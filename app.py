@@ -291,6 +291,35 @@ def update_user(phone: str, updates: dict):
     return user_repo.get_user(phone)
 
 
+# ================= TESTIMONIALS =================
+testimonials_db = []
+
+@app.get("/testimonials")
+def get_testimonials():
+    """Get all testimonials"""
+    return {"testimonials": testimonials_db[-20:]}  # Last 20
+
+@app.post("/testimonials")
+def add_testimonial(data: dict):
+    """Add a new testimonial"""
+    phone = data.get("phone", "")
+    content = data.get("content", "")
+    
+    if content:
+        user = user_repo.get_user(phone)
+        name = user.get("name", "Anonymous") if user else "Anonymous"
+        
+        testimonials_db.append({
+            "name": name,
+            "role": "VittaSaathi User",
+            "content": content,
+            "saved": "Growing",
+            "improvement": "Better"
+        })
+    
+    return {"success": True}
+
+
 # ================= OTP AUTHENTICATION =================
 @app.post("/api/v2/auth/send-otp")
 async def send_otp(payload: OTPSendPayload):
