@@ -2,27 +2,27 @@
 # Core Dependencies
 
 # Web Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-python-multipart==0.0.6
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
 
-# Data Processing
-pandas==2.1.4
-numpy==1.26.3
+# Data Processing (compatible with Python 3.11+)
+pandas>=2.2.0
+numpy>=1.26.0
 
 # NLP & ML
 # prophet==1.1.5  # Uncomment for income prediction (requires cmdstan)
 
 # OCR & Document Processing
-pytesseract==0.3.10
-Pillow==10.2.0
-PyPDF2==3.0.1
+pytesseract>=0.3.10
+Pillow>=10.2.0
+PyPDF2>=3.0.1
 
 # Voice & TTS
-gtts==2.5.0
+gtts>=2.5.0
 
 # Communication
-twilio==8.13.0
+twilio>=8.13.0
 
 # Database (using JSON for simplicity, upgrade to SQLite/PostgreSQL as needed)
 # For production, uncomment:
@@ -30,34 +30,34 @@ twilio==8.13.0
 # alembic==1.13.1
 
 # Scheduling
-apscheduler==3.10.4
+apscheduler>=3.10.4
 
 # Environment
-python-dotenv==1.0.0
+python-dotenv>=1.0.0
 
 # HTTP Client
-httpx==0.26.0
-requests==2.31.0
+httpx>=0.26.0
+requests>=2.31.0
 
 # Utilities
-python-dateutil==2.8.2
+python-dateutil>=2.8.2
 
 # PDF Generation
-reportlab==4.0.8
+reportlab>=4.0.8
 
 # Excel Export
-openpyxl==3.1.2
+openpyxl>=3.1.2
 
 # Encryption (for secure backups)
-cryptography==41.0.7
+cryptography>=41.0.7
 
 # Cloud Backup (optional)
-boto3==1.34.29
+boto3>=1.34.29
 # google-cloud-storage==2.14.0  # Uncomment for GCS support
 
 # Two-Factor Authentication
-pyotp==2.9.0
-qrcode[pil]==7.4.2
+pyotp>=2.9.0
+qrcode[pil]>=7.4.2
 
 # OpenAI (for voice transcription and smart NLP)
-openai==1.12.0
+openai>=1.12.0
