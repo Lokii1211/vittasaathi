@@ -1,0 +1,243 @@
+{
+    "name": "VittaSaathi - Monthly Report (1st of Month)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 10 1 * *"
+                        }
+                    ]
+                }
+            },
+            "id": "e1b2c3d4-1111-1111-1111-111111111111",
+            "name": "1st of Month 10 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "http://127.0.0.1:8000/users",
+                "options": {}
+            },
+            "id": "e1b2c3d4-2222-2222-2222-222222222222",
+            "name": "Get All Users",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "e1b2c3d4-3333-3333-3333-333333333333",
+            "name": "Loop Users",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "onboarding-check",
+                            "leftValue": "={{ $json.onboarding_complete }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "e1b2c3d4-4444-4444-4444-444444444444",
+            "name": "Onboarding Done?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=http://127.0.0.1:8000/api/v2/analytics/{{ $json.phone }}/monthly",
+                "options": {}
+            },
+            "id": "e1b2c3d4-5555-5555-5555-555555555555",
+            "name": "Get Monthly Stats",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1120,
+                200
+            ],
+            "onError": "continueRegularOutput"
+        },
+        {
+            "parameters": {
+                "jsCode": "const stats = $json;\nconst user = $('Loop Users').item.json;\nconst lang = user.preferred_language || 'english';\nconst name = user.name || 'Friend';\n\nconst lastMonth = new Date();\nlastMonth.setMonth(lastMonth.getMonth() - 1);\nconst monthName = lastMonth.toLocaleString('default', { month: 'long' });\n\nconst income = stats.total_income || 0;\nconst expense = stats.total_expense || 0;\nconst savings = income - expense;\nconst savingsRate = income > 0 ? Math.round((savings / income) * 100) : 0;\n\nconst messages = {\n  'english': `📊 *${monthName} Monthly Report*\\n\\nHello ${name}! Here's your financial summary:\\n\\n💰 *Total Income:* ₹${income.toLocaleString()}\\n💸 *Total Expenses:* ₹${expense.toLocaleString()}\\n💾 *Net Savings:* ₹${savings.toLocaleString()}\\n📈 *Savings Rate:* ${savingsRate}%\\n\\n${savingsRate >= 20 ? '🎉 Great job! You saved more than 20%!' : savingsRate >= 10 ? '👍 Good progress! Try to save 20% next month.' : '💡 Tip: Try to save at least 10% of your income.'}\\n\\n*Top Expenses:*\\n${stats.top_categories ? stats.top_categories.map((c, i) => `${i+1}. ${c.category}: ₹${c.amount.toLocaleString()}`).join('\\n') : 'No data'}\\n\\nKeep tracking! 💪`,\n  \n  'hindi': `📊 *${monthName} मासिक रिपोर्ट*\\n\\nनमस्ते ${name}!\\n\\n💰 *कुल आय:* ₹${income.toLocaleString()}\\n💸 *कुल खर्च:* ₹${expense.toLocaleString()}\\n💾 *शुद्ध बचत:* ₹${savings.toLocaleString()}\\n📈 *बचत दर:* ${savingsRate}%\\n\\n${savingsRate >= 20 ? '🎉 बहुत बढ़िया!' : '💡 20% बचत का लक्ष्य रखें।'}`,\n  \n  'tamil': `📊 *${monthName} மாத அறிக்கை*\\n\\n💰 *மொத்த வருமானம்:* ₹${income.toLocaleString()}\\n💸 *மொத்த செலவு:* ₹${expense.toLocaleString()}\\n💾 *சேமிப்பு:* ₹${savings.toLocaleString()}`\n};\n\nreturn {\n  phone: user.phone,\n  message: messages[lang] || messages['english']\n};"
+            },
+            "id": "e1b2c3d4-6666-6666-6666-666666666666",
+            "name": "Format Report",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1340,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "send",
+                "from": "whatsapp:+14155238886",
+                "to": "=whatsapp:{{ $json.phone }}",
+                "message": "={{ $json.message }}"
+            },
+            "id": "e1b2c3d4-7777-7777-7777-777777777777",
+            "name": "Send Report",
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                1560,
+                200
+            ],
+            "credentials": {
+                "twilioApi": {
+                    "id": "1",
+                    "name": "Twilio account"
+                }
+            }
+        },
+        {
+            "parameters": {},
+            "id": "e1b2c3d4-8888-8888-8888-888888888888",
+            "name": "Continue",
+            "type": "n8n-nodes-base.noOp",
+            "typeVersion": 1,
+            "position": [
+                1120,
+                400
+            ]
+        }
+    ],
+    "connections": {
+        "1st of Month 10 AM": {
+            "main": [
+                [
+                    {
+                        "node": "Get All Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get All Users": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Users": {
+            "main": [
+                [
+                    {
+                        "node": "Onboarding Done?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Onboarding Done?": {
+            "main": [
+                [
+                    {
+                        "node": "Get Monthly Stats",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Continue",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Monthly Stats": {
+            "main": [
+                [
+                    {
+                        "node": "Format Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Report": {
+            "main": [
+                [
+                    {
+                        "node": "Send Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Report": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 1,
+    "updatedAt": "2026-01-07T20:08:00.000Z",
+    "versionId": "1"
+}

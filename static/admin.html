@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VittaSaathi Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --secondary: #1565C0;
+            --accent: #FF9800;
+            --danger: #E53935;
+            --success: #43A047;
+            --warning: #FB8C00;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            overflow-y: auto;
+            transition: transform 0.3s;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-260px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #2E7D32, #4CAF50);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .logo-text h1 {
+            font-size: 20px;
+            background: linear-gradient(135deg, #2E7D32, #4CAF50);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text span {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .nav-section {
+            padding: 10px 20px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            border-left: 3px solid var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 260px;
+            padding: 20px;
+            min-height: 100vh;
+            transition: margin-left 0.3s;
+        }
+
+        .main.expanded {
+            margin-left: 0;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: var(--bg-card);
+            border: none;
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2E7D32, #4CAF50);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: rgba(67, 160, 71, 0.2);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(251, 140, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: rgba(229, 57, 53, 0.2);
+            color: var(--danger);
+        }
+
+        .badge-info {
+            background: rgba(21, 101, 192, 0.2);
+            color: var(--secondary);
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover,
+        .tab.active {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Toggle */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: var(--border);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: var(--primary);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .toggle.active::after {
+            left: 26px;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-success {
+            background: rgba(67, 160, 71, 0.15);
+            border: 1px solid var(--success);
+        }
+
+        .alert-warning {
+            background: rgba(251, 140, 0, 0.15);
+            border: 1px solid var(--warning);
+        }
+
+        .alert-danger {
+            background: rgba(229, 57, 53, 0.15);
+            border: 1px solid var(--danger);
+        }
+
+        .alert-info {
+            background: rgba(21, 101, 192, 0.15);
+            border: 1px solid var(--secondary);
+        }
+
+        /* Health Indicator */
+        .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .health-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .health-dot.online {
+            background: var(--success);
+        }
+
+        .health-dot.offline {
+            background: var(--danger);
+            animation: none;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-260px);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Log viewer */
+        .log-viewer {
+            background: #0a0f1a;
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #1a2035;
+        }
+
+        .log-time {
+            color: #64748b;
+        }
+
+        .log-level-info {
+            color: #3b82f6;
+        }
+
+        .log-level-success {
+            color: #22c55e;
+        }
+
+        .log-level-warning {
+            color: #f59e0b;
+        }
+
+        .log-level-error {
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="logo-icon">💰</div>
+            <div class="logo-text">
+                <h1>VittaSaathi</h1>
+                <span>Admin Panel v3.0</span>
+            </div>
+        </div>
+
+        <div class="nav-section">Main</div>
+        <a class="nav-item active" onclick="showSection('dashboard')">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+        <a class="nav-item" onclick="showSection('users')">
+            <span class="nav-icon">👥</span>
+            <span>Users</span>
+        </a>
+        <a class="nav-item" onclick="showSection('transactions')">
+            <span class="nav-icon">💸</span>
+            <span>Transactions</span>
+        </a>
+
+        <div class="nav-section">Configuration</div>
+        <a class="nav-item" onclick="showSection('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+        <a class="nav-item" onclick="showSection('integrations')">
+            <span class="nav-icon">🔌</span>
+            <span>Integrations</span>
+        </a>
+        <a class="nav-item" onclick="showSection('notifications')">
+            <span class="nav-icon">🔔</span>
+            <span>Notifications</span>
+        </a>
+
+        <div class="nav-section">Security</div>
+        <a class="nav-item" onclick="showSection('backups')">
+            <span class="nav-icon">💾</span>
+            <span>Backups</span>
+        </a>
+        <a class="nav-item" onclick="showSection('security')">
+            <span class="nav-icon">🔐</span>
+            <span>Security</span>
+        </a>
+        <a class="nav-item" onclick="showSection('logs')">
+            <span class="nav-icon">📝</span>
+            <span>Logs</span>
+        </a>
+
+        <div class="nav-section">System</div>
+        <a class="nav-item" onclick="showSection('webhooks')">
+            <span class="nav-icon">🪝</span>
+            <span>Webhooks</span>
+        </a>
+        <a class="nav-item" onclick="showSection('n8n')">
+            <span class="nav-icon">🔄</span>
+            <span>n8n Workflows</span>
+        </a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main" id="main">
+        <header class="header">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="page-title" id="page-title">Dashboard</h1>
+            <div class="header-actions">
+                <div class="health-indicator">
+                    <span class="health-dot online" id="api-health"></span>
+                    <span id="api-health-text">API Online</span>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshData()">🔄 Refresh</button>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section id="section-dashboard" class="section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(67,160,71,0.2)">👥</div>
+                    </div>
+                    <div class="stat-value" id="stat-users">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(21,101,192,0.2)">💸</div>
+                    </div>
+                    <div class="stat-value" id="stat-transactions">0</div>
+                    <div class="stat-label">Transactions Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(255,152,0,0.2)">💰</div>
+                    </div>
+                    <div class="stat-value" id="stat-income">₹0</div>
+                    <div class="stat-label">Today's Income</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(229,57,53,0.2)">📤</div>
+                    </div>
+                    <div class="stat-value" id="stat-expense">₹0</div>
+                    <div class="stat-label">Today's Expenses</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📈 Recent Activity</h3>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Amount</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-table">
+                            <tr>
+                                <td colspan="5" style="text-align:center;padding:40px">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Users Section -->
+        <section id="section-users" class="section" style="display:none">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">👥 User Management</h3>
+                    <button class="btn btn-primary" onclick="showModal('add-user')">+ Add User</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Phone</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Level</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table">
+                            <tr>
+                                <td colspan="6" style="text-align:center;padding:40px">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="section-settings" class="section" style="display:none">
+            <div class="tabs" id="settings-tabs">
+                <button class="tab active" onclick="showTab('general')">General</button>
+                <button class="tab" onclick="showTab('api')">API Settings</button>
+                <button class="tab" onclick="showTab('whatsapp')">WhatsApp</button>
+                <button class="tab" onclick="showTab('email')">Email</button>
+                <button class="tab" onclick="showTab('cloud')">Cloud Storage</button>
+            </div>
+
+            <div id="tab-general" class="tab-content active">
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom:20px">General Settings</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">App Name</label>
+                            <input type="text" class="form-input" value="VittaSaathi">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Default Language</label>
+                            <select class="form-input">
+                                <option>English</option>
+                                <option>Hindi</option>
+                                <option>Tamil</option>
+                                <option>Telugu</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+
+            <div id="tab-api" class="tab-content">
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom:20px">API Configuration</h3>
+                    <div class="form-group">
+                        <label class="form-label">VittaSaathi API URL</label>
+                        <input type="text" class="form-input" id="api-url" value="http://localhost:8000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">n8n Webhook URL</label>
+                        <input type="text" class="form-input" id="n8n-url" value="http://localhost:5678">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveApiSettings()">Save & Test Connection</button>
+                </div>
+            </div>
+
+            <div id="tab-whatsapp" class="tab-content">
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom:20px">Twilio WhatsApp Configuration</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Account SID</label>
+                            <input type="text" class="form-input" id="twilio-sid" placeholder="ACxxxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Auth Token</label>
+                            <input type="password" class="form-input" id="twilio-token" placeholder="Your auth token">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">WhatsApp Number</label>
+                        <input type="text" class="form-input" id="twilio-number" placeholder="+14155238886">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveWhatsAppSettings()">Save & Test</button>
+                </div>
+            </div>
+
+            <div id="tab-email" class="tab-content">
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom:20px">Email (SMTP) Configuration</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">SMTP Host</label>
+                            <input type="text" class="form-input" id="smtp-host" value="smtp.gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SMTP Port</label>
+                            <input type="number" class="form-input" id="smtp-port" value="587">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Username (Email)</label>
+                            <input type="email" class="form-input" id="smtp-user" placeholder="your@gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password (App Password)</label>
+                            <input type="password" class="form-input" id="smtp-pass" placeholder="App password">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveEmailSettings()">Save & Send Test Email</button>
+                </div>
+            </div>
+
+            <div id="tab-cloud" class="tab-content">
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom:20px">AWS S3 Configuration</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Access Key ID</label>
+                            <input type="text" class="form-input" id="aws-key" placeholder="AKIA...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Secret Access Key</label>
+                            <input type="password" class="form-input" id="aws-secret" placeholder="Secret key">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Region</label>
+                            <input type="text" class="form-input" id="aws-region" value="ap-south-1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bucket Name</label>
+                            <input type="text" class="form-input" id="aws-bucket" value="vittasaathi-backups">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveCloudSettings()">Save & Test Connection</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Backups Section -->
+        <section id="section-backups" class="section" style="display:none">
+            <div class="alert alert-info">
+                <span>💡</span>
+                <span>Scheduled backups run automatically based on your configuration.</span>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(67,160,71,0.2)">💾</div>
+                    <div class="stat-value" id="backup-count">0</div>
+                    <div class="stat-label">Total Backups</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(21,101,192,0.2)">📅</div>
+                    <div class="stat-value" id="last-backup">Never</div>
+                    <div class="stat-label">Last Backup</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(255,152,0,0.2)">⏰</div>
+                    <div class="stat-value" id="next-backup">--</div>
+                    <div class="stat-label">Next Scheduled</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Backup Schedule</h3>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Frequency</label>
+                        <select class="form-input" id="backup-frequency">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Time</label>
+                        <input type="time" class="form-input" id="backup-time" value="02:00">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="toggle-container">
+                            <div class="toggle active" id="backup-encrypt"></div>
+                            <span>Encrypt Backups</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="toggle-container">
+                            <div class="toggle" id="backup-cloud"></div>
+                            <span>Upload to Cloud</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:20px">
+                    <button class="btn btn-primary" onclick="saveBackupSettings()">Save Schedule</button>
+                    <button class="btn btn-secondary" onclick="runBackupNow()">🚀 Run Backup Now</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Available Backups</h3>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>Size</th>
+                                <th>Created</th>
+                                <th>Encrypted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="backups-table">
+                            <tr>
+                                <td colspan="5" style="text-align:center;padding:40px">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Webhooks Section -->
+        <section id="section-webhooks" class="section" style="display:none">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🪝 Webhook Endpoints</h3>
+                    <button class="btn btn-primary" onclick="showModal('add-webhook')">+ Add Webhook</button>
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Configure external services to receive real-time notifications from VittaSaathi.
+                </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>URL</th>
+                                <th>Status</th>
+                                <th>Last Triggered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="webhooks-table">
+                            <tr>
+                                <td>transaction.created</td>
+                                <td><code>https://example.com/webhook</code></td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>2 min ago</td>
+                                <td>
+                                    <button class="btn btn-secondary"
+                                        style="padding:6px 12px;font-size:12px">Test</button>
+                                    <button class="btn btn-danger"
+                                        style="padding:6px 12px;font-size:12px">Delete</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom:20px">Available Webhook Events</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px">
+                    <div style="padding:15px;background:var(--bg-dark);border-radius:10px">
+                        <strong>transaction.created</strong>
+                        <p style="color:var(--text-secondary);font-size:13px">When a new transaction is added</p>
+                    </div>
+                    <div style="padding:15px;background:var(--bg-dark);border-radius:10px">
+                        <strong>user.created</strong>
+                        <p style="color:var(--text-secondary);font-size:13px">When a new user registers</p>
+                    </div>
+                    <div style="padding:15px;background:var(--bg-dark);border-radius:10px">
+                        <strong>goal.achieved</strong>
+                        <p style="color:var(--text-secondary);font-size:13px">When a savings goal is completed</p>
+                    </div>
+                    <div style="padding:15px;background:var(--bg-dark);border-radius:10px">
+                        <strong>fraud.detected</strong>
+                        <p style="color:var(--text-secondary);font-size:13px">When suspicious activity is detected</p>
+                    </div>
+                    <div style="padding:15px;background:var(--bg-dark);border-radius:10px">
+                        <strong>backup.completed</strong>
+                        <p style="color:var(--text-secondary);font-size:13px">When a backup finishes</p>
+                    </div>
+                    <div style="padding:15px;background:var(--bg-dark);border-radius:10px">
+                        <strong>bill.due</strong>
+                        <p style="color:var(--text-secondary);font-size:13px">When a bill payment is due</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- n8n Section -->
+        <section id="section-n8n" class="section" style="display:none">
+            <div class="alert alert-info">
+                <span>ℹ️</span>
+                <span>Connect to your local n8n at <strong>http://localhost:5678</strong></span>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(255,152,0,0.2)">🔄</div>
+                    <div class="stat-value" id="n8n-workflows">5</div>
+                    <div class="stat-label">Active Workflows</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(67,160,71,0.2)">✅</div>
+                    <div class="stat-value" id="n8n-executions">1,234</div>
+                    <div class="stat-label">Total Executions</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">n8n Workflow Status</h3>
+                    <a href="http://localhost:5678" target="_blank" class="btn btn-secondary">Open n8n →</a>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Workflow</th>
+                                <th>Status</th>
+                                <th>Last Run</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>📱 WhatsApp Main Flow</td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>Just now</td>
+                                <td><button class="btn btn-secondary"
+                                        style="padding:6px 12px;font-size:12px">View</button></td>
+                            </tr>
+                            <tr>
+                                <td>📊 Daily Dashboard</td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>Today 8:00 AM</td>
+                                <td><button class="btn btn-secondary"
+                                        style="padding:6px 12px;font-size:12px">View</button></td>
+                            </tr>
+                            <tr>
+                                <td>🔔 Bill Reminders</td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>Today 9:00 AM</td>
+                                <td><button class="btn btn-secondary"
+                                        style="padding:6px 12px;font-size:12px">View</button></td>
+                            </tr>
+                            <tr>
+                                <td>🛡️ Fraud Detection</td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>2 hours ago</td>
+                                <td><button class="btn btn-secondary"
+                                        style="padding:6px 12px;font-size:12px">View</button></td>
+                            </tr>
+                            <tr>
+                                <td>📅 Monthly Reports</td>
+                                <td><span class="badge badge-warning">Scheduled</span></td>
+                                <td>1st of month</td>
+                                <td><button class="btn btn-secondary"
+                                        style="padding:6px 12px;font-size:12px">View</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Logs Section -->
+        <section id="section-logs" class="section" style="display:none">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📝 System Logs</h3>
+                    <div>
+                        <select class="form-input" style="width:auto;display:inline-block">
+                            <option>All Levels</option>
+                            <option>Info</option>
+                            <option>Warning</option>
+                            <option>Error</option>
+                        </select>
+                        <button class="btn btn-secondary">Download</button>
+                    </div>
+                </div>
+                <div class="log-viewer" id="log-viewer">
+                    <div class="log-entry">
+                        <span class="log-time">19:03:08</span>
+                        <span class="log-level-success">[SUCCESS]</span>
+                        Server started on port 8000
+                    </div>
+                    <div class="log-entry">
+                        <span class="log-time">19:02:45</span>
+                        <span class="log-level-info">[INFO]</span>
+                        Loaded 130 API routes
+                    </div>
+                    <div class="log-entry">
+                        <span class="log-time">19:02:44</span>
+                        <span class="log-level-info">[INFO]</span>
+                        Connected to database
+                    </div>
+                    <div class="log-entry">
+                        <span class="log-time">19:02:43</span>
+                        <span class="log-level-warning">[WARNING]</span>
+                        APScheduler not configured
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Webhook Modal -->
+    <div class="modal-overlay" id="modal-add-webhook">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Add Webhook</h3>
+                <button class="modal-close" onclick="closeModal('add-webhook')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Event</label>
+                    <select class="form-input">
+                        <option>transaction.created</option>
+                        <option>user.created</option>
+                        <option>goal.achieved</option>
+                        <option>fraud.detected</option>
+                        <option>backup.completed</option>
+                        <option>bill.due</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Webhook URL</label>
+                    <input type="url" class="form-input" placeholder="https://your-service.com/webhook">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Secret (for signature verification)</label>
+                    <input type="text" class="form-input" placeholder="Optional secret key">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('add-webhook')">Cancel</button>
+                <button class="btn btn-primary">Save Webhook</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // Show section
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+            // Show selected
+            document.getElementById('section-' + section).style.display = 'block';
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            event.target.closest('.nav-item').classList.add('active');
+            // Update title
+            document.getElementById('page-title').textContent = section.charAt(0).toUpperCase() + section.slice(1);
+            // Close sidebar on mobile
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        // Tabs
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Toggle switches
+        document.querySelectorAll('.toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => toggle.classList.toggle('active'));
+        });
+
+        // Modals
+        function showModal(id) {
+            document.getElementById('modal-' + id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById('modal-' + id).classList.remove('active');
+        }
+
+        // API calls
+        async function checkApiHealth() {
+            try {
+                const res = await fetch(API_BASE + '/');
+                if (res.ok) {
+                    document.getElementById('api-health').classList.add('online');
+                    document.getElementById('api-health').classList.remove('offline');
+                    document.getElementById('api-health-text').textContent = 'API Online';
+                }
+            } catch {
+                document.getElementById('api-health').classList.remove('online');
+                document.getElementById('api-health').classList.add('offline');
+                document.getElementById('api-health-text').textContent = 'API Offline';
+            }
+        }
+
+        async function loadDashboardStats() {
+            try {
+                // This would load real stats from API
+                document.getElementById('stat-users').textContent = '42';
+                document.getElementById('stat-transactions').textContent = '156';
+                document.getElementById('stat-income').textContent = '₹45,200';
+                document.getElementById('stat-expense').textContent = '₹12,800';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function refreshData() {
+            checkApiHealth();
+            loadDashboardStats();
+        }
+
+        // Save functions
+        async function saveWhatsAppSettings() {
+            const sid = document.getElementById('twilio-sid').value;
+            const token = document.getElementById('twilio-token').value;
+            const number = document.getElementById('twilio-number').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/v2/notifications/configure/whatsapp?sid=${sid}&token=${token}&from_number=${number}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                alert(data.success ? '✅ WhatsApp configured!' : '❌ Error: ' + data.error);
+            } catch (e) {
+                alert('❌ Connection failed');
+            }
+        }
+
+        async function saveEmailSettings() {
+            const host = document.getElementById('smtp-host').value;
+            const port = document.getElementById('smtp-port').value;
+            const user = document.getElementById('smtp-user').value;
+            const pass = document.getElementById('smtp-pass').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/v2/notifications/configure/email?host=${host}&port=${port}&username=${user}&password=${pass}&from_email=${user}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                alert(data.success ? '✅ Email configured!' : '❌ Error: ' + data.error);
+            } catch (e) {
+                alert('❌ Connection failed');
+            }
+        }
+
+        async function saveCloudSettings() {
+            const key = document.getElementById('aws-key').value;
+            const secret = document.getElementById('aws-secret').value;
+            const region = document.getElementById('aws-region').value;
+            const bucket = document.getElementById('aws-bucket').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/v2/cloud-backup/configure/aws?access_key=${key}&secret_key=${secret}&region=${region}&bucket=${bucket}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                alert(data.success ? '✅ AWS S3 configured!' : '❌ Error: ' + data.error);
+            } catch (e) {
+                alert('❌ Connection failed');
+            }
+        }
+
+        async function runBackupNow() {
+            try {
+                const res = await fetch(`${API_BASE}/api/v2/backup/schedule/run`, { method: 'POST' });
+                const data = await res.json();
+                alert(data.success ? '✅ Backup started!' : '❌ Error: ' + data.error);
+            } catch (e) {
+                alert('❌ Backup failed');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkApiHealth();
+            loadDashboardStats();
+            setInterval(checkApiHealth, 30000);
+        });
+    </script>
+</body>
+
+</html>

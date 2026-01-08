@@ -1,0 +1,258 @@
+{
+    "name": "VittaSaathi - Fraud Alert",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "fraud-alert",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "id": "d1b2c3d4-1111-1111-1111-111111111111",
+            "name": "Fraud Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                300
+            ],
+            "webhookId": "fraud-alert"
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=http://127.0.0.1:8000/user/{{ $json.phone || $json.user_id }}",
+                "options": {}
+            },
+            "id": "d1b2c3d4-2222-2222-2222-222222222222",
+            "name": "Get User",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                300
+            ],
+            "onError": "continueRegularOutput"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "high-severity",
+                            "leftValue": "={{ $('Fraud Webhook').item.json.severity }}",
+                            "rightValue": "high",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "d1b2c3d4-3333-3333-3333-333333333333",
+            "name": "High Severity?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const alert = $('Fraud Webhook').item.json;\nconst user = $('Get User').item.json;\nconst lang = user.preferred_language || 'english';\n\nconst messages = {\n  'english': `🚨 *FRAUD ALERT - URGENT*\\n\\n⚠️ Suspicious activity detected!\\n\\n💳 Transaction: ${alert.description || 'Unknown'}\\n💰 Amount: ₹${(alert.amount || 0).toLocaleString()}\\n📍 Location: ${alert.location || 'Unknown'}\\n⏰ Time: ${new Date().toLocaleTimeString()}\\n\\n*Was this you?*\\n\\nReply *YES* if you made this transaction\\nReply *NO* if you didn't (we'll block it)`,\n  \n  'hindi': `🚨 *धोखाधड़ी चेतावनी - तुरंत*\\n\\n⚠️ संदिग्ध गतिविधि का पता चला!\\n\\n💳 लेन-देन: ${alert.description || 'अज्ञात'}\\n💰 राशि: ₹${(alert.amount || 0).toLocaleString()}\\n\\n*क्या यह आप थे?*\\n\\n*YES* भेजें अगर आपने किया\\n*NO* भेजें अगर नहीं किया`,\n  \n  'tamil': `🚨 *மோசடி எச்சரிக்கை*\\n\\n⚠️ சந்தேகத்திற்கிடமான செயல்பாடு!\\n\\n💰 தொகை: ₹${(alert.amount || 0).toLocaleString()}\\n\\n*இது நீங்களா?*\\n*YES* அல்லது *NO* பதிலளிக்கவும்`\n};\n\nreturn {\n  phone: user.phone,\n  message: messages[lang] || messages['english'],\n  alert_id: alert.id,\n  severity: 'high'\n};"
+            },
+            "id": "d1b2c3d4-4444-4444-4444-444444444444",
+            "name": "High Alert Message",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                900,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const alert = $('Fraud Webhook').item.json;\nconst user = $('Get User').item.json;\nconst lang = user.preferred_language || 'english';\n\nconst messages = {\n  'english': `⚠️ *Security Notice*\\n\\nWe noticed an unusual transaction:\\n\\n💳 ${alert.description || 'Transaction'}\\n💰 Amount: ₹${(alert.amount || 0).toLocaleString()}\\n\\nIf this wasn't you, reply *BLOCK*`,\n  \n  'hindi': `⚠️ *सुरक्षा सूचना*\\n\\nहमने एक असामान्य लेन-देन देखा:\\n\\n💰 राशि: ₹${(alert.amount || 0).toLocaleString()}\\n\\nअगर यह आप नहीं थे, *BLOCK* भेजें`\n};\n\nreturn {\n  phone: user.phone,\n  message: messages[lang] || messages['english'],\n  severity: 'low'\n};"
+            },
+            "id": "d1b2c3d4-5555-5555-5555-555555555555",
+            "name": "Low Alert Message",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                900,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "send",
+                "from": "whatsapp:+14155238886",
+                "to": "=whatsapp:{{ $json.phone }}",
+                "message": "={{ $json.message }}"
+            },
+            "id": "d1b2c3d4-6666-6666-6666-666666666666",
+            "name": "Send Alert",
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                1340,
+                300
+            ],
+            "credentials": {
+                "twilioApi": {
+                    "id": "1",
+                    "name": "Twilio account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "send",
+                "from": "whatsapp:+14155238886",
+                "to": "whatsapp:+919003360494",
+                "message": "=🚨 *Admin Alert*\\n\\nFraud detected for user: {{ $json.phone }}\\nSeverity: {{ $json.severity }}"
+            },
+            "id": "d1b2c3d4-7777-7777-7777-777777777777",
+            "name": "Notify Admin",
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                1560,
+                300
+            ],
+            "credentials": {
+                "twilioApi": {
+                    "id": "1",
+                    "name": "Twilio account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "status",
+                            "name": "status",
+                            "value": "alert_sent",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "d1b2c3d4-8888-8888-8888-888888888888",
+            "name": "Done",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.2,
+            "position": [
+                1780,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Fraud Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Get User",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get User": {
+            "main": [
+                [
+                    {
+                        "node": "High Severity?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "High Severity?": {
+            "main": [
+                [
+                    {
+                        "node": "High Alert Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Low Alert Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "High Alert Message": {
+            "main": [
+                [
+                    {
+                        "node": "Send Alert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Low Alert Message": {
+            "main": [
+                [
+                    {
+                        "node": "Send Alert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Alert": {
+            "main": [
+                [
+                    {
+                        "node": "Notify Admin",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Notify Admin": {
+            "main": [
+                [
+                    {
+                        "node": "Done",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 1,
+    "updatedAt": "2026-01-07T20:08:00.000Z",
+    "versionId": "1"
+}

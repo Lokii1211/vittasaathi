@@ -1,0 +1,112 @@
+{
+    "name": "VittaSaathi - Complete Onboarding",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "whatsapp-incoming",
+                "responseMode": "lastNode",
+                "options": {
+                    "rawBody": true
+                }
+            },
+            "id": "webhook-main",
+            "name": "WhatsApp Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                200,
+                300
+            ],
+            "webhookId": "whatsapp-incoming"
+        },
+        {
+            "parameters": {
+                "jsCode": "const data = $input.item.json;\n\n// Extract from Twilio\nlet phone = (data.From || '').replace('whatsapp:', '').trim();\nlet message = (data.Body || '').trim();\nlet mediaUrl = data.MediaUrl0 || null;\nlet mediaType = data.MediaContentType0 || null;\n\n// Handle voice message\nlet isVoice = mediaType && mediaType.includes('audio');\n\nif (phone && !phone.startsWith('+')) phone = '+' + phone;\n\nconsole.log('Phone:', phone);\nconsole.log('Message:', message);\nconsole.log('MediaUrl:', mediaUrl);\nconsole.log('IsVoice:', isVoice);\n\nreturn {\n  phone: phone,\n  message: message,\n  mediaUrl: mediaUrl,\n  mediaType: mediaType,\n  isVoice: isVoice,\n  profileName: data.ProfileName || 'Friend'\n};"
+            },
+            "id": "extract-data",
+            "name": "Extract Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                420,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=http://127.0.0.1:8000/user/{{ $json.phone }}",
+                "options": {
+                    "timeout": 10000
+                }
+            },
+            "id": "get-user",
+            "name": "Get User",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                640,
+                300
+            ],
+            "onError": "continueRegularOutput"
+        },
+        {
+            "parameters": {
+                "jsCode": "const user = $input.item.json;\nconst ext = $('Extract Data').item.json;\nconst phone = ext.phone;\nconst message = ext.message;\nconst isVoice = ext.isVoice;\nconst mediaUrl = ext.mediaUrl;\n\n// Check if user exists\nconst userExists = user && user.phone;\nconst step = user?.onboarding_step || '';\nconst lang = user?.preferred_language || user?.language || 'english';\nconst isComplete = user?.onboarding_complete || false;\n\n// Language data\nconst L = {\n  english: {\n    welcome: '🙏 *Welcome to VittaSaathi!*\\n\\nI\\'m your personal financial friend!\\n\\nPlease select your language:\\n\\n1️⃣ English\\n2️⃣ हिंदी\\n3️⃣ தமிழ்\\n4️⃣ తెలుగు\\n5️⃣ ಕನ್ನಡ\\n\\nReply with number (1-5)',\n    ask_name: '📝 Great! What\\'s your name?',\n    ask_profession: '💼 Nice to meet you, {name}!\\n\\nWhat do you do for work?\\n\\n1️⃣ Delivery Partner (Swiggy/Zomato)\\n2️⃣ Cab/Auto Driver\\n3️⃣ Daily Wage Worker\\n4️⃣ Shopkeeper\\n5️⃣ Student\\n6️⃣ Homemaker\\n7️⃣ Salaried Employee\\n8️⃣ Freelancer\\n9️⃣ Other',\n    ask_income: '💰 What\\'s your approximate monthly income?\\n\\n(Just type a number, e.g., 15000)',\n    ask_goals: '🎯 What are your financial goals?\\n\\n1️⃣ Build Emergency Fund\\n2️⃣ Save for House\\n3️⃣ Save for Education\\n4️⃣ Pay off Debt\\n5️⃣ Save for Marriage\\n6️⃣ Retirement Savings\\n7️⃣ Start a Business\\n8️⃣ General Savings\\n\\n(Reply with numbers, e.g., \"1,3,5\")',\n    ask_savings: '📊 How much do you want to save each month?\\n\\n(Just type a number, e.g., 5000)',\n    complete: '🎉 *Perfect! Your profile is ready!*\\n\\n📊 *Your Personalized Plan:*\\n\\n💰 Monthly Income: ₹{income}\\n💾 Savings Goal: ₹{savings}/month\\n📅 Daily Budget: ₹{daily}\\n\\n*Your Goals:*\\n{goals}\\n\\n💡 *Tip:* Say \"spent 100 on food\" or \"earned 500\" to track!\\n\\nLet\\'s start your financial journey! 🚀',\n    invalid: '❌ I didn\\'t understand. Please try again.',\n    lang_set: '✅ Language set to English! 🎉'\n  },\n  hindi: {\n    welcome: '🙏 *VittaSaathi में स्वागत है!*\\n\\nमैं आपका वित्तीय मित्र हूं!\\n\\nअपनी भाषा चुनें:\\n\\n1️⃣ English\\n2️⃣ हिंदी\\n3️⃣ தமிழ்\\n4️⃣ తెలుగు\\n5️⃣ ಕನ್ನಡ\\n\\nनंबर भेजें (1-5)',\n    ask_name: '📝 बढ़िया! आपका नाम क्या है?',\n    ask_profession: '💼 आपसे मिलकर अच्छा लगा, {name}!\\n\\nआप क्या काम करते हैं?\\n\\n1️⃣ डिलीवरी पार्टनर\\n2️⃣ कैब/ऑटो ड्राइवर\\n3️⃣ दैनिक मजदूर\\n4️⃣ दुकानदार\\n5️⃣ छात्र\\n6️⃣ गृहिणी\\n7️⃣ नौकरी\\n8️⃣ फ्रीलांसर\\n9️⃣ अन्य',\n    ask_income: '💰 आपकी मासिक आय कितनी है?\\n\\n(सिर्फ नंबर लिखें, जैसे 15000)',\n    ask_goals: '🎯 आपके वित्तीय लक्ष्य क्या हैं?\\n\\n1️⃣ इमरजेंसी फंड\\n2️⃣ घर के लिए बचत\\n3️⃣ शिक्षा के लिए\\n4️⃣ कर्ज चुकाना\\n5️⃣ शादी के लिए\\n6️⃣ रिटायरमेंट\\n7️⃣ बिजनेस शुरू करना\\n8️⃣ सामान्य बचत\\n\\n(नंबर भेजें जैसे \"1,3,5\")',\n    ask_savings: '📊 हर महीने कितना बचाना चाहते हैं?\\n\\n(नंबर लिखें जैसे 5000)',\n    complete: '🎉 *बधाई! आपकी प्रोफाइल तैयार है!*\\n\\n📊 *आपका प्लान:*\\n\\n💰 मासिक आय: ₹{income}\\n💾 बचत लक्ष्य: ₹{savings}/महीना\\n📅 दैनिक बजट: ₹{daily}\\n\\n*आपके लक्ष्य:*\\n{goals}\\n\\n💡 बोलें \"खाने पर 100 खर्च\" या \"500 कमाए\"\\n\\nचलिए शुरू करते हैं! 🚀',\n    invalid: '❌ समझ नहीं आया। कृपया दोबारा कोशिश करें।',\n    lang_set: '✅ भाषा हिंदी में सेट! 🎉'\n  },\n  tamil: {\n    welcome: '🙏 *VittaSaathi வரவேற்கிறோம்!*\\n\\nநான் உங்கள் நிதி நண்பன்!\\n\\n1️⃣ English\\n2️⃣ हिंदी\\n3️⃣ தமிழ்\\n4️⃣ తెలుగు\\n5️⃣ ಕನ್ನಡ',\n    ask_name: '📝 உங்கள் பெயர் என்ன?',\n    ask_profession: '💼 வணக்கம் {name}!\\n\\nநீங்கள் என்ன வேலை செய்கிறீர்கள்?\\n\\n1️⃣ டெலிவரி பார்ட்னர்\\n2️⃣ கேப்/ஆட்டோ\\n3️⃣ தினசரி கூலி\\n4️⃣ கடைக்காரர்\\n5️⃣ மாணவர்\\n6️⃣ இல்லத்தரசி\\n7️⃣ சம்பளம்\\n8️⃣ ஃப்ரீலான்சர்\\n9️⃣ மற்றவை',\n    ask_income: '💰 உங்கள் மாத வருமானம் எவ்வளவு? (எண் மட்டும்)',\n    ask_goals: '🎯 உங்கள் இலக்குகள்?\\n\\n1️⃣ அவசர நிதி\\n2️⃣ வீடு\\n3️⃣ கல்வி\\n4️⃣ கடன்\\n5️⃣ திருமணம்\\n6️⃣ ஓய்வு\\n7️⃣ தொழில்\\n8️⃣ சேமிப்பு',\n    ask_savings: '📊 மாதம் எவ்வளவு சேமிக்க?',\n    complete: '🎉 *தயார்!*\\n\\n💰 வருமானம்: ₹{income}\\n💾 சேமிப்பு: ₹{savings}/மாதம்\\n📅 தினசரி: ₹{daily}\\n\\n{goals}',\n    invalid: '❌ புரியவில்லை.',\n    lang_set: '✅ மொழி தமிழ்! 🎉'\n  },\n  telugu: {\n    welcome: '🙏 *VittaSaathiకి స్వాగతం!*\\n\\n1️⃣ English\\n2️⃣ हिंदी\\n3️⃣ தமிழ்\\n4️⃣ తెలుగు\\n5️⃣ ಕನ್ನಡ',\n    ask_name: '📝 మీ పేరు ఏమిటి?',\n    ask_profession: '💼 {name}, మీరు ఏమి చేస్తారు?\\n1️⃣-9️⃣',\n    ask_income: '💰 మీ నెలవారీ ఆదాయం? (సంఖ్య మాత్రమే)',\n    ask_goals: '🎯 మీ లక్ష్యాలు? (1-8)',\n    ask_savings: '📊 నెలకు ఎంత పొదుపు?',\n    complete: '🎉 *సిద్ధం!* ₹{income} ఆదాయం, ₹{savings} పొదుపు, ₹{daily}/రోజు',\n    invalid: '❌ అర్థం కాలేదు.',\n    lang_set: '✅ తెలుగు! 🎉'\n  },\n  kannada: {\n    welcome: '🙏 *VittaSaathiಗೆ ಸ್ವಾಗತ!*\\n\\n1️⃣-5️⃣ ಭಾಷೆ',\n    ask_name: '📝 ನಿಮ್ಮ ಹೆಸರು?',\n    ask_profession: '💼 {name}, ನಿಮ್ಮ ಕೆಲಸ?',\n    ask_income: '💰 ಆದಾಯ? (ಸಂಖ್ಯೆ)',\n    ask_goals: '🎯 ಗುರಿಗಳು? (1-8)',\n    ask_savings: '📊 ಉಳಿತಾಯ?',\n    complete: '🎉 ₹{income}, ₹{savings}/ತಿಂಗಳು, ₹{daily}/ದಿನ',\n    invalid: '❌ ಅರ್ಥವಾಗಲಿಲ್ಲ.',\n    lang_set: '✅ ಕನ್ನಡ! 🎉'\n  }\n};\n\nconst langMap = {'1':'english','2':'hindi','3':'tamil','4':'telugu','5':'kannada'};\nconst profMap = {'1':'Delivery Partner','2':'Driver','3':'Daily Worker','4':'Shopkeeper','5':'Student','6':'Homemaker','7':'Salaried','8':'Freelancer','9':'Other'};\nconst goalsMap = {'1':'Emergency Fund','2':'House','3':'Education','4':'Debt Payoff','5':'Marriage','6':'Retirement','7':'Business','8':'General Savings'};\n\n// If onboarding complete, go to main API\nif (isComplete) {\n  return {\n    phone, message, isVoice, mediaUrl,\n    action: 'process',\n    lang: lang,\n    response: ''\n  };\n}\n\n// New user\nif (!userExists) {\n  return {\n    phone,"
+            },
+            "id": "decide-action",
+            "name": "Onboarding Logic",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                860,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "WhatsApp Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Data": {
+            "main": [
+                [
+                    {
+                        "node": "Get User",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get User": {
+            "main": [
+                [
+                    {
+                        "node": "Onboarding Logic",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 1,
+    "updatedAt": "2026-01-07T21:24:00.000Z",
+    "versionId": "1"
+}

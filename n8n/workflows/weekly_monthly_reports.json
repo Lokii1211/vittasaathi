@@ -1,0 +1,409 @@
+{
+    "name": "VittaSaathi - Weekly & Monthly Reports",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 20,
+                            "daysInterval": 7
+                        }
+                    ]
+                }
+            },
+            "id": "weekly-trigger",
+            "name": "Weekly (Sunday 8PM)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                200,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 20,
+                            "triggerAtDayOfMonth": 1
+                        }
+                    ]
+                }
+            },
+            "id": "monthly-trigger",
+            "name": "Monthly (1st, 8PM)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                200,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "http://127.0.0.1:8000/users",
+                "options": {
+                    "timeout": 30000
+                }
+            },
+            "id": "get-users-weekly",
+            "name": "Get Users (Weekly)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                420,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "http://127.0.0.1:8000/users",
+                "options": {
+                    "timeout": 30000
+                }
+            },
+            "id": "get-users-monthly",
+            "name": "Get Users (Monthly)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                420,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const users = $input.item.json.users || $input.item.json || [];\nconst activeUsers = users.filter(u => u.onboarding_complete && u.phone);\n\nconst results = [];\nfor (const user of activeUsers) {\n  results.push({\n    phone: user.phone,\n    name: user.name || 'Friend',\n    language: user.preferred_language || 'english',\n    reportType: 'weekly'\n  });\n}\nreturn results;"
+            },
+            "id": "prep-weekly-users",
+            "name": "Prep Weekly",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                640,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const users = $input.item.json.users || $input.item.json || [];\nconst activeUsers = users.filter(u => u.onboarding_complete && u.phone);\n\nconst results = [];\nfor (const user of activeUsers) {\n  results.push({\n    phone: user.phone,\n    name: user.name || 'Friend',\n    language: user.preferred_language || 'english',\n    reportType: 'monthly'\n  });\n}\nreturn results;"
+            },
+            "id": "prep-monthly-users",
+            "name": "Prep Monthly",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                640,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop-weekly",
+            "name": "Loop Weekly",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                860,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop-monthly",
+            "name": "Loop Monthly",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                860,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=http://127.0.0.1:8000/reports/{{ $json.phone }}/weekly-comparison",
+                "options": {
+                    "timeout": 30000
+                }
+            },
+            "id": "get-weekly-report",
+            "name": "Get Weekly Report",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1080,
+                200
+            ],
+            "onError": "continueRegularOutput"
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=http://127.0.0.1:8000/reports/{{ $json.phone }}/monthly-comparison",
+                "options": {
+                    "timeout": 30000
+                }
+            },
+            "id": "get-monthly-report",
+            "name": "Get Monthly Report",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1080,
+                400
+            ],
+            "onError": "continueRegularOutput"
+        },
+        {
+            "parameters": {
+                "jsCode": "const report = $input.item.json;\nconst userData = $('Loop Weekly').item.json;\nconst phone = userData.phone;\nconst name = userData.name;\nconst lang = userData.language;\n\n// Build comparison message\nconst thisWeek = report.this_week || {};\nconst lastWeek = report.last_week || {};\nconst categories = report.categories || {};\n\nconst income = thisWeek.income || 0;\nconst expense = thisWeek.expense || 0;\nconst savings = income - expense;\n\nconst lastIncome = lastWeek.income || 0;\nconst lastExpense = lastWeek.expense || 0;\n\n// Calculate changes\nconst incomeChange = lastIncome > 0 ? Math.round(((income - lastIncome) / lastIncome) * 100) : 0;\nconst expenseChange = lastExpense > 0 ? Math.round(((expense - lastExpense) / lastExpense) * 100) : 0;\n\nconst incomeArrow = incomeChange >= 0 ? '📈' : '📉';\nconst expenseArrow = expenseChange >= 0 ? '📈' : '📉';\nconst incomeStatus = incomeChange >= 0 ? `+${incomeChange}%` : `${incomeChange}%`;\nconst expenseStatus = expenseChange <= 0 ? '✅ Great!' : `⚠️ +${expenseChange}%`;\n\n// Category breakdown\nlet categoryLines = '';\nfor (const [cat, amount] of Object.entries(categories)) {\n  categoryLines += `• ${cat}: ₹${amount.toLocaleString()}\\n`;\n}\n\nlet message = '';\nif (lang === 'hindi') {\n  message = `📊 *सप्ताहिक रिपोर्ट - ${name}*\\n\\n` +\n    `💰 आय: ₹${income.toLocaleString()} ${incomeArrow} ${incomeStatus}\\n` +\n    `💸 खर्च: ₹${expense.toLocaleString()} ${expenseArrow} ${expenseStatus}\\n` +\n    `💾 बचत: ₹${savings.toLocaleString()}\\n\\n` +\n    `📂 *श्रेणी विभाजन:*\\n${categoryLines || '• कोई डेटा नहीं'}\\n\\n` +\n    `💡 अगले हफ्ते और बेहतर करें!`;\n} else {\n  message = `📊 *Weekly Report - ${name}*\\n\\n` +\n    `💰 Income: ₹${income.toLocaleString()} ${incomeArrow} ${incomeStatus}\\n` +\n    `💸 Expenses: ₹${expense.toLocaleString()} ${expenseArrow} ${expenseStatus}\\n` +\n    `💾 Savings: ₹${savings.toLocaleString()}\\n\\n` +\n    `📂 *Category Breakdown:*\\n${categoryLines || '• No data'}\\n\\n` +\n    `💡 Keep improving next week!`;\n}\n\nreturn { phone, message };"
+            },
+            "id": "format-weekly",
+            "name": "Format Weekly Report",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1300,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const report = $input.item.json;\nconst userData = $('Loop Monthly').item.json;\nconst phone = userData.phone;\nconst name = userData.name;\nconst lang = userData.language;\n\n// Build comparison message\nconst thisMonth = report.this_month || {};\nconst lastMonth = report.last_month || {};\nconst categories = report.categories || {};\nconst goals = report.goals_progress || {};\n\nconst income = thisMonth.income || 0;\nconst expense = thisMonth.expense || 0;\nconst savings = income - expense;\nconst savingsTarget = thisMonth.savings_target || savings;\nconst savingsPercent = savingsTarget > 0 ? Math.round((savings / savingsTarget) * 100) : 0;\n\nconst lastIncome = lastMonth.income || 0;\nconst lastExpense = lastMonth.expense || 0;\n\nconst incomeChange = lastIncome > 0 ? Math.round(((income - lastIncome) / lastIncome) * 100) : 0;\nconst expenseChange = lastExpense > 0 ? Math.round(((expense - lastExpense) / lastExpense) * 100) : 0;\n\n// Category breakdown\nlet categoryLines = '';\nfor (const [cat, amount] of Object.entries(categories)) {\n  const percent = income > 0 ? Math.round((amount / income) * 100) : 0;\n  categoryLines += `• ${cat}: ₹${amount.toLocaleString()} (${percent}%)\\n`;\n}\n\n// Goals progress\nlet goalsLines = '';\nfor (const [goal, progress] of Object.entries(goals)) {\n  goalsLines += `• ${goal}: ${progress}%\\n`;\n}\n\nconst incomeArrow = incomeChange >= 0 ? '📈' : '📉';\nconst expenseArrow = expenseChange <= 0 ? '✅' : '⚠️';\n\nlet message = '';\nif (lang === 'hindi') {\n  message = `📊 *मासिक रिपोर्ट - ${name}*\\n\\n` +\n    `💰 आय: ₹${income.toLocaleString()} ${incomeArrow} ${incomeChange >= 0 ? '+' : ''}${incomeChange}%\\n` +\n    `💸 खर्च: ₹${expense.toLocaleString()} ${expenseArrow} ${expenseChange <= 0 ? '✅' : '+' + expenseChange + '%'}\\n` +\n    `💾 बचत: ₹${savings.toLocaleString()} (लक्ष्य का ${savingsPercent}%)\\n\\n` +\n    `📂 *खर्च विभाजन:*\\n${categoryLines || '• कोई डेटा नहीं'}\\n` +\n    `🎯 *लक्ष्य प्रगति:*\\n${goalsLines || '• कोई लक्ष्य नहीं'}\\n` +\n    `💪 नए महीने की शुभकामनाएं!`;\n} else {\n  message = `📊 *Monthly Report - ${name}*\\n\\n` +\n    `💰 Income: ₹${income.toLocaleString()} ${incomeArrow} ${incomeChange >= 0 ? '+' : ''}${incomeChange}%\\n` +\n    `💸 Expenses: ₹${expense.toLocaleString()} ${expenseArrow} ${expenseChange <= 0 ? 'Great!' : '+' + expenseChange + '%'}\\n` +\n    `💾 Savings: ₹${savings.toLocaleString()} (${savingsPercent}% of target)\\n\\n` +\n    `📂 *Expense Breakdown:*\\n${categoryLines || '• No data'}\\n` +\n    `🎯 *Goals Progress:*\\n${goalsLines || '• No goals set'}\\n` +\n    `💪 Good luck for the new month!`;\n}\n\nreturn { phone, message };"
+            },
+            "id": "format-monthly",
+            "name": "Format Monthly Report",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1300,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "send",
+                "from": "+14155238886",
+                "to": "={{ $json.phone }}",
+                "toWhatsapp": true,
+                "message": "={{ $json.message }}"
+            },
+            "id": "send-weekly",
+            "name": "Send Weekly",
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                1520,
+                200
+            ],
+            "credentials": {
+                "twilioApi": {
+                    "id": "1",
+                    "name": "Twilio account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "send",
+                "from": "+14155238886",
+                "to": "={{ $json.phone }}",
+                "toWhatsapp": true,
+                "message": "={{ $json.message }}"
+            },
+            "id": "send-monthly",
+            "name": "Send Monthly",
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                1520,
+                400
+            ],
+            "credentials": {
+                "twilioApi": {
+                    "id": "1",
+                    "name": "Twilio account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Weekly (Sunday 8PM)": {
+            "main": [
+                [
+                    {
+                        "node": "Get Users (Weekly)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Monthly (1st, 8PM)": {
+            "main": [
+                [
+                    {
+                        "node": "Get Users (Monthly)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Users (Weekly)": {
+            "main": [
+                [
+                    {
+                        "node": "Prep Weekly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Users (Monthly)": {
+            "main": [
+                [
+                    {
+                        "node": "Prep Monthly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prep Weekly": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Weekly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prep Monthly": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Monthly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Weekly": {
+            "main": [
+                [
+                    {
+                        "node": "Get Weekly Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "Loop Monthly": {
+            "main": [
+                [
+                    {
+                        "node": "Get Monthly Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "Get Weekly Report": {
+            "main": [
+                [
+                    {
+                        "node": "Format Weekly Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Monthly Report": {
+            "main": [
+                [
+                    {
+                        "node": "Format Monthly Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Weekly Report": {
+            "main": [
+                [
+                    {
+                        "node": "Send Weekly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Monthly Report": {
+            "main": [
+                [
+                    {
+                        "node": "Send Monthly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Weekly": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Weekly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Monthly": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Monthly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1",
+        "timezone": "Asia/Kolkata"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 2,
+    "updatedAt": "2026-01-07T22:00:00.000Z",
+    "versionId": "1"
+}

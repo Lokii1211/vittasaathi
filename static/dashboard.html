@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VittaSaathi Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --secondary: #1565C0;
+            --secondary-light: #42A5F5;
+            --accent: #FF9800;
+            --danger: #E53935;
+            --success: #43A047;
+            --warning: #FB8C00;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --gradient-green: linear-gradient(135deg, #2E7D32, #4CAF50);
+            --gradient-blue: linear-gradient(135deg, #1565C0, #42A5F5);
+            --gradient-orange: linear-gradient(135deg, #E65100, #FF9800);
+            --gradient-purple: linear-gradient(135deg, #7B1FA2, #BA68C8);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 52px;
+            height: 52px;
+            background: var(--gradient-green);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.4);
+        }
+
+        .logo-text h1 {
+            font-size: 26px;
+            font-weight: 700;
+            background: var(--gradient-green);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 20px;
+            box-shadow: 0 4px 15px rgba(21, 101, 192, 0.4);
+        }
+
+        .level-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--gradient-purple);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(123, 31, 162, 0.4);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .stat-card.income::before {
+            background: var(--gradient-green);
+        }
+
+        .stat-card.expense::before {
+            background: var(--gradient-orange);
+        }
+
+        .stat-card.savings::before {
+            background: var(--gradient-blue);
+        }
+
+        .stat-card.health::before {
+            background: var(--gradient-purple);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .stat-card.income .stat-icon {
+            background: rgba(67, 160, 71, 0.2);
+        }
+
+        .stat-card.expense .stat-icon {
+            background: rgba(229, 57, 53, 0.2);
+        }
+
+        .stat-card.savings .stat-icon {
+            background: rgba(21, 101, 192, 0.2);
+        }
+
+        .stat-card.health .stat-icon {
+            background: rgba(123, 31, 162, 0.2);
+        }
+
+        .stat-content {
+            margin-top: 16px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+
+        .stat-change.positive {
+            background: rgba(67, 160, 71, 0.2);
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            background: rgba(229, 57, 53, 0.2);
+            color: var(--danger);
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 400px;
+            gap: 20px;
+        }
+
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Bar Chart */
+        .chart-container {
+            height: 280px;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            padding: 20px 0;
+        }
+
+        .chart-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-bars {
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+            height: 200px;
+        }
+
+        .chart-bar {
+            width: 28px;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.5s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .chart-bar:hover {
+            filter: brightness(1.2);
+            transform: scaleY(1.02);
+        }
+
+        .chart-bar.income {
+            background: var(--gradient-green);
+            box-shadow: 0 4px 15px rgba(67, 160, 71, 0.3);
+        }
+
+        .chart-bar.expense {
+            background: var(--gradient-orange);
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .chart-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .legend-dot.income {
+            background: var(--success);
+        }
+
+        .legend-dot.expense {
+            background: var(--accent);
+        }
+
+        /* Donut Chart */
+        .donut-container {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        .donut-chart {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+
+        .donut-chart svg {
+            transform: rotate(-90deg);
+        }
+
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .donut-center-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .donut-center-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .donut-legend {
+            flex: 1;
+        }
+
+        .donut-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .donut-legend-item:last-child {
+            border-bottom: none;
+        }
+
+        .donut-legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        .donut-legend-info {
+            flex: 1;
+        }
+
+        .donut-legend-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .donut-legend-percent {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .donut-legend-amount {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Semi-circle gauge */
+        .gauge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .gauge-chart {
+            position: relative;
+            width: 200px;
+            height: 110px;
+            overflow: hidden;
+        }
+
+        .gauge-chart svg {
+            transform: rotate(180deg);
+        }
+
+        .gauge-value {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .gauge-value-number {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .gauge-value-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .gauge-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 200px;
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Progress Rings */
+        .progress-rings {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+        }
+
+        .progress-ring-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-ring {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .progress-ring-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Goals with radial progress */
+        .goal-item {
+            padding: 16px;
+            background: var(--bg-hover);
+            border-radius: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: background 0.2s;
+        }
+
+        .goal-item:hover {
+            background: #475569;
+        }
+
+        .goal-progress-circle {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            flex-shrink: 0;
+        }
+
+        .goal-progress-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .goal-progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .goal-info {
+            flex: 1;
+        }
+
+        .goal-name {
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .goal-amounts {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Transaction Items */
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            background: var(--bg-hover);
+            border-radius: 14px;
+            transition: all 0.2s;
+        }
+
+        .transaction-item:hover {
+            background: #475569;
+            transform: translateX(4px);
+        }
+
+        .txn-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .txn-icon.income {
+            background: rgba(67, 160, 71, 0.2);
+        }
+
+        .txn-icon.expense {
+            background: rgba(229, 57, 53, 0.2);
+        }
+
+        .txn-info {
+            flex: 1;
+        }
+
+        .txn-category {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .txn-date {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .txn-amount {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .txn-amount.income {
+            color: var(--success);
+        }
+
+        .txn-amount.expense {
+            color: var(--danger);
+        }
+
+        /* Tip Card */
+        .tip-card {
+            background: linear-gradient(135deg, rgba(21, 101, 192, 0.15), rgba(66, 165, 245, 0.1));
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(66, 165, 245, 0.3);
+        }
+
+        .tip-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .tip-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Calendar Mini */
+        .calendar-mini {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+
+        .calendar-header {
+            font-size: 10px;
+            color: var(--text-secondary);
+            padding: 8px 0;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background: var(--bg-hover);
+        }
+
+        .calendar-day.today {
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+        }
+
+        .calendar-day.has-income::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            width: 4px;
+            height: 4px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        .calendar-day.has-expense::before {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: calc(50% - 5px);
+            width: 4px;
+            height: 4px;
+            background: var(--danger);
+            border-radius: 50%;
+        }
+
+        /* Backup Actions */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--gradient-green);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .donut-container {
+                flex-direction: column;
+            }
+
+            .stat-value {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">💰</div>
+                <div class="logo-text">
+                    <h1>VittaSaathi</h1>
+                    <span>Your Financial Friend • v3.0</span>
+                </div>
+            </div>
+            <div class="user-info">
+                <div class="level-badge" id="user-level">
+                    <span>🌟</span>
+                    <span>Loading...</span>
+                </div>
+                <div class="user-avatar" id="user-avatar">?</div>
+                <div style="text-align: right">
+                    <div style="font-weight: 500" id="user-name">Loading...</div>
+                    <div style="font-size: 12px; color: var(--text-secondary)" id="user-streak">--</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card income">
+                <div class="stat-header">
+                    <div class="stat-icon">💰</div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">This Month Income</div>
+                    <div class="stat-value" id="total-income">₹0</div>
+                    <div class="stat-change positive" id="income-change">
+                        <span>↑</span> <span>0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card expense">
+                <div class="stat-header">
+                    <div class="stat-icon">💸</div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">This Month Expenses</div>
+                    <div class="stat-value" id="total-expense">₹0</div>
+                    <div class="stat-change negative" id="expense-change">
+                        <span>↓</span> <span>0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card savings">
+                <div class="stat-header">
+                    <div class="stat-icon">💾</div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Net Savings</div>
+                    <div class="stat-value" id="total-savings">₹0</div>
+                    <div class="stat-change positive" id="savings-rate">
+                        <span>📈</span> <span>0% rate</span>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card health">
+                <div class="stat-header">
+                    <div class="stat-icon">🏥</div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Financial Health</div>
+                    <div class="stat-value" id="health-score">--</div>
+                    <div class="stat-change positive" id="health-grade">
+                        <span>🎯</span> <span>Grade: --</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Column 1 -->
+            <div>
+                <!-- Trend Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">📈 Income vs Expenses</div>
+                            <div class="card-subtitle">Last 6 months comparison</div>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="trend-chart">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot income"></div>
+                            <span>Income</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot expense"></div>
+                            <span>Expense</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Savings Health Gauge -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🏥 Financial Health Score</div>
+                    </div>
+                    <div class="gauge-container" id="health-gauge">
+                        <div class="gauge-chart">
+                            <svg width="200" height="100" viewBox="0 0 200 100">
+                                <path d="M 10 90 A 80 80 0 0 1 190 90" fill="none" stroke="#334155" stroke-width="16"
+                                    stroke-linecap="round" />
+                                <path id="gauge-fill" d="M 10 90 A 80 80 0 0 1 190 90" fill="none"
+                                    stroke="url(#gaugeGradient)" stroke-width="16" stroke-linecap="round"
+                                    stroke-dasharray="251" stroke-dashoffset="251" />
+                                <defs>
+                                    <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#E53935" />
+                                        <stop offset="50%" stop-color="#FB8C00" />
+                                        <stop offset="100%" stop-color="#43A047" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="gauge-value">
+                                <div class="gauge-value-number" id="gauge-score">0</div>
+                                <div class="gauge-value-label">out of 100</div>
+                            </div>
+                        </div>
+                        <div class="gauge-labels">
+                            <span>Poor</span>
+                            <span>Fair</span>
+                            <span>Good</span>
+                            <span>Excellent</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 2 -->
+            <div>
+                <!-- Donut Chart - Category Breakdown -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">🍩 Expense Breakdown</div>
+                            <div class="card-subtitle">By category this month</div>
+                        </div>
+                    </div>
+                    <div class="donut-container" id="donut-chart">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Rings - Key Metrics -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📊 Key Metrics</div>
+                    </div>
+                    <div class="progress-rings" id="progress-rings">
+                        <div class="progress-ring-item">
+                            <div class="progress-ring">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle cx="40" cy="40" r="32" fill="none" stroke="#334155" stroke-width="8" />
+                                    <circle id="ring-budget" cx="40" cy="40" r="32" fill="none" stroke="#4CAF50"
+                                        stroke-width="8" stroke-linecap="round" stroke-dasharray="201"
+                                        stroke-dashoffset="201" />
+                                </svg>
+                                <div class="progress-ring-center" id="ring-budget-text">0%</div>
+                            </div>
+                            <div class="progress-ring-label">Budget Used</div>
+                        </div>
+                        <div class="progress-ring-item">
+                            <div class="progress-ring">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle cx="40" cy="40" r="32" fill="none" stroke="#334155" stroke-width="8" />
+                                    <circle id="ring-savings" cx="40" cy="40" r="32" fill="none" stroke="#2196F3"
+                                        stroke-width="8" stroke-linecap="round" stroke-dasharray="201"
+                                        stroke-dashoffset="201" />
+                                </svg>
+                                <div class="progress-ring-center" id="ring-savings-text">0%</div>
+                            </div>
+                            <div class="progress-ring-label">Savings Rate</div>
+                        </div>
+                        <div class="progress-ring-item">
+                            <div class="progress-ring">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle cx="40" cy="40" r="32" fill="none" stroke="#334155" stroke-width="8" />
+                                    <circle id="ring-goal" cx="40" cy="40" r="32" fill="none" stroke="#FF9800"
+                                        stroke-width="8" stroke-linecap="round" stroke-dasharray="201"
+                                        stroke-dashoffset="201" />
+                                </svg>
+                                <div class="progress-ring-center" id="ring-goal-text">0%</div>
+                            </div>
+                            <div class="progress-ring-label">Goal Progress</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goals -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🎯 Active Goals</div>
+                    </div>
+                    <div id="goals-list">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 3 -->
+            <div>
+                <!-- Recent Transactions -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📝 Recent Activity</div>
+                    </div>
+                    <div class="transaction-list" id="recent-transactions">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Tip -->
+                <div class="card tip-card">
+                    <div class="tip-header">
+                        <span>💡</span>
+                        <span>Daily Tip</span>
+                    </div>
+                    <div class="tip-content" id="daily-tip">
+                        Loading tip...
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">⚡ Quick Actions</div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="downloadReport()">
+                            📥 Download PDF
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportCSV()">
+                            📊 Export CSV
+                        </button>
+                        <button class="btn btn-secondary" onclick="backupData()">
+                            💾 Backup
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mini Calendar -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📅 This Month</div>
+                    </div>
+                    <div class="calendar-mini" id="mini-calendar">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = window.location.origin;
+        const urlParams = new URLSearchParams(window.location.search);
+        const USER_PHONE = urlParams.get('phone') || 'demo_user';
+
+        // Color palette for charts
+        const CHART_COLORS = [
+            '#4CAF50', '#2196F3', '#FF9800', '#E91E63', '#9C27B0',
+            '#00BCD4', '#795548', '#607D8B', '#F44336', '#3F51B5'
+        ];
+
+        // Format currency
+        function formatCurrency(amount) {
+            return '₹' + amount.toLocaleString('en-IN');
+        }
+
+        // Create donut chart SVG
+        function createDonutChart(data, total) {
+            const size = 180;
+            const strokeWidth = 30;
+            const radius = (size - strokeWidth) / 2;
+            const circumference = 2 * Math.PI * radius;
+            const center = size / 2;
+
+            let currentOffset = 0;
+            let paths = '';
+
+            data.forEach((item, i) => {
+                const percentage = item.amount / total;
+                const strokeLength = circumference * percentage;
+                const offset = circumference * currentOffset;
+                const color = CHART_COLORS[i % CHART_COLORS.length];
+
+                paths += `
+                    <circle cx="${center}" cy="${center}" r="${radius}"
+                            fill="none" stroke="${color}" stroke-width="${strokeWidth}"
+                            stroke-dasharray="${strokeLength} ${circumference - strokeLength}"
+                            stroke-dashoffset="${-offset}"
+                            style="transition: stroke-dasharray 0.5s ease"/>
+                `;
+
+                currentOffset += percentage;
+            });
+
+            return `
+                <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform: rotate(-90deg)">
+                    ${paths}
+                </svg>
+            `;
+        }
+
+        // Create goal progress circle
+        function createProgressCircle(percent, color) {
+            const radius = 22;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (percent / 100 * circumference);
+
+            return `
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                    <circle cx="28" cy="28" r="${radius}" fill="none" stroke="#334155" stroke-width="6"/>
+                    <circle cx="28" cy="28" r="${radius}" fill="none" stroke="${color}" stroke-width="6"
+                            stroke-linecap="round" stroke-dasharray="${circumference}" 
+                            stroke-dashoffset="${offset}" style="transition: stroke-dashoffset 0.5s ease"/>
+                </svg>
+            `;
+        }
+
+        // Load Dashboard Data
+        async function loadDashboard() {
+            try {
+                const [dashboardRes, trendsRes, healthRes, breakdownRes] = await Promise.all([
+                    fetch(`${API_BASE}/dashboard/${USER_PHONE}`),
+                    fetch(`${API_BASE}/api/v2/analytics/${USER_PHONE}/trends?months=6`),
+                    fetch(`${API_BASE}/api/v2/analytics/${USER_PHONE}/savings-health`),
+                    fetch(`${API_BASE}/api/v2/analytics/${USER_PHONE}/breakdown`)
+                ]);
+
+                const dashboard = await dashboardRes.json();
+                const trends = await trendsRes.json();
+                const health = await healthRes.json();
+                const breakdown = await breakdownRes.json();
+
+                updateStats(dashboard, health);
+                updateTrendChart(trends);
+                updateDonutChart(breakdown);
+                updateGauge(health);
+                updateProgressRings(dashboard, health);
+                loadGoals();
+                loadTransactions();
+                loadTip();
+                generateMiniCalendar();
+
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Update Stats Cards
+        function updateStats(data, health) {
+            if (data.summary) {
+                document.getElementById('total-income').textContent =
+                    formatCurrency(data.summary.total_income || 0);
+                document.getElementById('total-expense').textContent =
+                    formatCurrency(data.summary.total_expense || 0);
+                document.getElementById('total-savings').textContent =
+                    formatCurrency(data.summary.net_savings || 0);
+
+                const rate = health.savings_rate || 0;
+                document.getElementById('savings-rate').innerHTML =
+                    `<span>📈</span> <span>${rate}% rate</span>`;
+            }
+
+            if (data.comparison) {
+                updateChange('income-change', data.comparison.income_change, true);
+                updateChange('expense-change', data.comparison.expense_change, false);
+            }
+
+            if (data.health || health) {
+                const h = data.health || health;
+                const score = h.score || h.savings_rate || 0;
+                document.getElementById('health-score').textContent = score + '/100';
+                document.getElementById('health-grade').innerHTML =
+                    `<span>🎯</span> <span>Grade: ${h.grade || 'B'}</span>`;
+            }
+        }
+
+        function updateChange(elementId, change, positiveIsGood) {
+            const el = document.getElementById(elementId);
+            if (!el || change === undefined) return;
+
+            const isPositive = change >= 0;
+            const arrow = isPositive ? '↑' : '↓';
+            const className = (positiveIsGood === isPositive) ? 'positive' : 'negative';
+
+            el.className = `stat-change ${className}`;
+            el.innerHTML = `<span>${arrow}</span> <span>${Math.abs(change || 0)}%</span>`;
+        }
+
+        // Update Trend Chart
+        function updateTrendChart(trends) {
+            const container = document.getElementById('trend-chart');
+
+            if (!trends.months || !trends.total_income) {
+                container.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">No data available</p>';
+                return;
+            }
+
+            const maxIncome = Math.max(...trends.total_income);
+            const maxExpense = Math.max(...trends.total_expense);
+            const maxValue = Math.max(maxIncome, maxExpense, 1);
+
+            let html = '';
+            for (let i = 0; i < trends.months.length; i++) {
+                const incomeHeight = (trends.total_income[i] / maxValue * 180) || 5;
+                const expenseHeight = (trends.total_expense[i] / maxValue * 180) || 5;
+
+                html += `
+                    <div class="chart-bar-group">
+                        <div class="chart-bars">
+                            <div class="chart-bar income" style="height: ${incomeHeight}px" 
+                                 title="Income: ${formatCurrency(trends.total_income[i])}"></div>
+                            <div class="chart-bar expense" style="height: ${expenseHeight}px"
+                                 title="Expense: ${formatCurrency(trends.total_expense[i])}"></div>
+                        </div>
+                        <div class="chart-label">${trends.months[i]}</div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Update Donut Chart
+        function updateDonutChart(breakdown) {
+            const container = document.getElementById('donut-chart');
+
+            if (!breakdown.categories || breakdown.categories.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:var(--text-secondary)">No expenses yet</p>';
+                return;
+            }
+
+            const data = breakdown.categories.slice(0, 6);
+            const total = breakdown.total || data.reduce((s, c) => s + c.amount, 0);
+
+            let legendHtml = '';
+            data.forEach((cat, i) => {
+                const color = CHART_COLORS[i % CHART_COLORS.length];
+                legendHtml += `
+                    <div class="donut-legend-item">
+                        <div class="donut-legend-color" style="background: ${color}"></div>
+                        <div class="donut-legend-info">
+                            <div class="donut-legend-name">${cat.icon} ${cat.name}</div>
+                            <div class="donut-legend-percent">${cat.percentage}%</div>
+                        </div>
+                        <div class="donut-legend-amount">${formatCurrency(cat.amount)}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="donut-chart">
+                    ${createDonutChart(data, total)}
+                    <div class="donut-center">
+                        <div class="donut-center-value">${formatCurrency(total)}</div>
+                        <div class="donut-center-label">Total Spent</div>
+                    </div>
+                </div>
+                <div class="donut-legend">
+                    ${legendHtml}
+                </div>
+            `;
+        }
+
+        // Update Gauge
+        function updateGauge(health) {
+            const score = health.savings_rate || health.score || 50;
+            const gaugeFill = document.getElementById('gauge-fill');
+            const gaugeScore = document.getElementById('gauge-score');
+
+            if (gaugeFill && gaugeScore) {
+                // 251 is the arc length, we need to show percentage
+                const offset = 251 - (score / 100 * 251);
+                gaugeFill.style.strokeDashoffset = offset;
+                gaugeScore.textContent = Math.round(score);
+            }
+        }
+
+        // Update Progress Rings
+        function updateProgressRings(dashboard, health) {
+            const circumference = 201;
+
+            // Budget ring
+            const budgetPercent = dashboard.budget_percent || 70;
+            const budgetOffset = circumference - (budgetPercent / 100 * circumference);
+            document.getElementById('ring-budget').style.strokeDashoffset = budgetOffset;
+            document.getElementById('ring-budget-text').textContent = budgetPercent + '%';
+
+            // Savings ring
+            const savingsRate = health.savings_rate || 20;
+            const savingsOffset = circumference - (savingsRate / 100 * circumference);
+            document.getElementById('ring-savings').style.strokeDashoffset = savingsOffset;
+            document.getElementById('ring-savings-text').textContent = Math.round(savingsRate) + '%';
+
+            // Goal ring (placeholder)
+            const goalPercent = 45;
+            const goalOffset = circumference - (goalPercent / 100 * circumference);
+            document.getElementById('ring-goal').style.strokeDashoffset = goalOffset;
+            document.getElementById('ring-goal-text').textContent = goalPercent + '%';
+        }
+
+        // Load Goals
+        async function loadGoals() {
+            try {
+                const res = await fetch(`${API_BASE}/goals/${USER_PHONE}`);
+                const data = await res.json();
+
+                const container = document.getElementById('goals-list');
+
+                if (!data.goals || data.goals.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px">No goals set</p>';
+                    return;
+                }
+
+                let html = '';
+                data.goals.slice(0, 3).forEach((goal, i) => {
+                    const progress = Math.min(goal.progress_percent || 0, 100);
+                    const color = CHART_COLORS[i % CHART_COLORS.length];
+
+                    html += `
+                        <div class="goal-item">
+                            <div class="goal-progress-circle">
+                                ${createProgressCircle(progress, color)}
+                                <div class="goal-progress-text">${progress}%</div>
+                            </div>
+                            <div class="goal-info">
+                                <div class="goal-name">
+                                    <span>${goal.icon || '🎯'}</span>
+                                    <span>${goal.name}</span>
+                                </div>
+                                <div class="goal-amounts">
+                                    ${formatCurrency(goal.saved_amount || 0)} / ${formatCurrency(goal.target_amount || 0)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading goals:', error);
+            }
+        }
+
+        // Load Transactions
+        async function loadTransactions() {
+            try {
+                const res = await fetch(`${API_BASE}/transactions/${USER_PHONE}?limit=5`);
+                const data = await res.json();
+
+                const container = document.getElementById('recent-transactions');
+
+                if (!data.transactions || data.transactions.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px">No transactions yet</p>';
+                    return;
+                }
+
+                let html = '';
+                data.transactions.slice(0, 5).forEach(txn => {
+                    const isIncome = txn.type === 'income';
+                    const icon = isIncome ? '💰' : '💸';
+                    const amountClass = isIncome ? 'income' : 'expense';
+                    const sign = isIncome ? '+' : '-';
+                    const date = new Date(txn.date).toLocaleDateString('en-IN', {
+                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                    });
+
+                    html += `
+                        <div class="transaction-item">
+                            <div class="txn-icon ${amountClass}">${icon}</div>
+                            <div class="txn-info">
+                                <div class="txn-category">${txn.category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                                <div class="txn-date">${date}</div>
+                            </div>
+                            <div class="txn-amount ${amountClass}">${sign}${formatCurrency(txn.amount)}</div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        // Load Tip
+        async function loadTip() {
+            try {
+                const res = await fetch(`${API_BASE}/api/v2/tips/${USER_PHONE}`);
+                const data = await res.json();
+
+                document.getElementById('daily-tip').textContent =
+                    data.tip || 'Track expenses daily for better financial awareness!';
+            } catch (error) {
+                document.getElementById('daily-tip').textContent =
+                    '💡 Every rupee saved is a rupee earned!';
+            }
+        }
+
+        // Generate Mini Calendar
+        function generateMiniCalendar() {
+            const container = document.getElementById('mini-calendar');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            let html = days.map(d => `<div class="calendar-header">${d}</div>`).join('');
+
+            // Empty cells before first day
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day"></div>';
+            }
+
+            // Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isToday = day === today.getDate();
+                const classes = ['calendar-day'];
+                if (isToday) classes.push('today');
+                // Random indicators for demo
+                if (Math.random() > 0.7) classes.push('has-income');
+                if (Math.random() > 0.6) classes.push('has-expense');
+
+                html += `<div class="${classes.join(' ')}">${day}</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Load User Info
+        async function loadUserInfo() {
+            try {
+                const res = await fetch(`${API_BASE}/user/${USER_PHONE}`);
+                const user = await res.json();
+
+                if (user.name) {
+                    document.getElementById('user-name').textContent = user.name;
+                    document.getElementById('user-avatar').textContent = user.name.charAt(0).toUpperCase();
+                }
+
+                if (user.streak_days) {
+                    document.getElementById('user-streak').textContent = `🔥 ${user.streak_days} day streak`;
+                }
+
+                const levelRes = await fetch(`${API_BASE}/user/${USER_PHONE}/level`);
+                const level = await levelRes.json();
+
+                document.getElementById('user-level').innerHTML = `
+                    <span>${level.icon || '🌟'}</span>
+                    <span>${level.level || 'Beginner'}</span>
+                `;
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+
+        // Quick Actions
+        function downloadReport() {
+            window.open(`${API_BASE}/api/v2/reports/${USER_PHONE}/pdf`, '_blank');
+        }
+
+        function exportCSV() {
+            window.open(`${API_BASE}/api/v2/export/${USER_PHONE}/csv/transactions`, '_blank');
+        }
+
+        async function backupData() {
+            try {
+                const res = await fetch(`${API_BASE}/api/v2/backup/${USER_PHONE}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('✅ Backup created successfully!');
+                } else {
+                    alert('❌ Backup failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('❌ Backup failed');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadDashboard();
+        });
+
+        // Refresh every 5 minutes
+        setInterval(loadDashboard, 300000);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,259 @@
+{
+    "name": "VittaSaathi Monthly Dashboard",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtDayOfMonth": 1,
+                            "triggerAtHour": 10
+                        }
+                    ]
+                }
+            },
+            "id": "monthly-trigger",
+            "name": "1st of Month 10 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "http://localhost:8000/user/all",
+                "options": {}
+            },
+            "id": "get-all-users",
+            "name": "Get All Users",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 3,
+            "position": [
+                470,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop-users",
+            "name": "Loop Users",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 2,
+            "position": [
+                690,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{ $json.onboarding_complete }}",
+                            "value2": true
+                        }
+                    ]
+                }
+            },
+            "id": "check-onboarded",
+            "name": "Is Onboarded?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                910,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=http://localhost:8000/dashboard/{{ $json.phone }}",
+                "options": {}
+            },
+            "id": "get-dashboard",
+            "name": "Get Monthly Dashboard",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 3,
+            "position": [
+                1130,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "send",
+                "from": "={{ $env.TWILIO_WHATSAPP_NUMBER }}",
+                "to": "=whatsapp:{{ $node['Loop Users'].json.phone }}",
+                "body": "={{ $json.dashboard }}"
+            },
+            "id": "send-text-dashboard",
+            "name": "Send Text Dashboard",
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                1350,
+                150
+            ],
+            "credentials": {
+                "twilioApi": {
+                    "id": "1",
+                    "name": "Twilio account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://localhost:8000/voice/generate",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"phone\": \"{{ $node['Loop Users'].json.phone }}\",\n  \"text\": \"{{ $json.voice_text }}\",\n  \"language\": \"{{ $node['Loop Users'].json.language }}\"\n}"
+            },
+            "id": "generate-voice",
+            "name": "Generate Voice Summary",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 3,
+            "position": [
+                1350,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "send",
+                "from": "={{ $env.TWILIO_WHATSAPP_NUMBER }}",
+                "to": "=whatsapp:{{ $node['Loop Users'].json.phone }}",
+                "body": "🔊 Listen to your monthly summary:",
+                "options": {
+                    "mediaUrl": "={{ $json.voice_url }}"
+                }
+            },
+            "id": "send-voice",
+            "name": "Send Voice Summary",
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                1570,
+                350
+            ],
+            "credentials": {
+                "twilioApi": {
+                    "id": "1",
+                    "name": "Twilio account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "1st of Month 10 AM": {
+            "main": [
+                [
+                    {
+                        "node": "Get All Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get All Users": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Users": {
+            "main": [
+                [
+                    {
+                        "node": "Is Onboarded?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Onboarded?": {
+            "main": [
+                [
+                    {
+                        "node": "Get Monthly Dashboard",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Monthly Dashboard": {
+            "main": [
+                [
+                    {
+                        "node": "Send Text Dashboard",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Generate Voice Summary",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Text Dashboard": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Voice Summary": {
+            "main": [
+                [
+                    {
+                        "node": "Send Voice Summary",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Voice Summary": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {}
+}
