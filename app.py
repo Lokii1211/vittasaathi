@@ -378,6 +378,137 @@ async def verify_otp(payload: OTPVerifyPayload):
 
 
 
+# ================= TWILIO WHATSAPP WEBHOOK =================
+from fastapi import Form, Request
+
+@app.post("/webhook/whatsapp-incoming")
+async def twilio_webhook(request: Request):
+    """Direct Twilio WhatsApp webhook - receives form data and responds via Twilio"""
+    from twilio.rest import Client
+    from twilio.twiml.messaging_response import MessagingResponse
+    
+    try:
+        # Parse form data from Twilio
+        form_data = await request.form()
+        
+        phone = form_data.get("From", "").replace("whatsapp:", "").strip()
+        message = form_data.get("Body", "hi").strip()
+        media_url = form_data.get("MediaUrl0")
+        media_type = form_data.get("MediaContentType0", "")
+        
+        if not phone:
+            return {"error": "No phone number"}
+        
+        if not phone.startswith("+"):
+            phone = "+" + phone
+            
+        print(f"[Twilio] Received from {phone}: {message}")
+        
+        # Handle voice message
+        msg_type = "voice" if media_type and "audio" in media_type else "text"
+        if msg_type == "voice" and media_url and openai_service.is_available():
+            try:
+                transcribed = transcribe_voice(media_url)
+                if transcribed:
+                    message = transcribed
+                    print(f"[Voice] Transcribed: {message}")
+            except Exception as e:
+                print(f"[Voice] Transcription failed: {e}")
+        
+        # Update user activity
+        user_repo.update_activity(phone)
+        
+        # Get or create user
+        user = user_repo.ensure_user(phone)
+        language = user.get("preferred_language", user.get("language", "english"))
+        
+        # Map to short code for voice service
+        lang_map = {"english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te", "kannada": "kn"}
+        lang_code = lang_map.get(language, "en")
+        
+        # Check if onboarding is complete
+        if not user.get("onboarding_complete"):
+            result = await handle_onboarding(phone, message, user)
+            reply_text = result["text"]
+        else:
+            # Use OpenAI for better NLP understanding if available
+            if openai_service.is_available():
+                ai_intent = understand_message(message, language)
+                
+                # Handle MULTIPLE_TRANSACTIONS (both income and expense in one message)
+                if ai_intent.get("intent") == "MULTIPLE_TRANSACTIONS":
+                    transactions = ai_intent.get("transactions", [])
+                    responses = []
+                    
+                    for txn in transactions:
+                        txn_type = txn.get("type", "expense")
+                        amount = txn.get("amount", 0)
+                        category = txn.get("category", "other")
+                        description = txn.get("description", "")
+                        
+                        if amount > 0:
+                            transaction_repo.add_transaction(
+                                phone, amount, txn_type, category,
+                                description=description, source="WHATSAPP"
+                            )
+                            
+                            if txn_type == "income":
+                                responses.append(f"✅ ₹{amount:,} income recorded!")
+                            else:
+                                responses.append(f"✅ ₹{amount:,} expense recorded!")
+                    
+                    summary = transaction_repo.get_daily_summary(phone)
+                    
+                    if language == "hindi":
+                        reply_text = "\n".join(responses) + f"\n\n📊 आज की कमाई: ₹{summary['income']:,}\n💸 आज का खर्च: ₹{summary['expense']:,}\n💰 आज की बचत: ₹{summary['net']:,}"
+                    else:
+                        reply_text = "\n".join(responses) + f"\n\n📊 Today's Income: ₹{summary['income']:,}\n💸 Today's Expense: ₹{summary['expense']:,}\n💰 Today's Savings: ₹{summary['net']:,}"
+                else:
+                    # Single transaction or query
+                    intent = {
+                        "intent": ai_intent.get("intent", "OTHER"),
+                        "amount": ai_intent.get("amount"),
+                        "category": ai_intent.get("category"),
+                        "description": ai_intent.get("description"),
+                        "raw_message": message
+                    }
+                    response = await route_intent(phone, intent, user, lang_code)
+                    reply_text = response["message"]
+            else:
+                # Fallback to local NLP
+                intent = nlp_service.detect_intent(message, lang_code)
+                response = await route_intent(phone, intent, user, lang_code)
+                reply_text = response["message"]
+        
+        print(f"[Twilio] Sending reply to {phone}: {reply_text[:100]}...")
+        
+        # Send response via Twilio
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN", "")
+        
+        if account_sid and auth_token:
+            try:
+                client = Client(account_sid, auth_token)
+                msg = client.messages.create(
+                    from_="whatsapp:+14155238886",
+                    to=f"whatsapp:{phone}",
+                    body=reply_text
+                )
+                print(f"[Twilio] Message sent: {msg.sid}")
+            except Exception as e:
+                print(f"[Twilio] Error sending: {e}")
+        
+        # Return TwiML response (empty to avoid double reply)
+        twiml = MessagingResponse()
+        return str(twiml)
+        
+    except Exception as e:
+        print(f"[Twilio Webhook] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+
 # ================= MAIN WEBHOOK (for n8n) =================
 @app.post("/webhook")
 async def handle_webhook(payload: WebhookPayload):
