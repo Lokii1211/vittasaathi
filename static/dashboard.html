@@ -1764,6 +1764,149 @@
             showToast('Data refreshed!', 'success');
         }
 
+        // Modal Functions
+        function showAddModal(type) {
+            const modal = document.getElementById('addModal');
+            const title = document.getElementById('modalTitle');
+            const txnType = document.getElementById('txnType');
+
+            txnType.value = type;
+            title.textContent = type === 'income' ? 'Add Income' : 'Add Expense';
+
+            // Update category options based on type
+            const categorySelect = document.getElementById('txnCategory');
+            if (type === 'income') {
+                categorySelect.innerHTML = `
+                    <option value="salary">Salary</option>
+                    <option value="freelance">Freelance</option>
+                    <option value="business">Business</option>
+                    <option value="investment">Investment</option>
+                    <option value="other">Other</option>
+                `;
+            } else {
+                categorySelect.innerHTML = `
+                    <option value="food">Food</option>
+                    <option value="transport">Transport</option>
+                    <option value="shopping">Shopping</option>
+                    <option value="bills">Bills</option>
+                    <option value="health">Health</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="education">Education</option>
+                    <option value="other">Other</option>
+                `;
+            }
+
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('addModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            // Reset form
+            document.getElementById('txnAmount').value = '';
+            document.getElementById('txnDescription').value = '';
+        }
+
+        async function submitTransaction(event) {
+            event.preventDefault();
+
+            const type = document.getElementById('txnType').value;
+            const amount = parseInt(document.getElementById('txnAmount').value);
+            const category = document.getElementById('txnCategory').value;
+            const description = document.getElementById('txnDescription').value;
+
+            if (!amount || amount <= 0) {
+                showToast('Enter valid amount', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/transaction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentUser.phone,
+                        amount: amount,
+                        type: type,
+                        category: category,
+                        description: description
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(data.message || `${type === 'income' ? 'Income' : 'Expense'} added!`, 'success');
+                    closeModal();
+                    loadDashboardData(); // Refresh data
+                } else {
+                    showToast('Failed to save. Try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Transaction error:', error);
+                showToast('Error saving transaction', 'error');
+            }
+        }
+
+        // Goal Modal Functions
+        function showGoalModal() {
+            const modal = document.getElementById('goalModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        function closeGoalModal() {
+            const modal = document.getElementById('goalModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            // Reset form
+            document.getElementById('goalName').value = '';
+            document.getElementById('goalAmount').value = '';
+            document.getElementById('goalDate').value = '';
+        }
+
+        async function submitGoal(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('goalName').value;
+            const amount = parseInt(document.getElementById('goalAmount').value);
+            const targetDate = document.getElementById('goalDate').value;
+
+            if (!name || !amount || !targetDate) {
+                showToast('Fill all fields', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/goal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentUser.phone,
+                        goal_type: 'savings',
+                        target_amount: amount,
+                        target_date: targetDate,
+                        name: name
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(data.message || 'Goal created!', 'success');
+                    closeGoalModal();
+                    loadGoals(); // Refresh goals
+                } else {
+                    showToast('Failed to create goal', 'error');
+                }
+            } catch (error) {
+                console.error('Goal error:', error);
+                showToast('Error creating goal', 'error');
+            }
+        }
+
         function showUserMenu() {
             if (confirm('Logout?')) {
                 localStorage.removeItem('vittasaathi_user');

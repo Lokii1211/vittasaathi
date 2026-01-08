@@ -28,8 +28,9 @@ class UserRepository:
             "phone": phone,
             "name": None,
             "language": "en",
+            "preferred_language": "english",
             "voice_enabled": True,
-            "onboarding_step": "NAME",
+            "onboarding_step": "language",
             "onboarding_complete": False,
             
             # Profile
