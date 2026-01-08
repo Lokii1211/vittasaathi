@@ -337,30 +337,29 @@ async def download_report(phone: str, format: str = "pdf"):
         
         user = user_repo.get_user(phone)
         if not user:
-            # Create a default user if not found
             user = {"name": "User", "phone": phone}
-    
-    # Get transactions for the month
-    today = datetime.now()
-    start_date = today.replace(day=1).strftime("%Y-%m-%d")
-    end_date = today.strftime("%Y-%m-%d")
-    
-    transactions = transaction_repo.get_transactions(phone) or []
-    
-    # Calculate totals
-    total_income = sum(t.get("amount", 0) for t in transactions if t.get("type") == "income")
-    total_expense = sum(t.get("amount", 0) for t in transactions if t.get("type") == "expense")
-    savings = total_income - total_expense
-    
-    # Group by category
-    categories = {}
-    for t in transactions:
-        if t.get("type") == "expense":
-            cat = t.get("category", "Other")
-            categories[cat] = categories.get(cat, 0) + t.get("amount", 0)
-    
-    # Create HTML report
-    html = f"""<!DOCTYPE html>
+        
+        # Get transactions for the month
+        today = datetime.now()
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+        end_date = today.strftime("%Y-%m-%d")
+        
+        transactions = transaction_repo.get_transactions(phone) or []
+        
+        # Calculate totals
+        total_income = sum(t.get("amount", 0) for t in transactions if t.get("type") == "income")
+        total_expense = sum(t.get("amount", 0) for t in transactions if t.get("type") == "expense")
+        savings = total_income - total_expense
+        
+        # Group by category
+        categories = {}
+        for t in transactions:
+            if t.get("type") == "expense":
+                cat = t.get("category", "Other")
+                categories[cat] = categories.get(cat, 0) + t.get("amount", 0)
+        
+        # Create HTML report
+        html = f"""<!DOCTYPE html>
 <html>
 <head>
     <title>VittaSaathi Report - {user.get('name', 'User')}</title>
@@ -417,7 +416,7 @@ async def download_report(phone: str, format: str = "pdf"):
     </p>
 </body>
 </html>"""
-    
+        
         from fastapi.responses import HTMLResponse
         return HTMLResponse(content=html)
     except Exception as e:
