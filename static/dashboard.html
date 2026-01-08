@@ -1432,9 +1432,15 @@
         async function loadDashboardData() {
             if (!currentUser) return;
 
+            // Encode phone number for URL
+            const phone = encodeURIComponent(currentUser.phone);
+            console.log('Loading data for:', currentUser.phone);
+
             try {
-                const response = await fetch(`${API_BASE}/summary/${currentUser.phone}?period=${currentFilter}`);
+                const response = await fetch(`${API_BASE}/summary/${phone}?period=${currentFilter}`);
+                console.log('Summary response status:', response.status);
                 const data = await response.json();
+                console.log('Summary data:', data);
 
                 const income = data.income || 0;
                 const expense = data.expense || 0;
@@ -1448,8 +1454,8 @@
 
                 const savingsRate = income > 0 ? Math.round((savings / income) * 100) : 0;
                 document.getElementById('savingsRate').textContent = savingsRate + '%';
-                document.getElementById('userName').textContent = data.name || 'User';
-                document.getElementById('userAvatar').textContent = (data.name || 'U')[0].toUpperCase();
+                document.getElementById('userName').textContent = data.name || currentUser.name || 'User';
+                document.getElementById('userAvatar').textContent = (data.name || currentUser.name || 'U')[0].toUpperCase();
 
                 loadTransactions();
                 loadGoals();
@@ -1459,7 +1465,7 @@
                     expense: [0, 0, 0, 0, 0, 0, 0]
                 }, data.categories || {});
             } catch (error) {
-                console.log('Using defaults');
+                console.log('Dashboard error:', error);
                 document.getElementById('totalIncome').textContent = '₹0';
                 document.getElementById('totalExpense').textContent = '₹0';
                 document.getElementById('totalSavings').textContent = '₹0';
@@ -1470,11 +1476,14 @@
 
         // Load Transactions
         async function loadTransactions() {
+            const phone = encodeURIComponent(currentUser.phone);
             try {
-                const response = await fetch(`${API_BASE}/transactions/${currentUser.phone}?limit=10`);
+                const response = await fetch(`${API_BASE}/transactions/${phone}?limit=10`);
                 const data = await response.json();
+                console.log('Transactions:', data);
                 renderTransactions(data.transactions || []);
-            } catch {
+            } catch (error) {
+                console.log('Transactions error:', error);
                 document.getElementById('transactionsList').innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-receipt"></i>
@@ -1511,11 +1520,14 @@
 
         // Load Goals
         async function loadGoals() {
+            const phone = encodeURIComponent(currentUser.phone);
             try {
-                const response = await fetch(`${API_BASE}/goals/${currentUser.phone}`);
+                const response = await fetch(`${API_BASE}/goals/${phone}`);
                 const data = await response.json();
+                console.log('Goals:', data);
                 renderGoals(data.goals || []);
-            } catch {
+            } catch (error) {
+                console.log('Goals error:', error);
                 document.getElementById('goalsList').innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-bullseye"></i>
@@ -1746,12 +1758,14 @@
 
         // Actions
         function downloadReport() {
-            window.open(`${API_BASE}/download/report/${currentUser.phone}?format=pdf`, '_blank');
+            const phone = encodeURIComponent(currentUser.phone);
+            window.open(`${API_BASE}/download/report/${phone}?format=pdf`, '_blank');
             showToast('Generating report...', 'success');
         }
 
         function downloadCSV() {
-            window.open(`${API_BASE}/download/export/${currentUser.phone}?format=csv`, '_blank');
+            const phone = encodeURIComponent(currentUser.phone);
+            window.open(`${API_BASE}/download/export/${phone}?format=csv`, '_blank');
             showToast('Downloading...', 'success');
         }
 
