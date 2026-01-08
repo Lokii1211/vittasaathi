@@ -1,5 +1,5 @@
 {
-    "name": "VittaSaathi - Main WhatsApp Flow",
+    "name": "VittaSaathi - Main WhatsApp Flow (Production)",
     "nodes": [
         {
             "parameters": {
@@ -20,7 +20,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// n8n receives Twilio form data in different places depending on version\nconst input = $input.item.json;\n\nconsole.log('=== DEBUGGING TWILIO DATA ===');\nconsole.log('Input keys:', Object.keys(input));\n\nlet phone = '';\nlet message = '';\n\n// Method 1: Direct fields (newer n8n versions)\nif (input.From) {\n  phone = input.From.replace('whatsapp:', '').trim();\n  message = input.Body || '';\n  console.log('Found in direct fields');\n}\n\n// Method 2: Inside 'body' object\nelse if (input.body && typeof input.body === 'object') {\n  phone = (input.body.From || '').replace('whatsapp:', '').trim();\n  message = input.body.Body || '';\n  console.log('Found in body object');\n}\n\n// Method 3: Body is a string (URL encoded) - parse it\nelse if (input.body && typeof input.body === 'string') {\n  console.log('Body is string, parsing...');\n  const params = new URLSearchParams(input.body);\n  phone = (params.get('From') || '').replace('whatsapp:', '').trim();\n  message = params.get('Body') || '';\n}\n\n// Method 4: Check for 'data' key\nelse if (input.data) {\n  if (typeof input.data === 'object') {\n    phone = (input.data.From || '').replace('whatsapp:', '').trim();\n    message = input.data.Body || '';\n  } else if (typeof input.data === 'string') {\n    const params = new URLSearchParams(input.data);\n    phone = (params.get('From') || '').replace('whatsapp:', '').trim();\n    message = params.get('Body') || '';\n  }\n  console.log('Found in data key');\n}\n\n// Method 5: Iterate all keys looking for 'From'\nif (!phone) {\n  for (const [key, value] of Object.entries(input)) {\n    if (key === 'From' || (typeof value === 'string' && value.includes('whatsapp:'))) {\n      phone = value.replace('whatsapp:', '').trim();\n      console.log('Found From in key:', key);\n    }\n    if (key === 'Body') {\n      message = value;\n    }\n  }\n}\n\n// FALLBACK for testing - use admin phone if extraction failed\nif (!phone) {\n  phone = '+919003360494';\n  console.log('FALLBACK: Using admin phone');\n}\n\n// Ensure + prefix\nif (phone && !phone.startsWith('+')) {\n  phone = '+' + phone;\n}\n\n// Default message\nif (!message) message = 'hi';\n\nconsole.log('FINAL Phone:', phone);\nconsole.log('FINAL Message:', message);\n\n// Media\nconst mediaUrl = input.MediaUrl0 || input.body?.MediaUrl0 || null;\nconst mediaType = input.MediaContentType0 || input.body?.MediaContentType0 || null;\nconst isVoice = mediaType && mediaType.includes('audio');\n\nreturn {\n  phone: phone,\n  message: message,\n  mediaUrl: mediaUrl,\n  mediaType: mediaType,\n  isVoice: isVoice\n};"
+                "jsCode": "// Get all possible data sources\nconst input = $input.item.json;\n\nconsole.log('=== INCOMING DATA ===');\nconsole.log('Input:', JSON.stringify(input, null, 2));\n\nlet phone = '';\nlet message = '';\n\n// Method 1: Direct Twilio fields\nif (input.From) {\n  phone = input.From.replace('whatsapp:', '').trim();\n  message = input.Body || '';\n}\n// Method 2: Nested in body\nelse if (input.body && typeof input.body === 'object') {\n  phone = (input.body.From || '').replace('whatsapp:', '').trim();\n  message = input.body.Body || '';\n}\n// Method 3: Body is string\nelse if (input.body && typeof input.body === 'string') {\n  const params = new URLSearchParams(input.body);\n  phone = (params.get('From') || '').replace('whatsapp:', '').trim();\n  message = params.get('Body') || '';\n}\n\n// Ensure + prefix\nif (phone && !phone.startsWith('+')) {\n  phone = '+' + phone;\n}\n\n// Default message\nif (!message) message = 'hi';\n\n// Media handling\nconst mediaUrl = input.MediaUrl0 || input.body?.MediaUrl0 || null;\nconst mediaType = input.MediaContentType0 || input.body?.MediaContentType0 || null;\nconst isVoice = mediaType && mediaType.includes('audio');\n\nconsole.log('Phone:', phone);\nconsole.log('Message:', message);\nconsole.log('IsVoice:', isVoice);\n\nreturn {\n  phone: phone,\n  message: message,\n  mediaUrl: mediaUrl,\n  mediaType: mediaType,\n  isVoice: isVoice\n};"
             },
             "id": "extract-data",
             "name": "Extract Data",
@@ -34,12 +34,12 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "http://127.0.0.1:8000/webhook",
+                "url": "https://vittasaathi-1.onrender.com/webhook",
                 "sendBody": true,
                 "specifyBody": "json",
                 "jsonBody": "={ \"phone\": \"{{ $json.phone }}\", \"message\": \"{{ $json.message }}\", \"message_type\": \"{{ $json.isVoice ? 'voice' : 'text' }}\", \"voice_url\": {{ $json.mediaUrl ? '\"' + $json.mediaUrl + '\"' : 'null' }} }",
                 "options": {
-                    "timeout": 30000
+                    "timeout": 60000
                 }
             },
             "id": "call-api",
@@ -53,7 +53,7 @@
         },
         {
             "parameters": {
-                "jsCode": "const apiResponse = $input.item.json;\nconst extractData = $('Extract Data').item.json;\n\nconst phone = extractData.phone;\nconst response = apiResponse.reply_text || apiResponse.response || apiResponse.message || 'Welcome to VittaSaathi!';\n\nconsole.log('Sending to:', phone);\nconsole.log('Response preview:', response.substring(0, 100));\n\nreturn {\n  phone: phone,\n  response: response\n};"
+                "jsCode": "const apiResponse = $input.item.json;\nconst extractData = $('Extract Data').item.json;\n\nconst phone = extractData.phone;\nconst response = apiResponse.reply_text || apiResponse.response || apiResponse.message || 'Welcome to VittaSaathi!';\n\nconsole.log('Sending to:', phone);\nconsole.log('Response:', response.substring(0, 100));\n\nreturn {\n  phone: phone,\n  response: response\n};"
             },
             "id": "prepare-response",
             "name": "Prepare Response",
@@ -67,7 +67,7 @@
         {
             "parameters": {
                 "operation": "send",
-                "from": "+14155238886",
+                "from": "={{$env.TWILIO_WHATSAPP_NUMBER || '+14155238886'}}",
                 "to": "={{ $json.phone }}",
                 "toWhatsapp": true,
                 "message": "={{ $json.response }}"
@@ -166,6 +166,6 @@
     "staticData": null,
     "tags": [],
     "triggerCount": 1,
-    "updatedAt": "2026-01-07T21:38:00.000Z",
-    "versionId": "9"
+    "updatedAt": "2026-01-08T12:00:00.000Z",
+    "versionId": "10"
 }

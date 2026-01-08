@@ -326,6 +326,50 @@ async def handle_webhook(payload: WebhookPayload):
     # Use OpenAI for better NLP understanding if available
     if openai_service.is_available():
         ai_intent = understand_message(message, language)
+        
+        # Handle MULTIPLE_TRANSACTIONS (both income and expense in one message)
+        if ai_intent.get("intent") == "MULTIPLE_TRANSACTIONS":
+            transactions = ai_intent.get("transactions", [])
+            responses = []
+            
+            for txn in transactions:
+                txn_type = txn.get("type", "expense")
+                amount = txn.get("amount", 0)
+                category = txn.get("category", "other")
+                description = txn.get("description", "")
+                
+                if amount > 0:
+                    # Record transaction
+                    transaction_repo.add_transaction(
+                        phone, amount, txn_type, category,
+                        description=description, source="WHATSAPP"
+                    )
+                    
+                    if txn_type == "income":
+                        responses.append(f"✅ ₹{amount:,} income recorded!")
+                    else:
+                        responses.append(f"✅ ₹{amount:,} expense recorded!")
+            
+            # Get today's summary
+            summary = transaction_repo.get_daily_summary(phone)
+            
+            if language == "hindi":
+                reply = "\n".join(responses) + f"\n\n📊 आज की कमाई: ₹{summary['income']:,}\n💸 आज का खर्च: ₹{summary['expense']:,}\n💰 आज की बचत: ₹{summary['net']:,}"
+            else:
+                reply = "\n".join(responses) + f"\n\n📊 Today's Income: ₹{summary['income']:,}\n💸 Today's Expense: ₹{summary['expense']:,}\n💰 Today's Savings: ₹{summary['net']:,}"
+            
+            enhanced = create_response(phone, reply, lang_code)
+            return {
+                "phone": phone,
+                "reply_text": enhanced["reply_text"],
+                "voice_path": enhanced.get("voice_path"),
+                "voice_url": None,
+                "intent": "MULTIPLE_TRANSACTIONS",
+                "language": language,
+                "achievements": enhanced.get("achievements", [])
+            }
+        
+        # Single transaction or query
         intent = {
             "intent": ai_intent.get("intent", "OTHER"),
             "amount": ai_intent.get("amount"),

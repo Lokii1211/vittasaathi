@@ -66,31 +66,46 @@ class OpenAIService:
             return ""
     
     def understand_message(self, message: str, language: str = "english", context: dict = None) -> Dict[str, Any]:
-        """Use GPT to understand financial messages with better NLP"""
+        """Use GPT to understand financial messages with better NLP - handles multiple transactions"""
         if not self.is_available():
             return self._fallback_parse(message)
         
         try:
             prompt = f"""You are a financial assistant that understands messages in multiple languages (Hindi, Tamil, Telugu, English, etc.)
 
-Parse this message and extract:
-1. intent: INCOME_ENTRY, EXPENSE_ENTRY, BALANCE_QUERY, REPORT_QUERY, GOAL_QUERY, GREETING, HELP, OTHER
-2. amount: number (if any)
-3. category: food, transport, entertainment, shopping, bills, health, education, other
-4. description: brief description
+Parse this message and extract ALL financial transactions. A single message may contain BOTH income AND expense.
 
 User's language: {language}
 Message: "{message}"
 
-Respond ONLY with valid JSON like:
+IMPORTANT: If message contains BOTH earned/income AND spent/expense, return MULTIPLE_TRANSACTIONS.
+
+Respond ONLY with valid JSON in ONE of these formats:
+
+For SINGLE transaction:
 {{"intent": "EXPENSE_ENTRY", "amount": 200, "category": "food", "description": "lunch"}}
 
-Common patterns to understand:
-- "aaj 200 kharch kiya khane pe" = expense 200 on food
-- "today spent 200 on food" = expense 200 on food
-- "500 kamaya" / "earned 500" = income 500
-- "200 खर्च किया" = expense 200
-- "balance" / "बैलेंस" = balance query
+For MULTIPLE transactions (earned AND spent):
+{{"intent": "MULTIPLE_TRANSACTIONS", "transactions": [
+    {{"type": "income", "amount": 500, "category": "salary", "description": "earned"}},
+    {{"type": "expense", "amount": 200, "category": "other", "description": "spent"}}
+]}}
+
+For queries:
+{{"intent": "BALANCE_QUERY"}} or {{"intent": "REPORT_QUERY"}} or {{"intent": "GREETING"}}
+
+Examples:
+- "I earned 700 and spent 300" = MULTIPLE_TRANSACTIONS with income 700 AND expense 300
+- "earned 500, spent 200" = MULTIPLE_TRANSACTIONS
+- "500 kamaya 200 kharch" = MULTIPLE_TRANSACTIONS  
+- "spent 200 on food" = EXPENSE_ENTRY
+- "earned 500" = INCOME_ENTRY
+- "hi" / "hello" = GREETING
+- "balance" / "report" = BALANCE_QUERY / REPORT_QUERY
+
+Categories: salary, freelance, tips, food, transport, shopping, bills, health, entertainment, other
+
+Now parse this message: "{message}"
 """
             
             response = requests.post(
@@ -99,11 +114,11 @@ Common patterns to understand:
                 json={
                     "model": "gpt-3.5-turbo",
                     "messages": [
-                        {"role": "system", "content": "You are a financial transaction parser. Always respond with valid JSON only."},
+                        {"role": "system", "content": "You are a financial transaction parser. Parse messages for income AND/OR expense. If message contains BOTH, return MULTIPLE_TRANSACTIONS. Always respond with valid JSON only."},
                         {"role": "user", "content": prompt}
                     ],
                     "temperature": 0.1,
-                    "max_tokens": 200
+                    "max_tokens": 300
                 },
                 timeout=30
             )
@@ -116,12 +131,13 @@ Common patterns to understand:
                 import json
                 try:
                     # Find JSON in response
-                    json_match = re.search(r'\{[^}]+\}', content)
+                    json_match = re.search(r'\{.*\}', content, re.DOTALL)
                     if json_match:
                         parsed = json.loads(json_match.group())
+                        print(f"[NLP] Parsed: {parsed}")
                         return parsed
-                except:
-                    pass
+                except Exception as e:
+                    print(f"[NLP] JSON parse error: {e}")
             
             return self._fallback_parse(message)
             
