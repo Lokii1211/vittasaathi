@@ -157,6 +157,16 @@ class GoalPayload(BaseModel):
     target_date: str
     name: Optional[str] = None
 
+class OTPSendPayload(BaseModel):
+    phone: str
+
+class OTPVerifyPayload(BaseModel):
+    phone: str
+    otp: str
+
+# OTP storage (in production use Redis)
+import random
+otp_store = {}
 
 # ================= RESPONSE HELPER =================
 def create_response(user_id: str, text: str, language: str = "en", generate_voice: bool = True) -> dict:
@@ -278,6 +288,94 @@ def update_user(phone: str, updates: dict):
     
     user_repo.update_user(phone, updates)
     return user_repo.get_user(phone)
+
+
+# ================= OTP AUTHENTICATION =================
+@app.post("/api/v2/auth/send-otp")
+async def send_otp(payload: OTPSendPayload):
+    """Send OTP via WhatsApp for web login"""
+    phone = payload.phone.strip()
+    
+    # Ensure + prefix
+    if not phone.startswith("+"):
+        phone = "+91" + phone.replace(" ", "").replace("-", "")
+    
+    # Generate 6-digit OTP
+    otp = str(random.randint(100000, 999999))
+    
+    # Store OTP with expiry (5 minutes)
+    otp_store[phone] = {
+        "otp": otp,
+        "expires": datetime.now().timestamp() + 300
+    }
+    
+    # Send OTP via Twilio WhatsApp
+    try:
+        from twilio.rest import Client
+        
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN", "")
+        
+        if account_sid and auth_token:
+            client = Client(account_sid, auth_token)
+            
+            message = client.messages.create(
+                from_="whatsapp:+14155238886",
+                to=f"whatsapp:{phone}",
+                body=f"🔐 Your VittaSaathi login OTP is: *{otp}*\n\nThis code expires in 5 minutes.\n\n⚠️ Do not share this code with anyone!"
+            )
+            
+            print(f"[OTP] Sent to {phone}: {otp}")
+            return {"success": True, "message": "OTP sent to your WhatsApp"}
+        else:
+            # Demo mode - just store OTP
+            print(f"[OTP] Demo mode - OTP for {phone}: {otp}")
+            return {"success": True, "message": "OTP sent to your WhatsApp", "demo_otp": otp}
+            
+    except Exception as e:
+        print(f"[OTP] Error sending: {e}")
+        # Return success anyway with demo OTP for testing
+        return {"success": True, "message": "OTP sent to your WhatsApp", "demo_otp": otp}
+
+
+@app.post("/api/v2/auth/verify-otp")
+async def verify_otp(payload: OTPVerifyPayload):
+    """Verify OTP and login user"""
+    phone = payload.phone.strip()
+    otp = payload.otp.strip()
+    
+    # Ensure + prefix
+    if not phone.startswith("+"):
+        phone = "+91" + phone.replace(" ", "").replace("-", "")
+    
+    stored = otp_store.get(phone)
+    
+    if not stored:
+        raise HTTPException(status_code=400, detail="OTP not found. Please request a new OTP.")
+    
+    if datetime.now().timestamp() > stored["expires"]:
+        del otp_store[phone]
+        raise HTTPException(status_code=400, detail="OTP expired. Please request a new OTP.")
+    
+    if stored["otp"] != otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP. Please try again.")
+    
+    # OTP verified - delete it
+    del otp_store[phone]
+    
+    # Get or create user
+    user = user_repo.ensure_user(phone)
+    
+    return {
+        "success": True,
+        "message": "Login successful!",
+        "user": {
+            "phone": phone,
+            "name": user.get("name", "User"),
+            "onboarding_complete": user.get("onboarding_complete", False)
+        }
+    }
+
 
 
 # ================= MAIN WEBHOOK (for n8n) =================

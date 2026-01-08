@@ -67,7 +67,7 @@
         {
             "parameters": {
                 "operation": "send",
-                "from": "={{$env.TWILIO_WHATSAPP_NUMBER || '+14155238886'}}",
+                "from": "+14155238886",
                 "to": "={{ $json.phone }}",
                 "toWhatsapp": true,
                 "message": "={{ $json.response }}"
@@ -166,6 +166,6 @@
     "staticData": null,
     "tags": [],
     "triggerCount": 1,
-    "updatedAt": "2026-01-08T12:00:00.000Z",
-    "versionId": "10"
+    "updatedAt": "2026-01-08T12:15:00.000Z",
+    "versionId": "11"
 }
