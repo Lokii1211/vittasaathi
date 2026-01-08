@@ -291,7 +291,7 @@ def update_user(phone: str, updates: dict):
     return user_repo.get_user(phone)
 
 
-@app.post("/user/{phone}/reset-onboarding")
+@app.api_route("/user/{phone}/reset-onboarding", methods=["GET", "POST"])
 def reset_user_onboarding(phone: str):
     """Reset user onboarding to restart the flow"""
     user = user_repo.get_user(phone)
@@ -305,22 +305,251 @@ def reset_user_onboarding(phone: str):
     return {"success": True, "message": "Onboarding reset. Send any message on WhatsApp to restart."}
 
 
-@app.post("/user/{phone}/complete-onboarding")
+@app.api_route("/user/{phone}/complete-onboarding", methods=["GET", "POST"])
 def force_complete_onboarding(phone: str):
-    """Force complete onboarding for a user"""
+    """Force complete onboarding for a user (GET or POST)"""
     user = user_repo.get_user(phone)
     if not user:
-        return {"error": "User not found"}
+        # Create user if not exists
+        user = user_repo.create_user(phone)
     
     user_repo.update_user(phone, {
         "onboarding_step": "completed",
         "onboarding_complete": True,
-        "preferred_language": user.get("preferred_language", "english")
+        "preferred_language": user.get("preferred_language", "english"),
+        "name": user.get("name", "User")
     })
-    return {"success": True, "message": "Onboarding completed. You can now track expenses!"}
+    return {"success": True, "message": "Onboarding completed! You can now track expenses on WhatsApp."}
+
+
+# ================= DOWNLOAD ENDPOINTS =================
+@app.get("/download/report/{phone}")
+async def download_report(phone: str, format: str = "pdf"):
+    """Download financial report as PDF or HTML"""
+    from datetime import datetime, timedelta
+    
+    user = user_repo.get_user(phone)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get transactions for the month
+    today = datetime.now()
+    start_date = today.replace(day=1).strftime("%Y-%m-%d")
+    end_date = today.strftime("%Y-%m-%d")
+    
+    transactions = transaction_repo.get_transactions(phone) or []
+    
+    # Calculate totals
+    total_income = sum(t.get("amount", 0) for t in transactions if t.get("type") == "income")
+    total_expense = sum(t.get("amount", 0) for t in transactions if t.get("type") == "expense")
+    savings = total_income - total_expense
+    
+    # Group by category
+    categories = {}
+    for t in transactions:
+        if t.get("type") == "expense":
+            cat = t.get("category", "Other")
+            categories[cat] = categories.get(cat, 0) + t.get("amount", 0)
+    
+    # Create HTML report
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>VittaSaathi Report - {user.get('name', 'User')}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }}
+        h1 {{ color: #4F46E5; }}
+        .summary {{ display: flex; gap: 20px; margin: 20px 0; }}
+        .stat {{ background: #F8FAFC; border-radius: 10px; padding: 20px; flex: 1; text-align: center; }}
+        .stat-value {{ font-size: 28px; font-weight: bold; }}
+        .stat-label {{ color: #64748B; }}
+        .income {{ color: #10B981; }}
+        .expense {{ color: #EF4444; }}
+        .savings {{ color: #4F46E5; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+        th, td {{ border: 1px solid #E2E8F0; padding: 12px; text-align: left; }}
+        th {{ background: #F8FAFC; }}
+    </style>
+</head>
+<body>
+    <h1>💰 VittaSaathi Financial Report</h1>
+    <p><strong>Name:</strong> {user.get('name', 'User')}</p>
+    <p><strong>Phone:</strong> {phone}</p>
+    <p><strong>Period:</strong> {start_date} to {end_date}</p>
+    
+    <div class="summary">
+        <div class="stat">
+            <div class="stat-value income">₹{total_income:,}</div>
+            <div class="stat-label">Total Income</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value expense">₹{total_expense:,}</div>
+            <div class="stat-label">Total Expenses</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value savings">₹{savings:,}</div>
+            <div class="stat-label">Net Savings</div>
+        </div>
+    </div>
+    
+    <h2>📊 Expense by Category</h2>
+    <table>
+        <tr><th>Category</th><th>Amount</th><th>Percentage</th></tr>
+        {"".join(f"<tr><td>{cat}</td><td>₹{amt:,}</td><td>{round(amt/total_expense*100) if total_expense > 0 else 0}%</td></tr>" for cat, amt in categories.items())}
+    </table>
+    
+    <h2>📝 Recent Transactions</h2>
+    <table>
+        <tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th></tr>
+        {"".join(f"<tr><td>{t.get('date', 'N/A')}</td><td>{t.get('type', 'expense')}</td><td>{t.get('category', 'Other')}</td><td>₹{t.get('amount', 0):,}</td></tr>" for t in transactions[-20:])}
+    </table>
+    
+    <p style="text-align: center; color: #64748B; margin-top: 40px;">
+        Generated by VittaSaathi • Your Smart Financial Friend
+    </p>
+</body>
+</html>"""
+    
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(content=html)
+
+
+@app.get("/download/export/{phone}")
+async def download_csv(phone: str, format: str = "csv"):
+    """Download transactions as CSV"""
+    user = user_repo.get_user(phone)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    transactions = transaction_repo.get_transactions(phone) or []
+    
+    # Create CSV
+    csv_lines = ["Date,Type,Category,Amount,Description"]
+    for t in transactions:
+        date = t.get("date", "")
+        txn_type = t.get("type", "expense")
+        category = t.get("category", "Other")
+        amount = t.get("amount", 0)
+        description = t.get("description", "").replace(",", " ")
+        csv_lines.append(f"{date},{txn_type},{category},{amount},{description}")
+    
+    csv_content = "\n".join(csv_lines)
+    
+    from fastapi.responses import Response
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=vittasaathi_transactions_{phone.replace('+', '')}.csv"}
+    )
+
+
+# ================= DASHBOARD API ENDPOINTS =================
+@app.post("/transaction")
+async def add_transaction(txn: TransactionPayload):
+    """Add a transaction from dashboard"""
+    from datetime import datetime
+    
+    user = user_repo.get_user(txn.phone)
+    if not user:
+        user = user_repo.create_user(txn.phone)
+    
+    transaction_repo.add_transaction(
+        txn.phone,
+        txn.amount,
+        txn.type,
+        txn.category or "other",
+        description=txn.description or "Added from dashboard",
+        source="DASHBOARD"
+    )
+    
+    return {"success": True, "message": f"{txn.type.capitalize()} of ₹{txn.amount:,} recorded!"}
+
+
+@app.get("/transactions/{phone}")
+async def get_transactions(phone: str, limit: int = 50):
+    """Get user transactions"""
+    transactions = transaction_repo.get_transactions(phone) or []
+    return {"transactions": transactions[-limit:]}
+
+
+@app.post("/goal")
+async def add_goal(goal: GoalPayload):
+    """Add a financial goal"""
+    from datetime import datetime
+    
+    user = user_repo.get_user(goal.phone)
+    if not user:
+        user = user_repo.create_user(goal.phone)
+    
+    goal_repo.add_goal(
+        goal.phone,
+        goal.goal_type,
+        goal.target_amount,
+        goal.target_date,
+        name=goal.name or goal.goal_type
+    )
+    
+    return {"success": True, "message": f"Goal '{goal.name or goal.goal_type}' created!"}
+
+
+@app.get("/goals/{phone}")
+async def get_goals(phone: str):
+    """Get user goals"""
+    goals = goal_repo.get_goals(phone) or []
+    return {"goals": goals}
+
+
+@app.get("/summary/{phone}")
+async def get_summary(phone: str, period: str = "week"):
+    """Get financial summary for dashboard"""
+    from datetime import datetime, timedelta
+    
+    user = user_repo.get_user(phone)
+    if not user:
+        return {
+            "income": 0,
+            "expense": 0,
+            "name": "User",
+            "daily_budget": 0,
+            "chart_data": {"labels": [], "income": [], "expense": []},
+            "categories": {}
+        }
+    
+    transactions = transaction_repo.get_transactions(phone) or []
+    
+    # Calculate totals
+    total_income = sum(t.get("amount", 0) for t in transactions if t.get("type") == "income")
+    total_expense = sum(t.get("amount", 0) for t in transactions if t.get("type") == "expense")
+    
+    # Categories
+    categories = {}
+    for t in transactions:
+        if t.get("type") == "expense":
+            cat = t.get("category", "Other")
+            categories[cat] = categories.get(cat, 0) + t.get("amount", 0)
+    
+    # Chart data (last 7 days)
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    income_data = [0] * 7
+    expense_data = [0] * 7
+    
+    return {
+        "income": total_income,
+        "expense": total_expense,
+        "name": user.get("name", "User"),
+        "daily_budget": max(0, (total_income - total_expense) // 30),
+        "chart_data": {
+            "labels": days,
+            "income": income_data,
+            "expense": expense_data
+        },
+        "categories": categories
+    }
+
 
 # ================= TESTIMONIALS =================
 testimonials_db = []
+
 
 @app.get("/testimonials")
 def get_testimonials():
@@ -884,13 +1113,18 @@ async def handle_webhook(payload: WebhookPayload):
 async def handle_onboarding(phone: str, message: str, user: dict) -> dict:
     """Handle smart onboarding flow with multi-language support, goals, and personalized plans"""
     
+    # Refetch user to get latest data
+    user = user_repo.get_user(phone) or user
+    
     # Get smart onboarding service
     smart_onboarding = get_smart_onboarding(user_repo)
     
     # Process the onboarding step
     result = smart_onboarding.process_onboarding(phone, message, user)
     
-    language = user.get("preferred_language", user.get("language", "english"))
+    # Refetch user after update
+    updated_user = user_repo.get_user(phone) or user
+    language = updated_user.get("preferred_language", updated_user.get("language", "english"))
     
     # Map language codes
     lang_code_map = {
@@ -904,7 +1138,6 @@ async def handle_onboarding(phone: str, message: str, user: dict) -> dict:
         reminder_repo.setup_default_reminders(phone)
         
         # Create monthly budget based on their income and savings target
-        updated_user = user_repo.get_user(phone)
         monthly_income = updated_user.get("monthly_income", 20000)
         savings_target = updated_user.get("savings_target", int(monthly_income * 0.2))
         monthly_budget = monthly_income - savings_target
