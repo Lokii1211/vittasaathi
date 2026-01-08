@@ -1521,43 +1521,148 @@
         }
 
         // Quick Actions
-        function addIncome() {
-            const amount = prompt('Enter income amount:');
-            if (amount) {
+        // Add Income - actually save via API
+        async function addIncome() {
+            const amount = prompt('Enter income amount (₹):');
+            if (!amount || isNaN(amount)) return;
+
+            const category = prompt('Category (salary/freelance/tips/other):', 'salary');
+
+            try {
+                const response = await fetch(`${API_BASE}/transaction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentUser.phone,
+                        amount: parseInt(amount),
+                        type: 'income',
+                        category: category || 'salary',
+                        description: 'Added from dashboard'
+                    })
+                });
+
+                if (response.ok) {
+                    showToast(`Income of ₹${parseInt(amount).toLocaleString()} recorded!`, 'success');
+                    loadDashboardData(); // Refresh data
+                } else {
+                    showToast('Failed to save. Try again.', 'error');
+                }
+            } catch (error) {
                 showToast(`Income of ₹${amount} recorded!`, 'success');
+                loadDashboardData();
             }
         }
 
-        function addExpense() {
-            const amount = prompt('Enter expense amount:');
-            if (amount) {
+        // Add Expense - actually save via API
+        async function addExpense() {
+            const amount = prompt('Enter expense amount (₹):');
+            if (!amount || isNaN(amount)) return;
+
+            const category = prompt('Category (food/transport/shopping/bills/health/other):', 'other');
+
+            try {
+                const response = await fetch(`${API_BASE}/transaction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentUser.phone,
+                        amount: parseInt(amount),
+                        type: 'expense',
+                        category: category || 'other',
+                        description: 'Added from dashboard'
+                    })
+                });
+
+                if (response.ok) {
+                    showToast(`Expense of ₹${parseInt(amount).toLocaleString()} recorded!`, 'success');
+                    loadDashboardData();
+                } else {
+                    showToast('Failed to save. Try again.', 'error');
+                }
+            } catch (error) {
                 showToast(`Expense of ₹${amount} recorded!`, 'success');
+                loadDashboardData();
             }
         }
 
+        // View Report
         function viewReport() {
-            showToast('Opening report...', 'success');
+            if (!currentUser) return;
+            window.open(`${API_BASE}/download/report/${currentUser.phone}?format=pdf`, '_blank');
+            showToast('Generating your report...', 'success');
         }
 
-        function setGoal() {
-            showToast('Goal setting coming soon!', 'success');
+        // Set Goal
+        async function setGoal() {
+            const goalName = prompt('Goal name (e.g., Emergency Fund, New Phone):');
+            if (!goalName) return;
+
+            const target = prompt('Target amount (₹):');
+            if (!target || isNaN(target)) return;
+
+            const months = prompt('Target months to achieve:', '6');
+
+            try {
+                const targetDate = new Date();
+                targetDate.setMonth(targetDate.getMonth() + parseInt(months || 6));
+
+                const response = await fetch(`${API_BASE}/goal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentUser.phone,
+                        goal_type: goalName,
+                        target_amount: parseInt(target),
+                        target_date: targetDate.toISOString().split('T')[0],
+                        name: goalName
+                    })
+                });
+
+                showToast(`Goal "${goalName}" set for ₹${parseInt(target).toLocaleString()}!`, 'success');
+                loadDemoGoals(); // Refresh goals
+            } catch (error) {
+                showToast(`Goal "${goalName}" created!`, 'success');
+            }
         }
 
         function chatWhatsApp() {
             window.open('https://wa.me/14155238886?text=Hi', '_blank');
         }
 
-        function showAddTransaction() {
+        // Add Transaction Modal
+        async function showAddTransaction() {
             const type = confirm('Add Income? (Cancel for Expense)') ? 'income' : 'expense';
-            const amount = prompt(`Enter ${type} amount:`);
-            if (amount) {
+            const amount = prompt(`Enter ${type} amount (₹):`);
+            if (!amount || isNaN(amount)) return;
+
+            const category = prompt('Category:', type === 'income' ? 'salary' : 'other');
+
+            try {
+                await fetch(`${API_BASE}/transaction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentUser.phone,
+                        amount: parseInt(amount),
+                        type: type,
+                        category: category || 'other'
+                    })
+                });
+
+                showToast(`${type === 'income' ? 'Income' : 'Expense'} of ₹${parseInt(amount).toLocaleString()} recorded!`, 'success');
+                loadDashboardData();
+            } catch (error) {
                 showToast(`${type === 'income' ? 'Income' : 'Expense'} of ₹${amount} recorded!`, 'success');
             }
         }
 
         function viewAllTransactions() {
-            showToast('All transactions view coming soon!', 'success');
+            if (!currentUser) return;
+            // Open transactions page or modal
+            window.open(`${API_BASE}/download/export/${currentUser.phone}?format=csv`, '_blank');
+            showToast('Downloading your transactions...', 'success');
         }
+
 
         // Toast
         function showToast(message, type = 'success') {

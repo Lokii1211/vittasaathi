@@ -377,6 +377,170 @@ async def verify_otp(payload: OTPVerifyPayload):
     }
 
 
+# ================= OCR BILL PROCESSING =================
+async def process_bill_image(media_url: str, media_type: str, phone: str) -> dict:
+    """Process bill images and PDFs using OCR and OpenAI Vision"""
+    import requests
+    import re
+    
+    try:
+        print(f"[OCR] Processing image from {media_url}")
+        
+        # Download the image
+        response = requests.get(media_url, timeout=30)
+        if not response.ok:
+            return None
+        
+        image_data = response.content
+        
+        # Try OpenAI Vision first (better accuracy)
+        if openai_service.is_available():
+            import base64
+            
+            # Convert to base64
+            base64_image = base64.b64encode(image_data).decode('utf-8')
+            
+            # Use GPT-4 Vision to analyze the bill
+            vision_prompt = """Analyze this bill/receipt image and extract:
+1. Total amount (number only)
+2. Type: Is this an EXPENSE (payment/purchase), INCOME (salary slip/payment received), or SAVINGS (bank deposit/investment)?
+3. Category: food, transport, shopping, bills, health, salary, freelance, investment, other
+4. Merchant/Source name
+5. Date if visible
+
+Respond ONLY with JSON like:
+{"amount": 500, "type": "expense", "category": "food", "merchant": "Swiggy", "date": "2024-01-08"}
+
+If you cannot read the amount clearly, set amount to 0."""
+
+            try:
+                api_response = requests.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY', '')}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "gpt-4o-mini",
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": vision_prompt},
+                                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                                ]
+                            }
+                        ],
+                        "max_tokens": 300
+                    },
+                    timeout=60
+                )
+                
+                if api_response.ok:
+                    result = api_response.json()
+                    content = result["choices"][0]["message"]["content"]
+                    
+                    # Extract JSON from response
+                    import json
+                    json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                    if json_match:
+                        bill_data = json.loads(json_match.group())
+                        
+                        amount = bill_data.get("amount", 0)
+                        txn_type = bill_data.get("type", "expense").lower()
+                        category = bill_data.get("category", "other")
+                        merchant = bill_data.get("merchant", "Unknown")
+                        
+                        if amount > 0:
+                            # Record the transaction
+                            transaction_repo.add_transaction(
+                                phone, amount, txn_type, category,
+                                description=f"Bill from {merchant}",
+                                source="WHATSAPP_IMAGE"
+                            )
+                            
+                            # Get user's preferred language
+                            user = user_repo.get_user(phone)
+                            lang = user.get("preferred_language", "english") if user else "english"
+                            
+                            if txn_type == "income":
+                                emoji = "💰"
+                                type_text = "income" if lang == "english" else "आय"
+                            elif txn_type == "savings":
+                                emoji = "💾"
+                                type_text = "savings" if lang == "english" else "बचत"
+                            else:
+                                emoji = "💸"
+                                type_text = "expense" if lang == "english" else "खर्च"
+                            
+                            if lang == "hindi":
+                                msg = f"""📄 *बिल स्कैन किया गया!*
+
+{emoji} ₹{amount:,} {type_text} रिकॉर्ड किया
+🏪 {merchant}
+📁 श्रेणी: {category}
+
+✅ आपके खाते में जोड़ दिया गया!"""
+                            else:
+                                msg = f"""📄 *Bill Scanned Successfully!*
+
+{emoji} ₹{amount:,} {type_text} recorded
+🏪 From: {merchant}
+📁 Category: {category}
+
+✅ Added to your account!"""
+                            
+                            return {"success": True, "message": msg, "amount": amount, "type": txn_type}
+                        else:
+                            return {"success": False, "message": "❌ Could not extract amount from the bill. Please send clearer image or type the amount manually."}
+                            
+            except Exception as e:
+                print(f"[OCR] Vision API error: {e}")
+        
+        # Fallback: Try pytesseract OCR
+        try:
+            from PIL import Image
+            import pytesseract
+            from io import BytesIO
+            
+            img = Image.open(BytesIO(image_data))
+            text = pytesseract.image_to_string(img)
+            
+            # Extract amounts from text
+            amounts = re.findall(r'₹?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*(?:rs|rupees|inr)?', text.lower())
+            
+            if amounts:
+                # Take the largest amount (likely total)
+                amount = max([float(a.replace(',', '')) for a in amounts])
+                
+                # Try to determine if expense or income
+                income_words = ['salary', 'credited', 'received', 'income', 'payment received']
+                expense_words = ['total', 'amount', 'bill', 'invoice', 'payment', 'paid']
+                
+                text_lower = text.lower()
+                is_income = any(w in text_lower for w in income_words)
+                txn_type = "income" if is_income else "expense"
+                
+                transaction_repo.add_transaction(
+                    phone, int(amount), txn_type, "other",
+                    description="Scanned from bill",
+                    source="WHATSAPP_IMAGE"
+                )
+                
+                return {
+                    "success": True,
+                    "message": f"📄 *Bill Scanned!*\n\n{'💰' if is_income else '💸'} ₹{int(amount):,} {txn_type} recorded!\n\n✅ Added to your account!",
+                    "amount": int(amount),
+                    "type": txn_type
+                }
+        except Exception as e:
+            print(f"[OCR] Pytesseract error: {e}")
+        
+        return {"success": False, "message": "❌ Could not read the bill. Please send a clearer image or type the amount manually."}
+        
+    except Exception as e:
+        print(f"[OCR] Error: {e}")
+        return None
 
 # ================= TWILIO WHATSAPP WEBHOOK =================
 from fastapi import Form, Request
@@ -414,6 +578,37 @@ async def twilio_webhook(request: Request):
                     print(f"[Voice] Transcribed: {message}")
             except Exception as e:
                 print(f"[Voice] Transcription failed: {e}")
+        
+        # Handle image/PDF - OCR and bill extraction
+        is_image = media_type and ("image" in media_type)
+        is_pdf = media_type and ("pdf" in media_type or "document" in media_type)
+        
+        if (is_image or is_pdf) and media_url:
+            try:
+                ocr_result = await process_bill_image(media_url, media_type, phone)
+                if ocr_result:
+                    # Return the result directly
+                    reply_text = ocr_result["message"]
+                    
+                    # Send response
+                    account_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
+                    auth_token = os.getenv("TWILIO_AUTH_TOKEN", "")
+                    
+                    if account_sid and auth_token:
+                        try:
+                            client = Client(account_sid, auth_token)
+                            msg = client.messages.create(
+                                from_="whatsapp:+14155238886",
+                                to=f"whatsapp:{phone}",
+                                body=reply_text
+                            )
+                        except Exception as e:
+                            print(f"[Twilio] Error sending: {e}")
+                    
+                    twiml = MessagingResponse()
+                    return str(twiml)
+            except Exception as e:
+                print(f"[OCR] Error processing image: {e}")
         
         # Update user activity
         user_repo.update_activity(phone)
