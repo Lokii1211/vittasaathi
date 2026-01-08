@@ -1014,6 +1014,19 @@
                     <a href="#" onclick="sendOTP()" style="color: var(--primary);">Resend OTP</a>
                 </p>
             </div>
+
+            <div id="nameStep" style="display: none;">
+                <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">What should we call you?
+                </p>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="nameInput" placeholder="Enter your name" maxlength="50">
+                </div>
+                <button class="btn" onclick="saveName()">
+                    <span class="btn-text">Continue to Dashboard</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1329,10 +1342,73 @@
             if (otp.length !== 6) return showToast('Enter complete OTP', 'error');
 
             const phone = document.getElementById('phoneInput').value.trim();
-            currentUser = { phone: phone.startsWith('+') ? phone : '+91' + phone.replace(/\D/g, '') };
+            const formattedPhone = phone.startsWith('+') ? phone : '+91' + phone.replace(/\D/g, '');
+
+            const btn = document.querySelector('#otpStep .btn');
+            btn.classList.add('loading');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v2/auth/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: formattedPhone, otp })
+                });
+
+                const data = await response.json();
+                btn.classList.remove('loading');
+
+                if (response.ok && data.success) {
+                    currentUser = {
+                        phone: formattedPhone,
+                        name: data.user?.name,
+                        onboarding_complete: data.user?.onboarding_complete
+                    };
+
+                    // Check if new user (no name) - ask for name
+                    if (!currentUser.name || currentUser.name === 'User') {
+                        showNamePrompt(formattedPhone);
+                    } else {
+                        localStorage.setItem('vittasaathi_user', JSON.stringify(currentUser));
+                        showDashboard();
+                        showToast(`Welcome back, ${currentUser.name}!`, 'success');
+                    }
+                } else {
+                    showToast(data.detail || 'Invalid OTP. Please try again.', 'error');
+                }
+            } catch (error) {
+                btn.classList.remove('loading');
+                // Fallback for demo
+                currentUser = { phone: formattedPhone };
+                showNamePrompt(formattedPhone);
+            }
+        }
+
+        // Show name prompt for new users
+        function showNamePrompt(phone) {
+            document.getElementById('otpStep').style.display = 'none';
+            document.getElementById('nameStep').style.display = 'block';
+            currentUser = { phone };
+        }
+
+        // Save name and continue
+        async function saveName() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name || name.length < 2) {
+                return showToast('Please enter your name', 'error');
+            }
+
+            try {
+                await fetch(`${API_BASE}/user/${currentUser.phone}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+            } catch { }
+
+            currentUser.name = name;
             localStorage.setItem('vittasaathi_user', JSON.stringify(currentUser));
             showDashboard();
-            showToast('Welcome to VittaSaathi!', 'success');
+            showToast(`Welcome to VittaSaathi, ${name}!`, 'success');
         }
 
         // Show Dashboard

@@ -291,6 +291,34 @@ def update_user(phone: str, updates: dict):
     return user_repo.get_user(phone)
 
 
+@app.post("/user/{phone}/reset-onboarding")
+def reset_user_onboarding(phone: str):
+    """Reset user onboarding to restart the flow"""
+    user = user_repo.get_user(phone)
+    if not user:
+        return {"error": "User not found"}
+    
+    user_repo.update_user(phone, {
+        "onboarding_step": "language",
+        "onboarding_complete": False
+    })
+    return {"success": True, "message": "Onboarding reset. Send any message on WhatsApp to restart."}
+
+
+@app.post("/user/{phone}/complete-onboarding")
+def force_complete_onboarding(phone: str):
+    """Force complete onboarding for a user"""
+    user = user_repo.get_user(phone)
+    if not user:
+        return {"error": "User not found"}
+    
+    user_repo.update_user(phone, {
+        "onboarding_step": "completed",
+        "onboarding_complete": True,
+        "preferred_language": user.get("preferred_language", "english")
+    })
+    return {"success": True, "message": "Onboarding completed. You can now track expenses!"}
+
 # ================= TESTIMONIALS =================
 testimonials_db = []
 
