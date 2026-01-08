@@ -960,57 +960,117 @@ async def twilio_webhook(request: Request):
         lang_map = {"english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te", "kannada": "kn"}
         lang_code = lang_map.get(language, "en")
         
+        # Initialize reply_text
+        reply_text = ""
+        
         # Check if onboarding is complete
         if not user.get("onboarding_complete"):
             result = await handle_onboarding(phone, message, user)
             reply_text = result["text"]
         else:
-            # Use OpenAI for better NLP understanding if available
-            if openai_service.is_available():
-                ai_intent = understand_message(message, language)
-                
-                # Handle MULTIPLE_TRANSACTIONS (both income and expense in one message)
-                if ai_intent.get("intent") == "MULTIPLE_TRANSACTIONS":
-                    transactions = ai_intent.get("transactions", [])
-                    responses = []
+            # First try keyword-based detection for common commands
+            msg_lower = message.lower().strip()
+            intent = None
+            
+            # Balance/Summary keywords
+            if any(kw in msg_lower for kw in ["balance", "summary", "total", "status", "how much", "kitna", "कितना", "बैलेंस"]):
+                intent = {"intent": "SUMMARY", "raw_message": message}
+            
+            # Report keywords
+            elif any(kw in msg_lower for kw in ["report", "monthly", "weekly", "रिपोर्ट"]):
+                intent = {"intent": "DASHBOARD", "raw_message": message}
+            
+            # Help keywords  
+            elif any(kw in msg_lower for kw in ["help", "commands", "what can", "मदद", "सहायता"]):
+                intent = {"intent": "HELP", "raw_message": message}
+            
+            # Income keywords
+            elif any(kw in msg_lower for kw in ["earned", "received", "salary", "income", "got paid", "कमाया", "मिला"]):
+                # Extract amount
+                import re
+                amounts = re.findall(r'\d+', msg_lower)
+                amount = int(amounts[0]) if amounts else 0
+                intent = {"intent": "INCOME", "amount": amount, "category": "salary", "raw_message": message}
+            
+            # Expense keywords
+            elif any(kw in msg_lower for kw in ["spent", "paid", "expense", "bought", "खर्च", "दिया"]):
+                import re
+                amounts = re.findall(r'\d+', msg_lower)
+                amount = int(amounts[0]) if amounts else 0
+                # Try to detect category
+                category = "other"
+                if any(f in msg_lower for f in ["food", "eat", "lunch", "dinner", "breakfast", "खाना"]):
+                    category = "food"
+                elif any(f in msg_lower for f in ["transport", "uber", "ola", "auto", "bus", "train", "petrol", "यात्रा"]):
+                    category = "transport"
+                elif any(f in msg_lower for f in ["shop", "buy", "purchase", "खरीद"]):
+                    category = "shopping"
+                elif any(f in msg_lower for f in ["bill", "rent", "electricity", "recharge", "बिल"]):
+                    category = "bills"
+                intent = {"intent": "EXPENSE", "amount": amount, "category": category, "raw_message": message}
+            
+            # Savings keywords
+            elif any(kw in msg_lower for kw in ["saved", "saving", "बचत", "जमा"]):
+                import re
+                amounts = re.findall(r'\d+', msg_lower)
+                amount = int(amounts[0]) if amounts else 0
+                intent = {"intent": "SAVINGS", "amount": amount, "raw_message": message}
+            
+            # Goal keywords
+            elif any(kw in msg_lower for kw in ["goal", "target", "लक्ष्य"]):
+                intent = {"intent": "GOALS", "raw_message": message}
+            
+            # Investment advice
+            elif any(kw in msg_lower for kw in ["invest", "sip", "mutual fund", "निवेश"]):
+                intent = {"intent": "INVESTMENT_ADVICE", "raw_message": message}
+            
+            # If no keyword match, try OpenAI or fallback NLP
+            if intent is None:
+                if openai_service.is_available():
+                    ai_intent = understand_message(message, language)
                     
-                    for txn in transactions:
-                        txn_type = txn.get("type", "expense")
-                        amount = txn.get("amount", 0)
-                        category = txn.get("category", "other")
-                        description = txn.get("description", "")
+                    # Handle MULTIPLE_TRANSACTIONS
+                    if ai_intent.get("intent") == "MULTIPLE_TRANSACTIONS":
+                        transactions = ai_intent.get("transactions", [])
+                        responses = []
                         
-                        if amount > 0:
-                            transaction_repo.add_transaction(
-                                phone, amount, txn_type, category,
-                                description=description, source="WHATSAPP"
-                            )
+                        for txn in transactions:
+                            txn_type = txn.get("type", "expense")
+                            amount = txn.get("amount", 0)
+                            category = txn.get("category", "other")
+                            description = txn.get("description", "")
                             
-                            if txn_type == "income":
-                                responses.append(f"✅ ₹{amount:,} income recorded!")
-                            else:
-                                responses.append(f"✅ ₹{amount:,} expense recorded!")
-                    
-                    summary = transaction_repo.get_daily_summary(phone)
-                    
-                    if language == "hindi":
-                        reply_text = "\n".join(responses) + f"\n\n📊 आज की कमाई: ₹{summary['income']:,}\n💸 आज का खर्च: ₹{summary['expense']:,}\n💰 आज की बचत: ₹{summary['net']:,}"
+                            if amount > 0:
+                                transaction_repo.add_transaction(
+                                    phone, amount, txn_type, category,
+                                    description=description, source="WHATSAPP"
+                                )
+                                
+                                if txn_type == "income":
+                                    responses.append(f"✅ ₹{amount:,} income recorded!")
+                                else:
+                                    responses.append(f"✅ ₹{amount:,} expense recorded!")
+                        
+                        summary = transaction_repo.get_daily_summary(phone)
+                        
+                        if language == "hindi":
+                            reply_text = "\n".join(responses) + f"\n\n📊 आज की कमाई: ₹{summary['income']:,}\n💸 आज का खर्च: ₹{summary['expense']:,}\n💰 आज की बचत: ₹{summary['net']:,}"
+                        else:
+                            reply_text = "\n".join(responses) + f"\n\n📊 Today's Income: ₹{summary['income']:,}\n💸 Today's Expense: ₹{summary['expense']:,}\n💰 Today's Savings: ₹{summary['net']:,}"
                     else:
-                        reply_text = "\n".join(responses) + f"\n\n📊 Today's Income: ₹{summary['income']:,}\n💸 Today's Expense: ₹{summary['expense']:,}\n💰 Today's Savings: ₹{summary['net']:,}"
+                        intent = {
+                            "intent": ai_intent.get("intent", "OTHER"),
+                            "amount": ai_intent.get("amount"),
+                            "category": ai_intent.get("category"),
+                            "description": ai_intent.get("description"),
+                            "raw_message": message
+                        }
                 else:
-                    # Single transaction or query
-                    intent = {
-                        "intent": ai_intent.get("intent", "OTHER"),
-                        "amount": ai_intent.get("amount"),
-                        "category": ai_intent.get("category"),
-                        "description": ai_intent.get("description"),
-                        "raw_message": message
-                    }
-                    response = await route_intent(phone, intent, user, lang_code)
-                    reply_text = response["message"]
-            else:
-                # Fallback to local NLP
-                intent = nlp_service.detect_intent(message, lang_code)
+                    # Fallback to local NLP
+                    intent = nlp_service.detect_intent(message, lang_code)
+            
+            # Route intent if we have one and didn't already set reply_text
+            if intent and not reply_text:
                 response = await route_intent(phone, intent, user, lang_code)
                 reply_text = response["message"]
         
