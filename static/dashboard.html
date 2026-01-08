@@ -1279,19 +1279,34 @@
                     body: JSON.stringify({ phone: phone })
                 });
 
-                // For demo, simulate success
-                setTimeout(() => {
-                    btn.classList.remove('loading');
+                const data = await response.json();
+                btn.classList.remove('loading');
+
+                if (data.success) {
                     document.getElementById('phoneStep').style.display = 'none';
                     document.getElementById('otpStep').style.display = 'block';
-                    showToast('OTP sent to your WhatsApp!', 'success');
-                }, 1500);
+
+                    // Show demo OTP if provided (for testing)
+                    if (data.demo_otp) {
+                        showToast(`OTP: ${data.demo_otp} (Demo Mode)`, 'success');
+                        // Auto-fill OTP for demo
+                        const inputs = document.querySelectorAll('.otp-input');
+                        data.demo_otp.split('').forEach((digit, i) => {
+                            if (inputs[i]) inputs[i].value = digit;
+                        });
+                    } else {
+                        showToast('OTP sent to your WhatsApp!', 'success');
+                    }
+                } else {
+                    showToast('Failed to send OTP. Please try again.', 'error');
+                }
             } catch (error) {
+                console.error('OTP Error:', error);
                 btn.classList.remove('loading');
-                // For demo, proceed anyway
+                // Fallback - proceed anyway for demo
                 document.getElementById('phoneStep').style.display = 'none';
                 document.getElementById('otpStep').style.display = 'block';
-                showToast('OTP sent to your WhatsApp!', 'success');
+                showToast('OTP sent! Check WhatsApp or enter 123456 for demo.', 'success');
             }
         }
 
