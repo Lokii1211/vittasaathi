@@ -323,14 +323,22 @@ def force_complete_onboarding(phone: str):
 
 
 # ================= DOWNLOAD ENDPOINTS =================
-@app.get("/download/report/{phone}")
+@app.get("/download/report/{phone:path}")
 async def download_report(phone: str, format: str = "pdf"):
     """Download financial report as PDF or HTML"""
-    from datetime import datetime, timedelta
-    
-    user = user_repo.get_user(phone)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        from datetime import datetime, timedelta
+        from urllib.parse import unquote
+        
+        # Decode phone if URL encoded
+        phone = unquote(phone)
+        if not phone.startswith("+"):
+            phone = "+" + phone
+        
+        user = user_repo.get_user(phone)
+        if not user:
+            # Create a default user if not found
+            user = {"name": "User", "phone": phone}
     
     # Get transactions for the month
     today = datetime.now()
@@ -410,37 +418,49 @@ async def download_report(phone: str, format: str = "pdf"):
 </body>
 </html>"""
     
-    from fastapi.responses import HTMLResponse
-    return HTMLResponse(content=html)
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(content=html)
+    except Exception as e:
+        print(f"Report error: {e}")
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(content=f"<html><body><h1>Report Error</h1><p>Unable to generate report. Please try again.</p></body></html>")
 
 
-@app.get("/download/export/{phone}")
+@app.get("/download/export/{phone:path}")
 async def download_csv(phone: str, format: str = "csv"):
     """Download transactions as CSV"""
-    user = user_repo.get_user(phone)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        from urllib.parse import unquote
+        
+        phone = unquote(phone)
+        if not phone.startswith("+"):
+            phone = "+" + phone
+        
+        user = user_repo.get_user(phone)
+        transactions = transaction_repo.get_transactions(phone) or []
     
-    transactions = transaction_repo.get_transactions(phone) or []
-    
-    # Create CSV
-    csv_lines = ["Date,Type,Category,Amount,Description"]
-    for t in transactions:
-        date = t.get("date", "")
-        txn_type = t.get("type", "expense")
-        category = t.get("category", "Other")
-        amount = t.get("amount", 0)
-        description = t.get("description", "").replace(",", " ")
-        csv_lines.append(f"{date},{txn_type},{category},{amount},{description}")
-    
-    csv_content = "\n".join(csv_lines)
-    
-    from fastapi.responses import Response
-    return Response(
-        content=csv_content,
-        media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=vittasaathi_transactions_{phone.replace('+', '')}.csv"}
-    )
+        # Create CSV
+        csv_lines = ["Date,Type,Category,Amount,Description"]
+        for t in transactions:
+            date = t.get("date", "")
+            txn_type = t.get("type", "expense")
+            category = t.get("category", "Other")
+            amount = t.get("amount", 0)
+            description = t.get("description", "").replace(",", " ")
+            csv_lines.append(f"{date},{txn_type},{category},{amount},{description}")
+        
+        csv_content = "\n".join(csv_lines)
+        
+        from fastapi.responses import Response
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=vittasaathi_transactions_{phone.replace('+', '')}.csv"}
+        )
+    except Exception as e:
+        print(f"Export error: {e}")
+        from fastapi.responses import Response
+        return Response(content="Date,Type,Category,Amount,Description\n", media_type="text/csv")
 
 
 # ================= DASHBOARD API ENDPOINTS =================
@@ -465,11 +485,19 @@ async def add_transaction(txn: TransactionPayload):
     return {"success": True, "message": f"{txn.type.capitalize()} of ₹{txn.amount:,} recorded!"}
 
 
-@app.get("/transactions/{phone}")
+@app.get("/transactions/{phone:path}")
 async def get_transactions(phone: str, limit: int = 50):
     """Get user transactions"""
-    transactions = transaction_repo.get_transactions(phone) or []
-    return {"transactions": transactions[-limit:]}
+    try:
+        from urllib.parse import unquote
+        phone = unquote(phone)
+        if not phone.startswith("+"):
+            phone = "+" + phone
+        transactions = transaction_repo.get_transactions(phone) or []
+        return {"transactions": transactions[-limit:]}
+    except Exception as e:
+        print(f"Transactions error: {e}")
+        return {"transactions": []}
 
 
 @app.post("/goal")
@@ -492,20 +520,76 @@ async def add_goal(goal: GoalPayload):
     return {"success": True, "message": f"Goal '{goal.name or goal.goal_type}' created!"}
 
 
-@app.get("/goals/{phone}")
+@app.get("/goals/{phone:path}")
 async def get_goals(phone: str):
     """Get user goals"""
-    goals = goal_repo.get_goals(phone) or []
-    return {"goals": goals}
+    try:
+        from urllib.parse import unquote
+        phone = unquote(phone)
+        if not phone.startswith("+"):
+            phone = "+" + phone
+        goals = goal_repo.get_goals(phone) or []
+        return {"goals": goals}
+    except Exception as e:
+        print(f"Goals error: {e}")
+        return {"goals": []}
 
 
-@app.get("/summary/{phone}")
+@app.get("/summary/{phone:path}")
 async def get_summary(phone: str, period: str = "week"):
     """Get financial summary for dashboard"""
-    from datetime import datetime, timedelta
-    
-    user = user_repo.get_user(phone)
-    if not user:
+    try:
+        from datetime import datetime, timedelta
+        from urllib.parse import unquote
+        
+        # Decode phone if URL encoded
+        phone = unquote(phone)
+        if not phone.startswith("+"):
+            phone = "+" + phone
+        
+        user = user_repo.get_user(phone)
+        if not user:
+            return {
+                "income": 0,
+                "expense": 0,
+                "name": "User",
+                "daily_budget": 0,
+                "chart_data": {"labels": [], "income": [], "expense": []},
+                "categories": {}
+            }
+        
+        transactions = transaction_repo.get_transactions(phone) or []
+        
+        # Calculate totals
+        total_income = sum(t.get("amount", 0) for t in transactions if t.get("type") == "income")
+        total_expense = sum(t.get("amount", 0) for t in transactions if t.get("type") == "expense")
+        
+        # Categories
+        categories = {}
+        for t in transactions:
+            if t.get("type") == "expense":
+                cat = t.get("category", "Other")
+                categories[cat] = categories.get(cat, 0) + t.get("amount", 0)
+        
+        # Chart data (last 7 days)
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        income_data = [0] * 7
+        expense_data = [0] * 7
+        
+        return {
+            "income": total_income,
+            "expense": total_expense,
+            "name": user.get("name", "User"),
+            "daily_budget": max(0, (total_income - total_expense) // 30),
+            "chart_data": {
+                "labels": days,
+                "income": income_data,
+                "expense": expense_data
+            },
+            "categories": categories
+        }
+    except Exception as e:
+        print(f"Summary error: {e}")
         return {
             "income": 0,
             "expense": 0,
@@ -514,37 +598,6 @@ async def get_summary(phone: str, period: str = "week"):
             "chart_data": {"labels": [], "income": [], "expense": []},
             "categories": {}
         }
-    
-    transactions = transaction_repo.get_transactions(phone) or []
-    
-    # Calculate totals
-    total_income = sum(t.get("amount", 0) for t in transactions if t.get("type") == "income")
-    total_expense = sum(t.get("amount", 0) for t in transactions if t.get("type") == "expense")
-    
-    # Categories
-    categories = {}
-    for t in transactions:
-        if t.get("type") == "expense":
-            cat = t.get("category", "Other")
-            categories[cat] = categories.get(cat, 0) + t.get("amount", 0)
-    
-    # Chart data (last 7 days)
-    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    income_data = [0] * 7
-    expense_data = [0] * 7
-    
-    return {
-        "income": total_income,
-        "expense": total_expense,
-        "name": user.get("name", "User"),
-        "daily_budget": max(0, (total_income - total_expense) // 30),
-        "chart_data": {
-            "labels": days,
-            "income": income_data,
-            "expense": expense_data
-        },
-        "categories": categories
-    }
 
 
 # ================= TESTIMONIALS =================
