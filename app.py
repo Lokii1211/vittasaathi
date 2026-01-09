@@ -1255,12 +1255,94 @@ async def twilio_webhook(request: Request):
         # Return TwiML response (empty to avoid double reply)
         twiml = MessagingResponse()
         return str(twiml)
-        
+
     except Exception as e:
         print(f"[Twilio Webhook] Error: {e}")
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
+
+
+# ================= BAILEYS/NODE.JS BOT ENDPOINT =================
+@app.post("/api/message")
+async def baileys_message(request: Request):
+    """
+    Simple endpoint for Baileys/Node.js WhatsApp bot
+    Accepts form data, returns JSON with reply text
+    """
+    try:
+        # Parse form data
+        form_data = await request.form()
+        
+        phone = form_data.get("From", "").replace("whatsapp:", "").strip()
+        message = form_data.get("Body", "hi").strip()
+        
+        if not phone:
+            return {"reply": "Error: No phone number provided"}
+        
+        if not phone.startswith("+"):
+            phone = "+" + phone
+            
+        print(f"[Baileys] Message from {phone}: {message}")
+        
+        # Update user activity
+        user_repo.update_activity(phone)
+        
+        # Get or create user
+        user = user_repo.ensure_user(phone)
+        language = user.get("preferred_language", user.get("language", "english"))
+        
+        # Process message
+        reply_text = ""
+        
+        # Check if onboarding is complete
+        if not user.get("onboarding_complete"):
+            result = await handle_onboarding(phone, message, user)
+            reply_text = result["text"]
+        else:
+            # Process regular message using intent detection
+            msg_lower = message.lower().strip()
+            intent = None
+            
+            # Greeting keywords
+            if msg_lower in ["hi", "hello", "hey", "hii", "namaste"]:
+                intent = {"intent": "GREETING", "raw_message": message}
+            
+            # Balance/Summary keywords
+            elif any(kw in msg_lower for kw in ["balance", "summary", "total", "status", "kitna", "बैलेंस"]):
+                intent = {"intent": "SUMMARY_QUERY", "raw_message": message}
+            
+            # Report keywords
+            elif any(kw in msg_lower for kw in ["report", "monthly", "weekly", "रिपोर्ट"]):
+                intent = {"intent": "DASHBOARD_QUERY", "raw_message": message}
+            
+            # Help keywords
+            elif any(kw in msg_lower for kw in ["help", "commands", "मदद"]):
+                intent = {"intent": "HELP_QUERY", "raw_message": message}
+            
+            # Use OpenAI for complex messages
+            if not intent and openai_service.is_available():
+                intent = understand_message(message, language)
+            
+            # Fallback to NLP service
+            if not intent:
+                intent = nlp_service.parse_message(message, language)
+            
+            # Route to handler
+            if intent:
+                result = await route_intent(phone, intent, user, language)
+                reply_text = result.get("message", str(result))
+            else:
+                reply_text = "I didn't understand. Type 'help' for commands."
+        
+        print(f"[Baileys] Reply: {reply_text[:100]}...")
+        return {"reply": reply_text}
+        
+    except Exception as e:
+        print(f"[Baileys] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"reply": f"Error: {str(e)}"}
 
 
 # ================= MAIN WEBHOOK (for n8n) =================
