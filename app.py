@@ -1061,8 +1061,12 @@ async def twilio_webhook(request: Request):
             msg_lower = message.lower().strip()
             intent = None
             
+            # Greeting keywords (Hi, Hello, etc.)
+            if msg_lower in ["hi", "hello", "hey", "hii", "hiii", "namaste", "नमस्ते"]:
+                intent = {"intent": "GREETING", "raw_message": message}
+            
             # Balance/Summary keywords
-            if any(kw in msg_lower for kw in ["balance", "summary", "total", "status", "how much", "kitna", "कितना", "बैलेंस"]):
+            elif any(kw in msg_lower for kw in ["balance", "summary", "total", "status", "how much", "kitna", "कितना", "बैलेंस"]):
                 intent = {"intent": "SUMMARY_QUERY", "raw_message": message}
             
             # Report keywords
