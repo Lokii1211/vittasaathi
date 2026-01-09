@@ -12,20 +12,84 @@ ONBOARDING_MESSAGES = {
     "english": {
         "welcome": """🙏 *Welcome to VittaSaathi!*
 
-I'm your personal financial friend!
+I'm your personal financial friend! 💰
 
-Please select your language:
+Which language do you prefer?
 
-1️⃣ English
-2️⃣ हिंदी (Hindi)
-3️⃣ தமிழ் (Tamil)
-4️⃣ తెలుగు (Telugu)
-5️⃣ ಕನ್ನಡ (Kannada)
-6️⃣ മലയാളം (Malayalam)
-7️⃣ मराठी (Marathi)
-8️⃣ বাংলা (Bengali)
+Just type: *English*, *Hindi*, or *Tamil*
 
-Reply with a number (1-8)""",
+(Or type: తెలుగు, ಕನ್ನಡ, മലയാളം, मराठी, বাংলা)""",
+        
+        "lang_set": "✅ Language set to *English*! 🎉",
+        
+        "ask_name": """📝 Great!
+
+What's your name?
+
+(Just type your name)""",
+        
+        "ask_profession": """💼 Nice to meet you, {name}!
+
+What do you do for work?
+
+Just tell me! Examples: Student, Teacher, Doctor, IT Employee, Housewife, Driver, Business, Freelancer...""",
+        
+        "ask_income": """💰 Got it!
+
+What's your approximate monthly income?
+
+Just type the amount! Examples: 25000, 50000, 15k...""",
+        
+        "ask_goals": """🎯 Great! What are your financial goals?
+
+Tell me what you want to achieve! Examples:
+• Emergency fund
+• Save for house/home
+• Education
+• Pay off loans
+• Marriage
+• Retirement
+• Start business
+• General savings
+
+Just type like: 'emergency fund and house' or 'education, marriage'""",
+        
+        "ask_savings_target": """📊 Almost done!
+
+How much do you want to save each month?
+
+Your income: ₹{income}
+Suggested (20%): ₹{suggested}
+
+Just type an amount like: 5000, 10000, 10k...""",
+        
+        "complete": """🎉 *Congratulations, {name}!*
+
+Your VittaSaathi profile is ready!
+
+📊 *Your Financial Plan:*
+💰 Monthly Income: ₹{income}
+💾 Savings Goal: ₹{savings}/month
+📅 Daily Budget: ₹{daily_budget}
+
+💡 *How to use:*
+• "spent 100 on food" → Track expense
+• "earned 5000" → Track income  
+• "balance" → See your status
+• "help" → All commands
+
+Let's start! 🚀""",
+        
+        "returning_user": """👋 *Welcome back, {name}!*
+
+Good to see you again! 😊
+
+What would you like to do?
+• Track expense: "spent 100 on food"
+• Track income: "earned 5000"
+• Check balance: "balance"
+• Get report: "report"
+• Need help: 'help'""",
         
         "lang_set": "✅ Language set to *English*! 🎉",
         
@@ -99,20 +163,11 @@ Let's start your financial journey! 🚀""",
     "hindi": {
         "welcome": """🙏 *VittaSaathi में स्वागत है!*
 
-मैं आपका निजी वित्तीय मित्र हूं!
+मैं आपका वित्तीय मित्र हूं! 💰
 
-अपनी भाषा चुनें:
+आप कौन सी भाषा पसंद करते हैं?
 
-1️⃣ English
-2️⃣ हिंदी (Hindi)
-3️⃣ தமிழ் (Tamil)
-4️⃣ తెలుగు (Telugu)
-5️⃣ ಕನ್ನಡ (Kannada)
-6️⃣ മലയാളം (Malayalam)
-7️⃣ मराठी (Marathi)
-8️⃣ বাংলা (Bengali)
-
-नंबर भेजें (1-8)""",
+बस लिखें: *Hindi*, *English*, या *Tamil*""",
         
         "lang_set": "✅ भाषा *हिंदी* में सेट! 🎉",
         
@@ -126,71 +181,64 @@ Let's start your financial journey! 🚀""",
 
 आप क्या काम करते हैं?
 
-1️⃣ डिलीवरी पार्टनर (Swiggy/Zomato)
-2️⃣ कैब/ऑटो ड्राइवर
-3️⃣ दैनिक मजदूर
-4️⃣ छोटे दुकानदार
-5️⃣ छात्र
-6️⃣ गृहिणी
-7️⃣ नौकरीपेशा
-8️⃣ फ्रीलांसर
-9️⃣ अन्य
-
-नंबर भेजें""",
+बस बताइए! जैसे: छात्र, टीचर, डॉक्टर, IT कर्मचारी, गृहिणी, ड्राइवर, बिजनेस...""",
         
         "ask_income": """💰 समझ गया!
 
-आपकी *मासिक आय* लगभग कितनी है?
+आपकी लगभग मासिक आय कितनी है?
 
-(बस राशि लिखें, जैसे "15000" या "25000")""",
+बस नंबर लिखें! जैसे: 25000, 50000, 15k...""",
         
-        "ask_goals": """🎯 अब अपने वित्तीय लक्ष्य तय करें!
+        "ask_goals": """🎯 आपके वित्तीय लक्ष्य क्या हैं?
 
-आप क्या हासिल करना चाहते हैं?
+बताइए क्या हासिल करना चाहते हैं! जैसे:
+• इमरजेंसी फंड
+• घर के लिए बचत
+• शिक्षा
+• कर्ज चुकाना
+• शादी
+• रिटायरमेंट
+• बिजनेस शुरू करना
 
-1️⃣ 🏦 इमरजेंसी फंड बनाना
-2️⃣ 🏠 घर के लिए बचत
-3️⃣ 📚 शिक्षा के लिए
-4️⃣ 💳 कर्ज चुकाना
-5️⃣ 💒 शादी के लिए
-6️⃣ 👴 रिटायरमेंट बचत
-7️⃣ 🏪 बिजनेस शुरू करना
-8️⃣ 💰 सामान्य बचत
-
-कई चुन सकते हैं! जैसे "1,3,5" या सिर्फ "1".""",
+बस लिखें जैसे: "इमरजेंसी फंड और शादी" """,
         
         "ask_savings_target": """📊 लगभग हो गया!
 
-हर महीने *कितना बचाना* चाहते हैं?
+हर महीने कितना बचाना चाहते हैं?
 
-आपकी ₹{income} आय के हिसाब से, कम से कम ₹{suggested} (20%) बचाएं
+आपकी आय: ₹{income}
+सुझाव (20%): ₹{suggested}
 
-(अपना लक्ष्य लिखें, जैसे "5000")""",
+बस राशि लिखें जैसे: 5000, 10000...""",
         
-        "complete": """🎉 *बधाई हो, {name}!*
+        "complete": """🎉 *बधाई, {name}!*
 
-आपकी VittaSaathi प्रोफाइल तैयार है!
+आपकी प्रोफाइल तैयार है!
 
-📊 *आपका व्यक्तिगत वित्तीय प्लान:*
-
+📊 *आपकी प्लान:*
 💰 मासिक आय: ₹{income}
-💾 बचत लक्ष्य: ₹{savings}/महीना ({percent}%)
-📅 दैनिक खर्च बजट: ₹{daily_budget}
-🎯 मुख्य लक्ष्य: {primary_goal}
+💾 बचत लक्ष्य: ₹{savings}/महीना
+📅 दैनिक बजट: ₹{daily_budget}
 
-*आपके लक्ष्य:*
-{goals_list}
+💡 *कैसे इस्तेमाल करें:*
+• "100 खाने पर खर्च" → खर्च ट्रैक
+• "5000 कमाए" → आय ट्रैक
+• "बैलेंस" → स्थिति देखें
+• "help" → सभी कमांड
 
-💡 *शुरू करने के टिप्स:*
-• "खाने पर 100 खर्च" बोलें खर्च ट्रैक करने के लिए
-• "500 कमाए" बोलें आय ट्रैक करने के लिए
-• "बैलेंस" बोलें स्थिति देखने के लिए
-• "रिपोर्ट" बोलें सारांश के लिए
-
-चलिए शुरू करते हैं! 🚀""",
+शुरू करें! 🚀""",
         
-        "invalid_choice": "❌ समझ नहीं आया। कृपया सही नंबर भेजें।",
-        "invalid_amount": "❌ कृपया सही राशि लिखें (सिर्फ नंबर, जैसे 15000)"
+        "returning_user": """👋 *फिर से स्वागत, {name}!*
+
+आपको देखकर अच्छा लगा! 😊
+
+क्या करना चाहते हैं?
+• "100 खाने पर खर्च" → खर्च ट्रैक
+• "5000 कमाए" → आय ट्रैक
+• "बैलेंस" → स्थिति देखें""",
+        
+        "invalid_choice": "❌ समझ नहीं आया। कृपया दोबारा बताएं।",
+        "invalid_amount": "❌ कृपया सही राशि लिखें (जैसे 15000)"
     },
     
     "tamil": {
@@ -325,8 +373,9 @@ GOALS = {
     "8": {"en": "General Savings", "hi": "सामान्य बचत", "emoji": "💰"}
 }
 
-# Language code mapping
+# Language code mapping - accepts both numbers AND text
 LANGUAGE_MAP = {
+    # Numbers
     "1": "english",
     "2": "hindi", 
     "3": "tamil",
@@ -335,11 +384,26 @@ LANGUAGE_MAP = {
     "6": "malayalam",
     "7": "marathi",
     "8": "bengali",
+    # English text
     "english": "english",
+    "eng": "english",
+    "en": "english",
     "hindi": "hindi",
+    "हिंदी": "hindi",
+    "हिन्दी": "hindi",
     "tamil": "tamil",
+    "தமிழ்": "tamil",
     "telugu": "telugu",
-    "kannada": "kannada"
+    "తెలుగు": "telugu",
+    "kannada": "kannada",
+    "ಕನ್ನಡ": "kannada",
+    "malayalam": "malayalam",
+    "മലയാളം": "malayalam",
+    "marathi": "marathi",
+    "मराठी": "marathi",
+    "bengali": "bengali",
+    "বাংলা": "bengali",
+    "bangla": "bengali"
 }
 
 
@@ -361,7 +425,19 @@ class SmartOnboardingService:
             return template
     
     def parse_number(self, text: str) -> Optional[int]:
-        """Extract number from text"""
+        """Extract number from text - handles 25k, 25000, 25,000 formats"""
+        text = text.lower().strip()
+        
+        # Handle "k" suffix (25k = 25000)
+        k_match = re.search(r'(\d+)\s*k\b', text)
+        if k_match:
+            return int(k_match.group(1)) * 1000
+        
+        # Handle "lakh" or "lac" (1 lakh = 100000)
+        lakh_match = re.search(r'(\d+)\s*(?:lakh|lac)\b', text)
+        if lakh_match:
+            return int(lakh_match.group(1)) * 100000
+        
         # Remove currency symbols, commas, etc.
         cleaned = re.sub(r'[₹,\s]', '', text)
         numbers = re.findall(r'\d+', cleaned)
@@ -370,10 +446,32 @@ class SmartOnboardingService:
         return None
     
     def parse_goals(self, text: str) -> List[str]:
-        """Parse goal selections from user input"""
-        # Handle comma-separated numbers
-        numbers = re.findall(r'[1-8]', text)
-        return list(set(numbers))[:5]  # Max 5 goals
+        """Parse goal selections from user input - accepts TEXT like 'emergency fund, house'"""
+        text = text.lower()
+        goals = []
+        
+        # Goal keywords mapping
+        goal_keywords = {
+            "1": ["1", "emergency", "fund", "backup", "rainy day"],
+            "2": ["2", "house", "home", "property", "flat", "apartment", "down payment"],
+            "3": ["3", "education", "study", "college", "school", "course", "learn"],
+            "4": ["4", "debt", "loan", "emi", "pay off", "credit card"],
+            "5": ["5", "marriage", "wedding", "shaadi", "விவாகம்"],
+            "6": ["6", "retirement", "retire", "pension", "old age"],
+            "7": ["7", "business", "startup", "shop", "venture", "entrepreneur"],
+            "8": ["8", "savings", "save", "general", "money"]
+        }
+        
+        for goal_id, keywords in goal_keywords.items():
+            if any(kw in text for kw in keywords):
+                goals.append(goal_id)
+        
+        # If no text match, try numbers
+        if not goals:
+            numbers = re.findall(r'[1-8]', text)
+            goals = list(set(numbers))
+        
+        return goals[:5]  # Max 5 goals
     
     def format_goals_list(self, goal_ids: List[str], language: str = "english") -> str:
         """Format goals as a readable list"""
