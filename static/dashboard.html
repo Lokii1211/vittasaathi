@@ -973,6 +973,228 @@
             margin-bottom: 16px;
             opacity: 0.5;
         }
+
+        /* ============ MOBILE RESPONSIVE STYLES ============ */
+
+        /* Small tablets and large phones */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+
+            .logo-text {
+                font-size: 18px;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .greeting {
+                font-size: 22px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .stat-card {
+                padding: 16px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .card-title {
+                font-size: 16px;
+            }
+
+            .btn-outline span {
+                display: none;
+            }
+
+            .header-actions {
+                gap: 8px;
+            }
+        }
+
+        /* Phones */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 24px 20px;
+                border-radius: 16px;
+            }
+
+            .login-title {
+                font-size: 22px;
+            }
+
+            .header-content {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .logo-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+
+            .main-content {
+                padding: 12px;
+            }
+
+            .greeting {
+                font-size: 18px;
+            }
+
+            .greeting-sub {
+                font-size: 13px;
+            }
+
+            .stat-card {
+                padding: 14px;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .stat-label {
+                font-size: 12px;
+            }
+
+            .stat-trend {
+                font-size: 11px;
+                padding: 3px 8px;
+            }
+
+            .transaction-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+
+            .transaction-item {
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .transaction-category {
+                font-size: 14px;
+            }
+
+            .transaction-date {
+                font-size: 11px;
+            }
+
+            .transaction-amount {
+                font-size: 14px;
+            }
+
+            .filter-tab {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .date-input {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+            .goal-item {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .goal-progress {
+                width: 100%;
+            }
+
+            .chart-container {
+                height: 200px !important;
+            }
+
+            /* Modal adjustments */
+            .modal-content {
+                width: 95%;
+                max-width: 95%;
+                margin: 10px;
+                padding: 16px;
+            }
+
+            .profile-header {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .profile-info {
+                text-align: center;
+            }
+        }
+
+        /* Very small phones */
+        @media (max-width: 360px) {
+            .login-screen {
+                padding: 10px;
+            }
+
+            .login-card {
+                padding: 20px 16px;
+            }
+
+            .otp-input {
+                width: 40px;
+                height: 48px;
+                font-size: 18px;
+            }
+
+            .stat-grid {
+                gap: 10px;
+            }
+
+            .greeting {
+                font-size: 16px;
+            }
+        }
+
+        /* Touch-friendly adjustments */
+        @media (hover: none) and (pointer: coarse) {
+
+            .btn,
+            .btn-outline,
+            .filter-tab,
+            .transaction-item {
+                min-height: 44px;
+            }
+
+            .transaction-item:hover {
+                background: transparent;
+            }
+
+            .transaction-item:active {
+                background: var(--bg-tertiary);
+            }
+        }
     </style>
 </head>
 
