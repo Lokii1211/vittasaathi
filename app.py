@@ -974,15 +974,15 @@ async def twilio_webhook(request: Request):
             
             # Balance/Summary keywords
             if any(kw in msg_lower for kw in ["balance", "summary", "total", "status", "how much", "kitna", "कितना", "बैलेंस"]):
-                intent = {"intent": "SUMMARY", "raw_message": message}
+                intent = {"intent": "SUMMARY_QUERY", "raw_message": message}
             
             # Report keywords
             elif any(kw in msg_lower for kw in ["report", "monthly", "weekly", "रिपोर्ट"]):
-                intent = {"intent": "DASHBOARD", "raw_message": message}
+                intent = {"intent": "DASHBOARD_QUERY", "raw_message": message}
             
             # Help keywords  
             elif any(kw in msg_lower for kw in ["help", "commands", "what can", "मदद", "सहायता"]):
-                intent = {"intent": "HELP", "raw_message": message}
+                intent = {"intent": "HELP_QUERY", "raw_message": message}
             
             # Income keywords
             elif any(kw in msg_lower for kw in ["earned", "received", "salary", "income", "got paid", "कमाया", "मिला"]):
@@ -990,7 +990,7 @@ async def twilio_webhook(request: Request):
                 import re
                 amounts = re.findall(r'\d+', msg_lower)
                 amount = int(amounts[0]) if amounts else 0
-                intent = {"intent": "INCOME", "amount": amount, "category": "salary", "raw_message": message}
+                intent = {"intent": "INCOME_ENTRY", "amount": amount, "category": "salary", "raw_message": message}
             
             # Expense keywords
             elif any(kw in msg_lower for kw in ["spent", "paid", "expense", "bought", "खर्च", "दिया"]):
@@ -1007,22 +1007,22 @@ async def twilio_webhook(request: Request):
                     category = "shopping"
                 elif any(f in msg_lower for f in ["bill", "rent", "electricity", "recharge", "बिल"]):
                     category = "bills"
-                intent = {"intent": "EXPENSE", "amount": amount, "category": category, "raw_message": message}
+                intent = {"intent": "EXPENSE_ENTRY", "amount": amount, "category": category, "raw_message": message}
             
             # Savings keywords
             elif any(kw in msg_lower for kw in ["saved", "saving", "बचत", "जमा"]):
                 import re
                 amounts = re.findall(r'\d+', msg_lower)
                 amount = int(amounts[0]) if amounts else 0
-                intent = {"intent": "SAVINGS", "amount": amount, "raw_message": message}
+                intent = {"intent": "SAVINGS_ENTRY", "amount": amount, "raw_message": message}
             
             # Goal keywords
             elif any(kw in msg_lower for kw in ["goal", "target", "लक्ष्य"]):
-                intent = {"intent": "GOALS", "raw_message": message}
+                intent = {"intent": "GOAL_QUERY", "raw_message": message}
             
             # Investment advice
             elif any(kw in msg_lower for kw in ["invest", "sip", "mutual fund", "निवेश"]):
-                intent = {"intent": "INVESTMENT_ADVICE", "raw_message": message}
+                intent = {"intent": "INVESTMENT_QUERY", "raw_message": message}
             
             # If no keyword match, try OpenAI or fallback NLP
             if intent is None:

@@ -56,6 +56,10 @@ class TransactionRepository:
         """Get transaction by ID"""
         return self.store.get(txn_id)
     
+    def get_transactions(self, user_id: str, limit: int = 100) -> List[Dict]:
+        """Get all transactions for a user - simple alias"""
+        return self.get_user_transactions(user_id, limit=limit)
+    
     def get_user_transactions(
         self,
         user_id: str,
