@@ -21,7 +21,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=http://127.0.0.1:8000/user/{{ $json.phone || $json.user_id }}",
+                "url": "=https://vittasaathi-1.onrender.com/user/{{ $json.phone || $json.user_id }}",
                 "options": {}
             },
             "id": "d1b2c3d4-2222-2222-2222-222222222222",

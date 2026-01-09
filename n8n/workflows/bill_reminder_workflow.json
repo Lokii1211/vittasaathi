@@ -24,7 +24,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "http://127.0.0.1:8000/api/v2/bills/due-today",
+                "url": "https://vittasaathi-1.onrender.com/api/v2/bills/due-today",
                 "options": {}
             },
             "id": "c1b2c3d4-2222-2222-2222-222222222222",
@@ -86,7 +86,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=http://127.0.0.1:8000/user/{{ $json.user_id }}",
+                "url": "=https://vittasaathi-1.onrender.com/user/{{ $json.user_id }}",
                 "options": {}
             },
             "id": "c1b2c3d4-5555-5555-5555-555555555555",

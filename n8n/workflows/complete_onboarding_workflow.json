@@ -36,7 +36,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=http://127.0.0.1:8000/user/{{ $json.phone }}",
+                "url": "=https://vittasaathi-1.onrender.com/user/{{ $json.phone }}",
                 "options": {
                     "timeout": 10000
                 }

@@ -24,7 +24,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "http://127.0.0.1:8000/users",
+                "url": "https://vittasaathi-1.onrender.com/users",
                 "options": {}
             },
             "id": "b1b2c3d4-2222-2222-2222-222222222222",
@@ -85,7 +85,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=http://127.0.0.1:8000/dashboard/{{ $json.phone }}",
+                "url": "=https://vittasaathi-1.onrender.com/dashboard/{{ $json.phone }}",
                 "options": {}
             },
             "id": "b1b2c3d4-5555-5555-5555-555555555555",

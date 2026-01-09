@@ -44,7 +44,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "http://127.0.0.1:8000/users",
+                "url": "https://vittasaathi-1.onrender.com/users",
                 "options": {
                     "timeout": 30000
                 }
@@ -61,7 +61,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "http://127.0.0.1:8000/users",
+                "url": "https://vittasaathi-1.onrender.com/users",
                 "options": {
                     "timeout": 30000
                 }
@@ -132,7 +132,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=http://127.0.0.1:8000/reports/{{ $json.phone }}/weekly-comparison",
+                "url": "=https://vittasaathi-1.onrender.com/reports/{{ $json.phone }}/weekly-comparison",
                 "options": {
                     "timeout": 30000
                 }
@@ -150,7 +150,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=http://127.0.0.1:8000/reports/{{ $json.phone }}/monthly-comparison",
+                "url": "=https://vittasaathi-1.onrender.com/reports/{{ $json.phone }}/monthly-comparison",
                 "options": {
                     "timeout": 30000
                 }
