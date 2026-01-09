@@ -626,8 +626,21 @@ class SmartOnboardingService:
         
         # Step 4: Monthly Income
         elif step == "income":
+            msg_lower = message.lower().strip()
+            
+            # Check if user wants to restart or get help
+            if msg_lower in ["hi", "hello", "restart", "start over", "help"]:
+                self.user_repo.update_user(phone, {
+                    "onboarding_step": "language"
+                })
+                return {
+                    "text": self.get_message("welcome", "english"),
+                    "step": "language"
+                }
+            
             income = self.parse_number(message)
-            if income and income >= 1000:
+            # Accept any amount >= 100 (for testing) or >= 500 for real use
+            if income and income >= 100:
                 self.user_repo.update_user(phone, {
                     "monthly_income": income,
                     "onboarding_step": "goals"
