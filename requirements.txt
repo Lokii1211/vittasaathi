@@ -21,8 +21,8 @@ PyPDF2>=3.0.1
 # Voice & TTS
 gtts>=2.5.0
 
-# Communication
-twilio>=8.13.0
+# Communication (Optional - Twilio is fallback, primary is Node.js bot)
+# twilio>=8.13.0  # Uncomment if using Twilio instead of Node.js bot
 
 # Database (using JSON for simplicity, upgrade to SQLite/PostgreSQL as needed)
 # For production, uncomment:
