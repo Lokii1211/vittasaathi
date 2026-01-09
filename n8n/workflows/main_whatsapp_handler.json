@@ -1,0 +1,182 @@
+{
+    "name": "VittaSaathi - Main WhatsApp Handler",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "whatsapp-webhook",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-1",
+            "name": "WhatsApp Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                200,
+                300
+            ],
+            "webhookId": "whatsapp-webhook"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Extract Twilio WhatsApp data\nconst data = $input.item.json.body || $input.item.json;\n\nlet phone = (data.From || '').replace('whatsapp:', '').trim();\nlet message = (data.Body || '').trim();\nlet mediaUrl = data.MediaUrl0 || null;\nlet mediaType = data.MediaContentType0 || null;\nlet profileName = data.ProfileName || 'Friend';\n\nif (phone && !phone.startsWith('+')) {\n  phone = '+' + phone;\n}\n\nreturn {\n  phone: phone,\n  message: message,\n  mediaUrl: mediaUrl,\n  mediaType: mediaType,\n  profileName: profileName,\n  isVoice: mediaType && mediaType.includes('audio'),\n  isImage: mediaType && mediaType.includes('image'),\n  timestamp: new Date().toISOString()\n};"
+            },
+            "id": "extract-1",
+            "name": "Extract Message Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                420,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://vittasaathi-1.onrender.com/whatsapp",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ From: 'whatsapp:' + $json.phone, Body: $json.message, MediaUrl0: $json.mediaUrl, MediaContentType0: $json.mediaType, ProfileName: $json.profileName }) }}",
+                "options": {
+                    "timeout": 30000
+                }
+            },
+            "id": "call-api-1",
+            "name": "Call VittaSaathi API",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                640,
+                300
+            ],
+            "onError": "continueRegularOutput"
+        },
+        {
+            "parameters": {
+                "jsCode": "const apiResponse = $input.item.json;\nconst userData = $('Extract Message Data').item.json;\n\n// Get reply text from API response\nlet replyText = '';\n\nif (apiResponse.reply_text) {\n  replyText = apiResponse.reply_text;\n} else if (apiResponse.message) {\n  replyText = apiResponse.message;\n} else if (typeof apiResponse === 'string') {\n  replyText = apiResponse;\n} else {\n  replyText = '❓ Something went wrong. Please try again.';\n}\n\nreturn {\n  phone: userData.phone,\n  message: replyText,\n  voicePath: apiResponse.voice_path || null\n};"
+            },
+            "id": "format-1",
+            "name": "Format Response",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                860,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "send",
+                "from": "whatsapp:+14155238886",
+                "to": "=whatsapp:{{ $json.phone }}",
+                "message": "={{ $json.message }}"
+            },
+            "id": "send-1",
+            "name": "Send WhatsApp Reply",
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                1080,
+                300
+            ],
+            "credentials": {
+                "twilioApi": {
+                    "id": "1",
+                    "name": "Twilio account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response></Response>",
+                "options": {
+                    "responseHeaders": {
+                        "entries": [
+                            {
+                                "name": "Content-Type",
+                                "value": "application/xml"
+                            }
+                        ]
+                    }
+                }
+            },
+            "id": "response-1",
+            "name": "Respond to Twilio",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1300,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "WhatsApp Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Message Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Message Data": {
+            "main": [
+                [
+                    {
+                        "node": "Call VittaSaathi API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Call VittaSaathi API": {
+            "main": [
+                [
+                    {
+                        "node": "Format Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Response": {
+            "main": [
+                [
+                    {
+                        "node": "Send WhatsApp Reply",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send WhatsApp Reply": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Twilio",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1",
+        "timezone": "Asia/Kolkata"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 1,
+    "updatedAt": "2026-01-09T14:45:00.000Z",
+    "versionId": "1"
+}
