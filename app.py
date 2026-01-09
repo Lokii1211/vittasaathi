@@ -41,6 +41,8 @@ from services.dashboard_service import dashboard_service
 from services.advanced_features import gamification_service, smart_insights, smart_reply_service
 from services.smart_onboarding_service import get_smart_onboarding
 from services.openai_service import openai_service, transcribe_voice, understand_message
+from services.ai_onboarding_service import get_ai_onboarding
+from services.pdf_report_service import pdf_report_service
 
 # Agents
 from agents.fraud_agent import check_fraud
@@ -85,6 +87,64 @@ def get_monthly_report(phone: str):
     from extended_api import get_monthly_comparison
     return get_monthly_comparison(phone)
 
+# PDF Report Generation
+@app.get("/reports/{phone}/pdf/weekly")
+def get_weekly_pdf_report(phone: str):
+    """Generate weekly PDF report for user"""
+    from datetime import datetime, timedelta
+    
+    user = user_repo.get_user(phone)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get last 7 days of transactions
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=7)
+    transactions = transaction_repo.get_transactions_by_date_range(
+        phone, 
+        start_date.strftime("%Y-%m-%d"),
+        end_date.strftime("%Y-%m-%d")
+    )
+    
+    pdf_path = pdf_report_service.generate_weekly_report(user, transactions)
+    
+    if pdf_path:
+        return FileResponse(
+            pdf_path, 
+            media_type="application/pdf",
+            filename=f"VittaSaathi_Weekly_Report_{datetime.now().strftime('%Y%m%d')}.pdf"
+        )
+    else:
+        raise HTTPException(status_code=500, detail="PDF generation failed. Install reportlab: pip install reportlab")
+
+@app.get("/reports/{phone}/pdf/monthly")
+def get_monthly_pdf_report(phone: str):
+    """Generate monthly PDF report for user"""
+    from datetime import datetime, timedelta
+    
+    user = user_repo.get_user(phone)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get last 30 days of transactions
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    transactions = transaction_repo.get_transactions_by_date_range(
+        phone,
+        start_date.strftime("%Y-%m-%d"),
+        end_date.strftime("%Y-%m-%d")
+    )
+    
+    pdf_path = pdf_report_service.generate_monthly_report(user, transactions)
+    
+    if pdf_path:
+        return FileResponse(
+            pdf_path,
+            media_type="application/pdf", 
+            filename=f"VittaSaathi_Monthly_Report_{datetime.now().strftime('%Y%m%d')}.pdf"
+        )
+    else:
+        raise HTTPException(status_code=500, detail="PDF generation failed")
 
 
 # ================= SCHEDULED TASKS =================
@@ -1323,16 +1383,16 @@ async def handle_webhook(payload: WebhookPayload):
 
 
 async def handle_onboarding(phone: str, message: str, user: dict) -> dict:
-    """Handle smart onboarding flow with multi-language support, goals, and personalized plans"""
+    """Handle AI-powered onboarding flow with NLP understanding"""
     
     # Refetch user to get latest data
     user = user_repo.get_user(phone) or user
     
-    # Get smart onboarding service
-    smart_onboarding = get_smart_onboarding(user_repo)
+    # Use AI-powered onboarding service (falls back gracefully if no OpenAI key)
+    ai_onboarding = get_ai_onboarding(user_repo)
     
-    # Process the onboarding step
-    result = smart_onboarding.process_onboarding(phone, message, user)
+    # Process the onboarding step with AI understanding
+    result = ai_onboarding.process_onboarding(phone, message, user)
     
     # Refetch user after update
     updated_user = user_repo.get_user(phone) or user
