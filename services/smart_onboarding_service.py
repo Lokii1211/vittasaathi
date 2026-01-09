@@ -39,23 +39,13 @@ What's your name?
 
 What do you do for work?
 
-1️⃣ Delivery Partner (Swiggy/Zomato/etc)
-2️⃣ Cab/Auto Driver (Ola/Uber/etc)
-3️⃣ Daily Wage Worker
-4️⃣ Small Shopkeeper
-5️⃣ Student
-6️⃣ Homemaker
-7️⃣ Salaried Employee
-8️⃣ Freelancer/Self-employed
-9️⃣ Other
-
-Reply with a number""",
+Just type it! Examples: Student, Housewife, IT Employee, Delivery Partner, Small Business, Teacher, Doctor, etc.""",
         
         "ask_income": """💰 Got it!
 
 What's your approximate *monthly income*?
 
-(Just type the amount, e.g., "15000" or "25000")""",
+Just type the number! Example: 50000""",
         
         "ask_goals": """🎯 Now let's set your financial goals!
 

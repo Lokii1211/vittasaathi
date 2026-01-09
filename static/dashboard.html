@@ -1274,6 +1274,36 @@
         </div>
     </div>
 
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Your Profile</h3>
+                <button class="modal-close" onclick="closeProfileModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 16px;"
+                    id="profileAvatar">U</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-input" id="profileName" placeholder="Your name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="text" class="form-input" id="profilePhone" disabled
+                    style="background: var(--bg-tertiary);">
+            </div>
+            <button class="btn" onclick="updateProfile()" style="margin-bottom: 12px;">
+                <span class="btn-text">Save Changes</span>
+            </button>
+            <button class="btn-outline" onclick="logout()"
+                style="width: 100%; color: var(--danger); border-color: var(--danger);">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast">
         <i class="fas fa-check-circle"></i>
@@ -1921,8 +1951,61 @@
             }
         }
 
+        // Profile Functions
         function showUserMenu() {
-            if (confirm('Logout?')) {
+            // Show profile modal instead of direct logout
+            const modal = document.getElementById('profileModal');
+            document.getElementById('profileName').value = currentUser.name || '';
+            document.getElementById('profilePhone').value = currentUser.phone || '';
+            document.getElementById('profileAvatar').textContent = (currentUser.name || 'U')[0].toUpperCase();
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
+
+        async function updateProfile() {
+            const name = document.getElementById('profileName').value.trim();
+            if (!name) {
+                showToast('Please enter your name', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/user/${encodeURIComponent(currentUser.phone)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+
+                const data = await response.json();
+
+                if (data.user || response.ok) {
+                    currentUser.name = name;
+                    localStorage.setItem('vittasaathi_user', JSON.stringify(currentUser));
+                    document.getElementById('userName').textContent = name;
+                    document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+                    showToast('Profile updated!', 'success');
+                    closeProfileModal();
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                // Update locally even if API fails
+                currentUser.name = name;
+                localStorage.setItem('vittasaathi_user', JSON.stringify(currentUser));
+                document.getElementById('userName').textContent = name;
+                document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+                showToast('Profile saved locally', 'success');
+                closeProfileModal();
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
                 localStorage.removeItem('vittasaathi_user');
                 location.reload();
             }

@@ -104,6 +104,15 @@ class GoalRepository:
         goals.sort(key=lambda x: x.get("priority", 10))
         return goals
     
+    # Aliases for API compatibility
+    def add_goal(self, user_id: str, goal_type: str, target_amount: int, target_date: str, name: str = None) -> Dict:
+        """Alias for create_goal"""
+        return self.create_goal(user_id, goal_type, target_amount, target_date, name)
+    
+    def get_goals(self, user_id: str) -> List[Dict]:
+        """Alias for get_user_goals"""
+        return self.get_user_goals(user_id)
+    
     def get_goal(self, goal_id: str) -> Optional[Dict]:
         """Get goal by ID"""
         return self.store.get(goal_id)

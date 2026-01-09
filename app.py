@@ -236,6 +236,26 @@ def get_user(phone: str):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+@app.put("/user/{phone:path}")
+async def update_user_profile(phone: str, request: Request):
+    """Update user profile"""
+    from urllib.parse import unquote
+    phone = unquote(phone)
+    if not phone.startswith("+"):
+        phone = "+" + phone
+    
+    try:
+        data = await request.json()
+        name = data.get("name")
+        
+        if name:
+            user_repo.update_user(phone, {"name": name})
+        
+        user = user_repo.get_user(phone)
+        return {"success": True, "user": user}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @app.get("/users")
 def get_all_users():
     """Get all users"""
@@ -320,6 +340,75 @@ def force_complete_onboarding(phone: str):
         "name": user.get("name", "User")
     })
     return {"success": True, "message": "Onboarding completed! You can now track expenses on WhatsApp."}
+
+
+# ================= OTP AUTHENTICATION =================
+import random
+otp_store = {}  # In production use Redis
+
+@app.post("/api/v2/auth/send-otp")
+async def send_otp(data: OTPSendPayload):
+    """Send OTP via WhatsApp"""
+    phone = data.phone
+    
+    # Normalize phone
+    if not phone.startswith("+"):
+        phone = "+91" + phone.replace(" ", "").replace("-", "")
+    
+    # Generate 6-digit OTP
+    otp = str(random.randint(100000, 999999))
+    otp_store[phone] = otp
+    
+    # Try to send via WhatsApp
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN", "")
+    
+    if account_sid and auth_token:
+        try:
+            from twilio.rest import Client
+            client = Client(account_sid, auth_token)
+            
+            message = client.messages.create(
+                from_="whatsapp:+14155238886",
+                to=f"whatsapp:{phone}",
+                body=f"🔐 Your VittaSaathi OTP is: *{otp}*\n\nDo not share this with anyone."
+            )
+            print(f"[OTP] Sent to {phone}: {otp}")
+            return {"success": True, "message": "OTP sent to WhatsApp"}
+        except Exception as e:
+            print(f"[OTP] WhatsApp send failed: {e}")
+            # Fall back to demo mode
+            return {"success": True, "demo_otp": otp, "message": "Demo mode - WhatsApp not available"}
+    else:
+        # Demo mode
+        return {"success": True, "demo_otp": otp, "message": "Demo mode - use this OTP"}
+
+@app.post("/api/v2/auth/verify-otp")
+async def verify_otp(data: OTPVerifyPayload):
+    """Verify OTP"""
+    phone = data.phone
+    otp = data.otp
+    
+    # Normalize phone
+    if not phone.startswith("+"):
+        phone = "+91" + phone.replace(" ", "").replace("-", "")
+    
+    stored_otp = otp_store.get(phone)
+    
+    # Allow demo OTP 123456 for testing
+    if otp == "123456" or (stored_otp and otp == stored_otp):
+        # Clear OTP after successful verification
+        if phone in otp_store:
+            del otp_store[phone]
+        
+        # Create or get user
+        user = user_repo.get_user(phone)
+        if not user:
+            user = user_repo.create_user(phone)
+        
+        return {"success": True, "user": user}
+    else:
+        return {"success": False, "message": "Invalid OTP"}
 
 
 # ================= DOWNLOAD ENDPOINTS =================
