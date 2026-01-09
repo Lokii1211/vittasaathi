@@ -461,14 +461,58 @@ class SmartOnboardingService:
                     "step": "name"
                 }
         
-        # Step 3: Profession
+        # Step 3: Profession - Accept BOTH text and numbers
         elif step == "profession":
-            prof_id = message.strip()
-            if prof_id in PROFESSIONS:
-                profession = PROFESSIONS[prof_id]
+            prof_input = message.strip().lower()
+            profession = None
+            
+            # First check if it's a number (1-9)
+            if prof_input in PROFESSIONS:
+                profession = PROFESSIONS[prof_input]
+            else:
+                # Accept text input - map common professions
+                profession_keywords = {
+                    "student": "Student",
+                    "housewife": "Homemaker", 
+                    "homemaker": "Homemaker",
+                    "teacher": "Salaried Employee",
+                    "doctor": "Salaried Employee",
+                    "engineer": "Salaried Employee",
+                    "it": "Salaried Employee",
+                    "software": "Salaried Employee",
+                    "employee": "Salaried Employee",
+                    "salaried": "Salaried Employee",
+                    "driver": "Cab/Auto Driver",
+                    "delivery": "Delivery Partner",
+                    "zomato": "Delivery Partner",
+                    "swiggy": "Delivery Partner",
+                    "uber": "Cab/Auto Driver",
+                    "ola": "Cab/Auto Driver",
+                    "shop": "Shopkeeper",
+                    "business": "Shopkeeper",
+                    "freelance": "Freelancer",
+                    "freelancer": "Freelancer",
+                    "self-employed": "Freelancer",
+                    "daily wage": "Daily Wage Worker",
+                    "labour": "Daily Wage Worker",
+                    "worker": "Daily Wage Worker",
+                    "other": "Other"
+                }
+                
+                # Check if any keyword matches
+                for keyword, prof_value in profession_keywords.items():
+                    if keyword in prof_input:
+                        profession = prof_value
+                        break
+                
+                # If still no match, accept any text as custom profession
+                if not profession and len(prof_input) >= 2:
+                    profession = message.strip().title()  # Capitalize properly
+            
+            if profession:
                 self.user_repo.update_user(phone, {
                     "profession": profession,
-                    "profession_type": prof_id,
+                    "profession_type": profession.lower().replace(" ", "_"),
                     "onboarding_step": "income"
                 })
                 return {

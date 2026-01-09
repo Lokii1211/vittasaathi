@@ -1114,9 +1114,16 @@ async def twilio_webhook(request: Request):
                 intent = {"intent": "GOAL_QUERY", "raw_message": message}
             
             # Investment advice
-            elif any(kw in msg_lower for kw in ["invest", "sip", "mutual fund", "निवेश"]):
+            elif any(kw in msg_lower for kw in ["invest", "sip", "mutual fund", "निवेश", "investment"]):
                 intent = {"intent": "INVESTMENT_QUERY", "raw_message": message}
             
+            # Reminder keywords
+            elif any(kw in msg_lower for kw in ["reminder", "remind", "daily reminder", "set reminder", "याद", "अलार्म"]):
+                intent = {"intent": "REMINDER", "raw_message": message}
+            
+            # Advice keywords
+            elif any(kw in msg_lower for kw in ["advice", "suggest", "recommendation", "सुझाव", "tip"]):
+                intent = {"intent": "ADVICE_REQUEST", "raw_message": message}
             # If no keyword match, try OpenAI or fallback NLP
             if intent is None:
                 if openai_service.is_available():
@@ -1391,6 +1398,7 @@ async def route_intent(phone: str, intent: dict, user: dict, language: str) -> d
         "FRAUD_REPORT": handle_fraud_report,
         "ADVICE_REQUEST": handle_advice,
         "DASHBOARD_QUERY": handle_dashboard,
+        "REMINDER": handle_reminder,
     }
     
     handler = handlers.get(intent_type, handle_unknown)
@@ -1853,7 +1861,36 @@ async def handle_advice(phone: str, intent: dict, user: dict, language: str) -> 
     return {"message": reply}
 
 
+async def handle_reminder(phone: str, intent: dict, user: dict, language: str) -> dict:
+    """Handle reminder setup"""
+    # Set up default daily reminders
+    reminder_repo.setup_default_reminders(phone)
+    
+    if language == "hi":
+        reply = """⏰ *रिमाइंडर सेट हो गया!*
+━━━━━━━━━━━━━━━━━
+
+मैं आपको हर दिन याद दिलाऊंगा:
+• 🌅 सुबह 9 बजे - बजट चेक
+• 🌙 रात 9 बजे - खर्च दर्ज करें
+
+💡 खर्च दर्ज करने के लिए बस टाइप करें जैसे:
+"100 खाने पर खर्च किया" """
+    else:
+        reply = """⏰ *Daily Reminder Set!*
+━━━━━━━━━━━━━━━━━
+
+I'll remind you daily:
+• 🌅 9 AM - Check your budget
+• 🌙 9 PM - Log your expenses
+
+💡 To log expenses, just type like:
+"spent 100 on food" """
+    return {"message": reply}
+
+
 async def handle_unknown(phone: str, intent: dict, user: dict, language: str) -> dict:
+    """Handle unknown intents"""
     tip = gamification_service.get_random_tip(language)
     
     if language == "hi":
