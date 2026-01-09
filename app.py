@@ -4,7 +4,7 @@ VittaSaathi v3.0 - WhatsApp Financial Advisor & Manager
 Complete API with voice replies, dashboards, gamification,
 analytics, PDF reports, family finance, and more!
 """
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
