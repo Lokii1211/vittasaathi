@@ -20,7 +20,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// Extract Twilio WhatsApp data\nconst data = $input.item.json.body || $input.item.json;\n\nlet phone = (data.From || '').replace('whatsapp:', '').trim();\nlet message = (data.Body || '').trim();\nlet mediaUrl = data.MediaUrl0 || null;\nlet mediaType = data.MediaContentType0 || null;\nlet profileName = data.ProfileName || 'Friend';\n\nif (phone && !phone.startsWith('+')) {\n  phone = '+' + phone;\n}\n\nconsole.log('Received from:', phone, 'Message:', message);\n\nreturn {\n  phone: phone,\n  message: message,\n  mediaUrl: mediaUrl,\n  mediaType: mediaType,\n  profileName: profileName,\n  isVoice: mediaType && mediaType.includes('audio'),\n  isImage: mediaType && mediaType.includes('image'),\n  timestamp: new Date().toISOString()\n};"
+                "jsCode": "// Extract Twilio WhatsApp data\nconst data = $input.item.json.body || $input.item.json;\n\nlet phone = (data.From || '').replace('whatsapp:', '').trim();\nlet message = (data.Body || '').trim();\nlet mediaUrl = data.MediaUrl0 || null;\nlet mediaType = data.MediaContentType0 || null;\nlet profileName = data.ProfileName || 'Friend';\n\n// Ensure phone starts with +\nif (phone && !phone.startsWith('+')) {\n  phone = '+' + phone;\n}\n\n// Clean phone number - remove any extra characters\nphone = phone.replace(/[^+0-9]/g, '');\n\nconsole.log('Received from:', phone, 'Message:', message);\n\nreturn {\n  phone: phone,\n  message: message,\n  mediaUrl: mediaUrl,\n  mediaType: mediaType,\n  profileName: profileName,\n  isVoice: mediaType && mediaType.includes('audio'),\n  isImage: mediaType && mediaType.includes('image'),\n  timestamp: new Date().toISOString()\n};"
             },
             "id": "extract-1",
             "name": "Extract Message Data",
@@ -69,7 +69,7 @@
         },
         {
             "parameters": {
-                "jsCode": "const apiResponse = $input.item.json;\nconst userData = $('Extract Message Data').item.json;\n\nconsole.log('API Response:', JSON.stringify(apiResponse));\n\n// Get reply text from API response\nlet replyText = '';\n\nif (apiResponse.reply_text) {\n  replyText = apiResponse.reply_text;\n} else if (apiResponse.message) {\n  replyText = apiResponse.message;\n} else if (apiResponse.text) {\n  replyText = apiResponse.text;\n} else if (typeof apiResponse === 'string') {\n  replyText = apiResponse;\n} else {\n  replyText = '❓ कुछ गड़बड़ हुई। कृपया दोबारा कोशिश करें।';\n}\n\nreturn {\n  phone: userData.phone,\n  message: replyText,\n  voicePath: apiResponse.voice_path || null\n};"
+                "jsCode": "const apiResponse = $input.item.json;\nconst userData = $('Extract Message Data').item.json;\n\nconsole.log('API Response:', JSON.stringify(apiResponse));\n\n// Get reply text from API response\nlet replyText = '';\n\nif (apiResponse.reply_text) {\n  replyText = apiResponse.reply_text;\n} else if (apiResponse.message) {\n  replyText = apiResponse.message;\n} else if (apiResponse.text) {\n  replyText = apiResponse.text;\n} else if (typeof apiResponse === 'string') {\n  replyText = apiResponse;\n} else {\n  replyText = '❓ कुछ गड़बड़ हुई। कृपया दोबारा कोशिश करें।';\n}\n\n// Ensure phone is clean\nlet cleanPhone = userData.phone.replace(/[^+0-9]/g, '');\n\nreturn {\n  phone: cleanPhone,\n  message: replyText,\n  voicePath: apiResponse.voice_path || null\n};"
             },
             "id": "format-1",
             "name": "Format Response",
@@ -83,8 +83,9 @@
         {
             "parameters": {
                 "operation": "send",
-                "from": "whatsapp:+14155238886",
-                "to": "=whatsapp:{{ $json.phone }}",
+                "from": "+14155238886",
+                "to": "={{ $json.phone }}",
+                "toWhatsapp": true,
                 "message": "={{ $json.message }}"
             },
             "id": "send-1",
@@ -192,6 +193,6 @@
     "staticData": null,
     "tags": [],
     "triggerCount": 1,
-    "updatedAt": "2026-01-09T14:47:00.000Z",
-    "versionId": "2"
+    "updatedAt": "2026-01-09T15:18:00.000Z",
+    "versionId": "3"
 }
