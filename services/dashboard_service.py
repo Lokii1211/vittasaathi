@@ -49,7 +49,7 @@ class DashboardService:
         
         # Build dashboard
         dashboard = self._build_dashboard_text(
-            name, month, current, previous, changes, goals, language
+            user_id, name, month, current, previous, changes, goals, language
         )
         
         # Build voice summary
@@ -95,7 +95,7 @@ class DashboardService:
         }
     
     def _build_dashboard_text(
-        self, name: str, month: str, current: Dict, previous: Dict, 
+        self, user_id: str, name: str, month: str, current: Dict, previous: Dict, 
         changes: Dict, goals: Dict, language: str
     ) -> str:
         """Build beautiful text dashboard"""

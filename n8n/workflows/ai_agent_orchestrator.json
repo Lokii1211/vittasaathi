@@ -1,0 +1,148 @@
+{
+    "name": "VittaSaathi AI Agent - Main Orchestrator",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "vittasaathi-agent",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Incoming Message Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                200,
+                300
+            ],
+            "webhookId": "vittasaathi-agent"
+        },
+        {
+            "parameters": {
+                "jsCode": "// AI Agent: Extract and validate input data\n\nconst input = $input.item.json;\n\n// Extract phone and message from various formats\nlet phone = '';\nlet message = '';\nlet messageType = 'text';\nlet mediaUrl = null;\n\n// WhatsApp format\nif (input.From) {\n  phone = input.From.replace('whatsapp:', '').trim();\n  message = input.Body || '';\n  mediaUrl = input.MediaUrl0 || null;\n  messageType = input.MediaContentType0?.includes('audio') ? 'voice' : 'text';\n}\n// Direct API format\nelse if (input.phone) {\n  phone = input.phone;\n  message = input.message || '';\n  messageType = input.message_type || 'text';\n  mediaUrl = input.voice_url || input.media_url || null;\n}\n\n// Normalize phone number\nif (phone && !phone.startsWith('+')) {\n  phone = '+' + phone;\n}\n\n// Log for debugging\nconsole.log('=== AI AGENT INPUT ===' );\nconsole.log('Phone:', phone);\nconsole.log('Message:', message.substring(0, 100));\nconsole.log('Type:', messageType);\n\nreturn {\n  phone: phone,\n  message: message || 'hi',\n  messageType: messageType,\n  mediaUrl: mediaUrl,\n  timestamp: new Date().toISOString()\n};"
+            },
+            "id": "extract-input",
+            "name": "AI Agent: Extract Input",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                420,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://vittasaathi-1.onrender.com/api/message",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "From",
+                            "value": "={{ 'whatsapp:' + $json.phone }}"
+                        },
+                        {
+                            "name": "Body",
+                            "value": "={{ $json.message }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "timeout": 60000
+                }
+            },
+            "id": "call-backend",
+            "name": "AI Agent: Process with Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                640,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// AI Agent: Format response\n\nconst backendResponse = $input.item.json;\nconst inputData = $('AI Agent: Extract Input').item.json;\n\nconst reply = backendResponse.reply || backendResponse.message || 'Welcome to VittaSaathi!';\n\nconsole.log('=== AI AGENT RESPONSE ===');\nconsole.log('Reply:', reply.substring(0, 100));\n\nreturn {\n  success: true,\n  phone: inputData.phone,\n  reply: reply,\n  processedAt: new Date().toISOString()\n};"
+            },
+            "id": "format-response",
+            "name": "AI Agent: Format Response",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                860,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({ success: true, reply: $json.reply }) }}",
+                "options": {}
+            },
+            "id": "respond",
+            "name": "Send Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                1080,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Incoming Message Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent: Extract Input",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Agent: Extract Input": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent: Process with Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Agent: Process with Backend": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent: Format Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Agent: Format Response": {
+            "main": [
+                [
+                    {
+                        "node": "Send Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [
+        "AI Agent",
+        "VittaSaathi",
+        "Main"
+    ]
+}
