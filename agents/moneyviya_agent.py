@@ -60,14 +60,8 @@ I'm your personal AI Financial Advisor. I'll help you:
                 
                 "ask_occupation": """Nice to meet you, {name}! 😊
 
-What describes you best?
-1️⃣ Student/Young Professional
-2️⃣ Gig Worker (Delivery/Driver/Freelance)
-3️⃣ Homemaker
-4️⃣ Business Owner
-5️⃣ Salaried Employee
-
-*Reply with the number*""",
+What do you do for work?
+(e.g., Student, Delivery Partner, Housewife, Business Owner, or just tell me!)""",
                 
                 "ask_income": """Got it! 👍
 
@@ -287,19 +281,19 @@ Based on your profile:
             return self.templates["onboarding"]["ask_occupation"].format(name=user_data["name"])
         
         elif step == 2:  # Got occupation
-            # Handle both number and text input
-            msg = message.lower()
-            if "student" in msg or "1" in msg: occ = "student"
-            elif "gig" in msg or "delivery" in msg or "2" in msg: occ = "gig_worker"
-            elif "house" in msg or "3" in msg: occ = "housewife"
-            elif "business" in msg or "4" in msg: occ = "small_business"
-            else: occ = "salaried"
+            user_data["occupation"] = message.strip().title()
             
-            user_data["occupation"] = occ
+            # Heuristics for internal logic
+            msg = message.lower()
+            occ_type = "general"
+            if "student" in msg: occ_type = "student"
+            elif any(w in msg for w in ["gig", "delivery", "driver", "uber", "zomato"]): occ_type = "gig_worker"
+            elif any(w in msg for w in ["house", "home", "mom"]): occ_type = "housewife"
+            
+            user_data["occupation_type"] = occ_type
             user_data["onboarding_step"] = 3
             
-            income_type = "monthly" if occ in ["student", "housewife", "salaried"] else "average monthly"
-            return self.templates["onboarding"]["ask_income"].format(income_type=income_type)
+            return self.templates["onboarding"]["ask_income"].format(income_type="monthly")
         
         elif step == 3:  # Got income
             import re

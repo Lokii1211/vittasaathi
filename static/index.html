@@ -533,17 +533,48 @@
         }
 
         .nav-item.center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: -20px;
             width: 56px;
             height: 56px;
             border-radius: 50%;
             background: var(--gradient);
             color: white;
-            margin-top: -28px;
             box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 101;
         }
 
         .nav-item.center i {
             font-size: 24px;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            padding-bottom: 80px;
+            /* Space for nav */
+            animation: fadeIn 0.3s;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .whatsapp-float {
@@ -601,6 +632,30 @@
                 transform: translateY(0);
                 opacity: 1;
             }
+        }
+
+        /* Light Mode */
+        body.light-mode {
+            background: #F8FAFC;
+            color: #1E293B;
+            --bg-card: #FFFFFF;
+            --text: #1E293B;
+            --text-secondary: #64748B;
+            --border: #E2E8F0;
+        }
+
+        body.light-mode .balance-card {
+            box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.4);
+        }
+
+        body.light-mode .txn,
+        body.light-mode .action,
+        body.light-mode .lang-btn,
+        body.light-mode .country,
+        body.light-mode .phone {
+            background: #FFFFFF;
+            border-color: #E2E8F0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
@@ -755,6 +810,9 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Setup UI dynamically
+            setupAppStructure();
+
             setTimeout(() => {
                 document.getElementById('splash').classList.add('hidden');
                 checkSession();
@@ -997,6 +1055,93 @@
         }
         function showGoals() {
             openWhatsApp("Set a new goal");
+        }
+
+        function setupAppStructure() {
+            // 1. Setup Nav Clicks
+            const nav = document.getElementById('nav');
+            if (nav) {
+                const btns = nav.querySelectorAll('.nav-item');
+                if (btns.length >= 5) {
+                    btns[0].onclick = () => switchTab('home');
+                    btns[1].onclick = () => switchTab('stats');
+                    btns[2].onclick = () => addExpense();
+                    btns[3].onclick = () => switchTab('budget');
+                    btns[4].onclick = () => switchTab('profile');
+                }
+            }
+
+            // 2. Wrap Home View & Create Others
+            const app = document.getElementById('app');
+            if (app && !document.getElementById('home-view')) {
+                const homeView = document.createElement('div');
+                homeView.id = 'home-view';
+                homeView.className = 'view active';
+
+                // Move children that are NOT header into homeView
+                const children = Array.from(app.children);
+                children.forEach(c => {
+                    if (!c.classList.contains('header')) {
+                        homeView.appendChild(c);
+                    }
+                });
+                app.appendChild(homeView);
+
+                // Create Stats View
+                const stats = document.createElement('div');
+                stats.id = 'stats-view';
+                stats.className = 'view';
+                stats.innerHTML = `<div class="section-title">Analytics</div><div style="text-align:center;padding:40px;opacity:0.6"><i class="fas fa-chart-pie" style="font-size:48px;margin-bottom:10px"></i><p>Coming Soon</p></div>`;
+                app.appendChild(stats);
+
+                // Create Budget View
+                const budget = document.createElement('div');
+                budget.id = 'budget-view';
+                budget.className = 'view';
+                budget.innerHTML = `<div class="section-title">Budget</div><div style="text-align:center;padding:40px;opacity:0.6"><i class="fas fa-wallet" style="font-size:48px;margin-bottom:10px"></i><p>Coming Soon</p></div>`;
+                app.appendChild(budget);
+
+                // Create Profile View
+                const profile = document.createElement('div');
+                profile.id = 'profile-view';
+                profile.className = 'view';
+                profile.innerHTML = `
+                    <div class="section-title">Profile</div>
+                    <div style="background:var(--bg-card);padding:20px;border-radius:16px;text-align:center;margin-bottom:20px">
+                        <div style="width:80px;height:80px;background:var(--gradient);border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:30px">👤</div>
+                        <h2 id="profileName" style="margin-bottom:5px">User</h2>
+                        <p id="profilePhone" style="opacity:0.7;margin-bottom:20px">+91...</p>
+                        <button class="btn" style="background:rgba(239,68,68,0.2);color:#EF4444" onclick="logout()">Logout</button>
+                    </div>`;
+                app.appendChild(profile);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            const map = { 'home': 0, 'stats': 1, 'budget': 3, 'profile': 4 };
+            if (map[tabId] !== undefined) {
+                document.querySelectorAll('.nav-item')[map[tabId]].classList.add('active');
+            }
+
+            // Toggle Views
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            const view = document.getElementById(tabId + '-view');
+            if (view) view.classList.add('active');
+
+            // Load Profile if needed
+            if (tabId === 'profile') {
+                const user = JSON.parse(localStorage.getItem('user_data') || '{}');
+                document.getElementById('profileName').textContent = (user.name || 'Friend').split(' ')[0];
+                document.getElementById('profilePhone').textContent = localStorage.getItem('phone') || '';
+            }
+        }
+
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.clear();
+                window.location.reload();
+            }
         }
 
         function toggleTheme() {
