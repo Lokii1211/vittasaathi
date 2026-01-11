@@ -160,6 +160,118 @@ async def send_reminder(request: Request):
         return {"success": False, "error": str(e)}
 
 
+# ================= WHATSAPP CLOUD API WEBHOOK =================
+WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "moneyviya_webhook_2024")
+
+
+@app.get("/webhook/whatsapp-cloud")
+async def verify_whatsapp_webhook(request: Request):
+    """Verify webhook for WhatsApp Cloud API (Meta)"""
+    try:
+        params = dict(request.query_params)
+        mode = params.get("hub.mode")
+        token = params.get("hub.verify_token")
+        challenge = params.get("hub.challenge")
+        
+        print(f"[Webhook Verify] mode={mode}, token={token}, challenge={challenge}")
+        
+        if mode == "subscribe" and token == WHATSAPP_VERIFY_TOKEN:
+            print("[Webhook Verify] SUCCESS")
+            return int(challenge)
+        else:
+            print(f"[Webhook Verify] FAILED - expected token: {WHATSAPP_VERIFY_TOKEN}")
+            raise HTTPException(status_code=403, detail="Verification failed")
+    except Exception as e:
+        print(f"[Webhook Verify] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/webhook/whatsapp-cloud")
+async def handle_whatsapp_cloud_webhook(request: Request):
+    """Handle incoming messages from WhatsApp Cloud API (Meta Official)"""
+    try:
+        data = await request.json()
+        print(f"[WhatsApp Cloud] Received: {data}")
+        
+        # Extract message data
+        entry = data.get("entry", [{}])[0]
+        changes = entry.get("changes", [{}])[0]
+        value = changes.get("value", {})
+        
+        # Check if it's a message
+        if "messages" not in value:
+            return {"status": "ok"}
+        
+        messages = value.get("messages", [])
+        contacts = value.get("contacts", [])
+        
+        for msg in messages:
+            msg_type = msg.get("type")
+            phone = msg.get("from")  # Sender's phone number
+            
+            # Get sender name
+            sender_name = "Friend"
+            for contact in contacts:
+                if contact.get("wa_id") == phone:
+                    sender_name = contact.get("profile", {}).get("name", "Friend")
+            
+            # Extract message text
+            message_text = ""
+            if msg_type == "text":
+                message_text = msg.get("text", {}).get("body", "")
+            elif msg_type == "interactive":
+                interactive = msg.get("interactive", {})
+                if interactive.get("type") == "button_reply":
+                    message_text = interactive.get("button_reply", {}).get("title", "")
+                elif interactive.get("type") == "list_reply":
+                    message_text = interactive.get("list_reply", {}).get("title", "")
+            elif msg_type == "audio":
+                message_text = "[Voice message]"
+            elif msg_type == "image":
+                message_text = msg.get("image", {}).get("caption", "[Image]")
+            else:
+                message_text = f"[{msg_type}]"
+            
+            if not message_text:
+                continue
+            
+            print(f"[WhatsApp Cloud] Message from +{phone}: {message_text}")
+            
+            # Ensure phone has + prefix
+            if not phone.startswith("+"):
+                phone = "+" + phone
+            
+            # Get or create user
+            user_repo.update_activity(phone)
+            user = user_repo.ensure_user(phone)
+            
+            if sender_name and sender_name != "Friend" and not user.get("name"):
+                user_repo.update_user(phone, {"name": sender_name})
+                user["name"] = sender_name
+            
+            # Process with AI Agent
+            try:
+                reply_text = moneyviya_agent.process_message(phone, message_text, user)
+                user_repo.update_user(phone, user)
+            except Exception as agent_error:
+                print(f"[Agent Error] {agent_error}")
+                reply_text = "I'm having trouble. Try:\n• 'spent 50 on tea'\n• 'earned 500 delivery'\n• 'help'"
+            
+            # Send reply
+            if reply_text and whatsapp_cloud_service.is_available():
+                clean_phone = phone.replace("+", "")
+                result = whatsapp_cloud_service.send_text_message(clean_phone, reply_text)
+                print(f"[WhatsApp Cloud] Reply sent: {result}")
+        
+        return {"status": "ok"}
+        
+    except Exception as e:
+        print(f"[WhatsApp Cloud] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "error": str(e)}
+
+
 # Add direct report routes for n8n (without /api/v2 prefix)
 @app.get("/reports/{phone}/weekly-comparison")
 def get_weekly_report(phone: str):
