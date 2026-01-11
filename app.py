@@ -75,6 +75,29 @@ try:
 except ImportError as e:
     print(f"Warning: Extended API not loaded: {e}")
 
+
+# Health check and status endpoints
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "ok",
+        "version": "3.0.0",
+        "whatsapp_cloud_configured": whatsapp_cloud_service.is_available(),
+        "openai_configured": openai_service.is_available()
+    }
+
+
+@app.get("/api/whatsapp-status")
+def whatsapp_status():
+    """Check WhatsApp Cloud API configuration"""
+    return {
+        "configured": whatsapp_cloud_service.is_available(),
+        "phone_number_id": os.getenv("WHATSAPP_PHONE_NUMBER_ID", "NOT SET"),
+        "token_set": bool(os.getenv("WHATSAPP_CLOUD_TOKEN", ""))
+    }
+
+
 # Add direct report routes for n8n (without /api/v2 prefix)
 @app.get("/reports/{phone}/weekly-comparison")
 def get_weekly_report(phone: str):
