@@ -633,10 +633,20 @@
             </div>
 
             <div style="margin-top: auto;">
-                <div class="input-group">
+                <div class="input-group" id="phone-group">
                     <input type="text" class="country" value="+91" readonly>
                     <input type="tel" class="phone" id="phone" placeholder="Enter mobile number" maxlength="10">
                 </div>
+
+                <div id="otp-group" style="display:none;">
+                    <p style="text-align:center;color:var(--text-secondary);margin-bottom:10px;font-size:14px;">Enter
+                        OTP sent to your WhatsApp</p>
+                    <div class="input-group">
+                        <input type="tel" class="phone" id="otp-input" placeholder="- - - - - -" maxlength="6"
+                            style="text-align:center;letter-spacing:5px;font-weight:bold;">
+                    </div>
+                </div>
+
                 <button class="btn btn-primary" id="loginBtn" disabled><span>Continue</span><i
                         class="fas fa-arrow-right"></i></button>
                 <div class="divider">or</div>
@@ -646,6 +656,7 @@
         </div>
 
         <div class="app" id="app">
+            <!-- App content remains same until script -->
             <div class="header">
                 <div class="greeting">
                     <span class="small" id="greet">Good Morning</span>
@@ -739,7 +750,8 @@
 
     <script>
         const API = window.location.origin;
-        const WA_NUMBER = '919363324580'; // Updated to user's number
+        const WA_NUMBER = '919363324580';
+        let currentStep = 'PHONE'; // PHONE or OTP
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -750,7 +762,9 @@
 
             // Phone input formatting
             const phoneInput = document.getElementById('phone');
+            const otpInput = document.getElementById('otp-input');
             const loginBtn = document.getElementById('loginBtn');
+
             phoneInput.addEventListener('input', (e) => {
                 let val = e.target.value.replace(/\D/g, '');
                 if (val.length > 10) val = val.substring(0, 10);
@@ -765,8 +779,22 @@
                 }
             });
 
+            otpInput.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/\D/g, '');
+                if (val.length > 6) val = val.substring(0, 6);
+                e.target.value = val;
+
+                if (val.length === 6) {
+                    loginBtn.disabled = false;
+                    loginBtn.classList.add('active');
+                } else {
+                    loginBtn.disabled = true;
+                    loginBtn.classList.remove('active');
+                }
+            });
+
             // Login button
-            loginBtn.addEventListener('click', login);
+            loginBtn.addEventListener('click', handleLoginClick);
 
             // Language buttons
             document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -777,7 +805,6 @@
                 });
             });
 
-            // Set greeting
             updateGreeting();
         });
 
@@ -799,42 +826,87 @@
             document.getElementById('greet').textContent = greet;
         }
 
-        async function login() {
+        async function handleLoginClick() {
+            if (currentStep === 'PHONE') {
+                await sendOTP();
+            } else {
+                await verifyOTP();
+            }
+        }
+
+        async function sendOTP() {
             const phoneVal = document.getElementById('phone').value;
             if (phoneVal.length !== 10) return;
 
             const phone = '+91' + phoneVal;
             const btn = document.getElementById('loginBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Converting...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending OTP...';
 
             try {
-                // Determine if we should ask for OTP or just let them in (MVP style)
-                // For now, we simulate sending OTP via WhatsApp
                 const res = await fetch(`${API}/api/v2/auth/send-otp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone })
                 });
 
-                localStorage.setItem('phone', phone);
-                localStorage.setItem('token', 'session_' + Date.now());
+                const data = await res.json();
 
-                // Show success toast
-                toast('Welcome back! Loading dashboard...', 'success');
-
-                setTimeout(() => {
-                    showApp();
-                    btn.disabled = false;
+                if (data.success) {
+                    toast('OTP sent to WhatsApp!', 'success');
+                    // Switch to OTP view
+                    currentStep = 'OTP';
+                    document.getElementById('phone-group').style.display = 'none';
+                    document.getElementById('otp-group').style.display = 'block';
+                    document.getElementById('otp-input').focus();
+                    btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
+                    btn.disabled = true; // Wait for input
+                } else {
+                    toast(data.message || 'Error sending OTP', 'error');
                     btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
-                }, 1000);
-
+                    btn.disabled = false;
+                }
             } catch (e) {
                 console.error("Login Error:", e);
-                // Fallback login
-                localStorage.setItem('phone', phone);
-                localStorage.setItem('token', 'demo_session');
-                showApp();
+                toast('Network Error', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
+            }
+        }
+
+        async function verifyOTP() {
+            const phone = '+91' + document.getElementById('phone').value;
+            const otp = document.getElementById('otp-input').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (otp.length !== 6) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+            try {
+                const res = await fetch(`${API}/api/v2/auth/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, otp })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('phone', phone);
+                    localStorage.setItem('token', data.token);
+                    toast('Login Successful!', 'success');
+                    setTimeout(() => showApp(), 500);
+                } else {
+                    toast(data.message || 'Invalid OTP', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
+                }
+            } catch (e) {
+                toast('Verification failed', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
             }
         }
 
@@ -851,28 +923,14 @@
             if (!phone) return;
 
             try {
-                // Fetch user data from backend
                 const res = await fetch(`${API}/api/v2/dashboard/${encodeURIComponent(phone)}`);
-
                 if (res.ok) {
                     const data = await res.json();
-
-                    // Update UI with real data
                     animateValue("balance", data.balance || 0);
                     animateValue("income", data.total_income || 0);
                     animateValue("expense", data.total_expenses || 0);
-
-                    if (data.name) {
-                        document.getElementById('userName').textContent = data.name.split(' ')[0];
-                    }
-
-                    // Update recent transactions
-                    if (data.recent_transactions && data.recent_transactions.length > 0) {
-                        renderTransactions(data.recent_transactions);
-                    }
-                } else {
-                    // Initialize if empty using demo for visualization
-                    document.getElementById('balance').textContent = '₹0';
+                    if (data.name) document.getElementById('userName').textContent = data.name.split(' ')[0];
+                    if (data.recent_transactions?.length) renderTransactions(data.recent_transactions);
                 }
             } catch (e) {
                 console.error("Data Load Error:", e);
@@ -881,14 +939,12 @@
 
         function renderTransactions(txns) {
             const list = document.getElementById('txnList');
-            list.innerHTML = ''; // Clear demo data
-
+            list.innerHTML = '';
             txns.slice(0, 5).forEach(txn => {
                 const isExpense = txn.type === 'expense';
                 const icon = isExpense ? 'minus' : 'plus';
                 const colorClass = isExpense ? 'out' : 'in';
                 const iconBg = isExpense ? 'bills' : 'gig';
-
                 const item = `
                 <div class="txn">
                     <div class="txn-icon ${iconBg}"><i class="fas fa-${icon}"></i></div>
@@ -905,12 +961,12 @@
         function animateValue(id, end) {
             const obj = document.getElementById(id);
             if (!obj) return;
-            // Simple formatting for now
             obj.textContent = '₹' + parseInt(end).toLocaleString('en-IN');
         }
 
-        function openWhatsApp() {
-            window.open(`https://wa.me/${WA_NUMBER}?text=Hi! I want to track my expenses.`, '_blank');
+        function openWhatsApp(msg) {
+            const text = msg || "Hi! I want to track my expenses.";
+            window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function toast(msg, type = 'success') {
@@ -921,13 +977,23 @@
             setTimeout(() => div.remove(), 3000);
         }
 
-        function addExpense() { openWhatsApp(); }
-        function addIncome() { openWhatsApp(); }
-        function showReport() { openWhatsApp(); }
-        function showGoals() { openWhatsApp(); }
+        // Direct Action Buttons - Now Functional
+        function addExpense() {
+            // In future: Open modal. For now: Smart WhatsApp Link
+            openWhatsApp("Spent 100 on Food");
+        }
+        function addIncome() {
+            openWhatsApp("Earned 500 from Delivery");
+        }
+        function showReport() {
+            openWhatsApp("Show my report");
+        }
+        function showGoals() {
+            openWhatsApp("Set a new goal");
+        }
 
         function toggleTheme() {
-            document.body.classList.toggle('light-mode'); // Assuming CSS handles this
+            document.body.classList.toggle('light-mode');
             const icon = document.querySelector('.header-btns i.fa-moon');
             if (icon) icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
         }

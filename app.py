@@ -2768,6 +2768,89 @@ async def fraud_check(payload: TransactionPayload):
     return combined
 
 
+
+# ================= REAL OTP AUTHENTICATION =================
+OTP_CACHE = {}  # Format: {phone: {"otp": "123456", "expires": timestamp}}
+
+@app.post("/api/v2/auth/send-otp")
+async def api_send_otp(request: Request):
+    """Generate and send OTP via WhatsApp"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "").replace(" ", "").replace("-", "")
+        
+        if not phone:
+            return {"success": False, "message": "Phone number required"}
+            
+        # Generate 6 digit OTP
+        import random
+        otp = str(random.randint(100000, 999999))
+        
+        # Store in cache (valid for 5 mins)
+        import time
+        OTP_CACHE[phone] = {
+            "otp": otp,
+            "expires": time.time() + 300
+        }
+        
+        # Send via WhatsApp (using the Cloud Service)
+        if whatsapp_cloud_service.is_available():
+            clean_phone = phone.replace("+", "")
+            message = f"🔐 Your MoneyViya Login OTP is: *{otp}*\n\nDo not share this with anyone."
+            whatsapp_cloud_service.send_text_message(clean_phone, message)
+            
+            return {"success": True, "message": "OTP sent to WhatsApp"}
+        else:
+            # Fallback for dev/demo if WA not configured
+            print(f"================ OTP FOR {phone}: {otp} ================")
+            return {"success": True, "message": "OTP sent (Dev Mode)"}
+            
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+@app.post("/api/v2/auth/verify-otp")
+async def api_verify_otp(request: Request):
+    """Verify OTP and return session token"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "")
+        otp = data.get("otp", "")
+        
+        if not phone or not otp:
+            return {"success": False, "message": "Phone and OTP required"}
+            
+        record = OTP_CACHE.get(phone)
+        
+        if not record:
+            return {"success": False, "message": "OTP expired or not sent"}
+            
+        import time
+        if time.time() > record["expires"]:
+            del OTP_CACHE[phone]
+            return {"success": False, "message": "OTP expired"}
+            
+        if record["otp"] != otp:
+            return {"success": False, "message": "Invalid OTP"}
+            
+        # Success! Clear OTP and return token
+        del OTP_CACHE[phone]
+        
+        # Create user if not exists
+        user_repo.ensure_user(phone)
+        
+        # Create session token (simple one for now)
+        token = f"session_{phone}_{int(time.time())}"
+        
+        return {
+            "success": True, 
+            "token": token,
+            "phone": phone
+        }
+        
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
 # ================= RUN =================
 if __name__ == "__main__":
     import uvicorn
