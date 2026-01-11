@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MoneyViya - Your Financial Friend | पैसा साथी</title>
+    <title>MoneyViya - Your Financial Friend | பண நண்பன்</title>
 
     <!-- PWA Meta -->
     <meta name="theme-color" content="#6366F1">
@@ -14,8 +14,9 @@
 
     <!-- SEO -->
     <meta name="description"
-        content="MoneyViya - Free financial advisor for gig workers, daily wagers & small vendors. Track expenses, save money, get investment tips in Hindi, Tamil, Telugu.">
-    <meta name="keywords" content="financial advisor, gig workers, expense tracker, savings, investment, hindi, tamil">
+        content="MoneyViya - Free financial advisor for gig workers, daily wagers & small vendors. Track expenses, save money, get investment tips in English, Tamil, Telugu.">
+    <meta name="keywords"
+        content="financial advisor, gig workers, expense tracker, savings, investment, tamil, english">
 
     <!-- Fonts & Icons -->
     <link
@@ -1075,7 +1076,7 @@
     <div class="splash-screen" id="splashScreen">
         <div class="splash-logo">💰</div>
         <div class="splash-title">MoneyViya</div>
-        <div class="splash-subtitle">Your Financial Friend • आपका वित्तीय साथी</div>
+        <div class="splash-subtitle">Your Financial Friend • உங்கள் நிதி நண்பன்</div>
     </div>
 
     <!-- Login Screen -->
@@ -1085,17 +1086,13 @@
                 <img src="/static/logo.png" alt="MoneyViya" onerror="this.style.display='none'">
             </div>
             <h1 class="login-title">MoneyViya</h1>
-            <p class="login-tagline">Track • Save • Grow | ट्रैक • बचाओ • बढ़ाओ</p>
+            <p class="login-tagline">Track • Save • Grow | கண்காணி • சேமி • வளர்</p>
         </div>
 
         <div class="language-selector">
             <button class="lang-btn active" data-lang="english">
                 <span class="flag">🇬🇧</span>
                 <span>English</span>
-            </button>
-            <button class="lang-btn" data-lang="hindi">
-                <span class="flag">🇮🇳</span>
-                <span>हिंदी</span>
             </button>
             <button class="lang-btn" data-lang="tamil">
                 <span class="flag">🇮🇳</span>
@@ -1104,6 +1101,10 @@
             <button class="lang-btn" data-lang="telugu">
                 <span class="flag">🇮🇳</span>
                 <span>తెలుగు</span>
+            </button>
+            <button class="lang-btn" data-lang="kannada">
+                <span class="flag">🇮🇳</span>
+                <span>ಕನ್ನಡ</span>
             </button>
         </div>
 
@@ -1330,7 +1331,7 @@
         };
 
         const API_BASE = window.location.origin;
-        const WHATSAPP_NUMBER = '919363324580';
+        const WHATSAPP_NUMBER = '15551589563';  // Meta test number
 
         // ========== INITIALIZATION ==========
         document.addEventListener('DOMContentLoaded', () => {
@@ -1347,7 +1348,7 @@
             applyTheme();
         });
 
-        function setupEventListeners() {
+        function setupEvenrs() {
             // Phone input
             const phoneInput = document.getElementById('phoneInput');
             phoneInput.addEventListener('input', (e) => {
@@ -1357,7 +1358,7 @@
             });
 
             // Language selector
-            document.querySelectorAll('.lang-btn').forEach(btn => {
+            ocument.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
@@ -1367,7 +1368,7 @@
             });
 
             // Category buttons
-            document.querySelectorAll('.category-btn').forEach(btn => {
+            doSelectorAll('.category-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
@@ -1376,20 +1377,18 @@
             });
 
             // Send OTP button
-            document.getElementById('sendOtpBtn').addEventListener('click', sendOTP);
+            document.getElendOtpBtn').addEventListener('click', sendOTP);
         }
 
         // ========== AUTH ==========
-        async function sendOTP() {
-            const phone = document.getElementById('phoneInput').value;
-            const btn = document.getElementById('sendOtpBtn');
+        async function sendOTP()       const phone = document.getElementById('phoneInput').value;
+        const btn = document.getElementById('sendOtpBtn');
 
-            btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div>';
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spin;
 
-            try {
-                const response = await fetch(`${API_BASE}/api/v2/auth/send-otp`, {
-                    method: 'POST',
+        try {
+            const response = await fetch(`${API_BASE}/api/v2/auth/se                   method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone: '+91' + phone })
                 });
@@ -1397,8 +1396,8 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast('OTP sent to your WhatsApp!', 'success');
-                    state.phone = '+91' + phone;
+             ('OTP sent to your WhatsApp!', 'success');
+          phone = '+91' + phone;
                     localStorage.setItem('phone', state.phone);
                     // For demo, auto-login
                     setTimeout(() => {
@@ -1418,10 +1417,9 @@
             btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
         }
 
-        // ========== APP FUNCTIONS ==========
+  ======= APP FUNCTIONS ==========
         function showApp() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('appContainer').classList.remove('hidden');
+            document.getElementById('loginScreen').classList.add('hidd          document.getElementById('appContainer').classList.remove('hidden');
             setGreeting();
             loadDashboard();
         }
@@ -1429,17 +1427,17 @@
         function setGreeting() {
             const hour = new Date().getHours();
             let greeting = 'Good Morning';
-            if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
+            if (hour >= 12 && 7) greeting = 'Good Afternoon';
             else if (hour >= 17) greeting = 'Good Evening';
 
             document.getElementById('greetingText').textContent = greeting;
-            document.getElementById('userName').textContent = state.user?.name || 'Friend';
-        }
+            document.getElementById('userName').textContent = state.user?.name || 'Fri  }
 
         async function loadDashboard() {
             try {
-                const response = await fetch(`${API_BASE}/api/v2/dashboard/${encodeURIComponent(state.phone)}`);
-                if (response.ok) {
+                const response = await fetch(`${ API_BASE } / api / v2 / dashboard / ${ encodeURIComponent(state.phone)
+        }`);
+        if (response.ok) {
                     const data = await response.json();
                     updateDashboard(data);
                 }
@@ -1452,7 +1450,7 @@
                 balance: 24780,
                 total_income: 35000,
                 total_expenses: 10220,
-                transactions: [
+    transactions: [
                     { description: 'Chai & Snacks', category: 'food', amount: 50, type: 'expense', date: new Date() },
                     { description: 'Auto ride', category: 'transport', amount: 120, type: 'expense', date: new Date() },
                     { description: 'Freelance work', category: 'income', amount: 5000, type: 'income', date: new Date() },
@@ -1463,7 +1461,7 @@
 
         function updateDashboard(data) {
             document.getElementById('balanceAmount').textContent = formatCurrency(data.balance || 0);
-            document.getElementById('incomeTotal').textContent = formatCurrency(data.total_income || 0);
+            document.getElementById('incomeTotal').ent = formatCurrency(data.total_income || 0);
             document.getElementById('expenseTotal').textContent = formatCurrency(data.total_expenses || 0);
 
             renderTransactions(data.transactions || []);
@@ -1472,14 +1470,14 @@
         function renderTransactions(transactions) {
             const list = document.getElementById('transactionList');
 
-            if (transactions.length === 0) {
+            ions.length === 0) {
                 list.innerHTML = `
-                    <div class="empty-state">
+            < div class="empty-state" >
                         <div class="empty-icon">📝</div>
-                        <div class="empty-title">No transactions yet</div>
+                        <div class="emp transactions yet</div>
                         <div class="empty-text">Add your first expense or income</div>
-                    </div>
-                `;
+                    </div >
+            `;
                 return;
             }
 
@@ -1487,7 +1485,7 @@
                 const iconClass = getCategoryIcon(txn.category);
                 const isExpense = txn.type === 'expense';
                 return `
-                    <div class="transaction-item">
+        "transaction-item" >
                         <div class="txn-icon ${txn.category}">${iconClass}</div>
                         <div class="txn-details">
                             <div class="txn-title">${txn.description}</div>
@@ -1496,8 +1494,8 @@
                         <div class="txn-amount ${txn.type}">
                             ${isExpense ? '-' : '+'}${formatCurrency(txn.amount)}
                         </div>
-                    </div>
-                `;
+                    </div >
+            `;
             }).join('');
         }
 
@@ -1505,8 +1503,7 @@
         function showAddModal(type = 'expense') {
             setType(type);
             document.getElementById('addModal').classList.add('active');
-            document.getElementById('amountInput').focus();
-        }
+            document.getElementById('amountInput').focus    }
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
@@ -1515,9 +1512,8 @@
         function setType(type) {
             state.currentType = type;
             document.querySelectorAll('.type-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.classList.contains(type)) btn.classList.add('active');
-            });
+        btn.classList.remove('active');
+                if (btn.classList.contains(type)) btn.classList.add('active        });
         }
 
         async function saveTransaction() {
@@ -1525,28 +1521,27 @@
             const note = document.getElementById('noteInput').value;
 
             if (!amount || amount <= 0) {
-                showToast('Enter a valid amount', 'error');
+                showToast('Entid amount', 'error');
                 return;
             }
 
             try {
-                const response = await fetch(`${API_BASE}/api/v2/transactions`, {
+                const response = await fetch(`${ API_BASE } /api/v2 / transactions`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        phone: state.phone,
-                        amount: amount,
+                        phone: state.phone              amount: amount,
                         type: state.currentType,
                         category: state.currentCategory,
-                        description: note || `${formatCategory(state.currentCategory)} ${state.currentType}`
+                        description: note || `${ formatCategory(state.currentCategory) } ${ state.currentType } `
                     })
                 });
 
                 if (response.ok) {
-                    showToast(`${state.currentType === 'expense' ? '💸' : '💰'} ₹${amount} ${state.currentType} saved!`, 'success');
+                    showToast(`${ state.currentType === 'expense' ? '💸' : '💰' } ₹${ amount } ${ state.currentType } saved!`, 'success');
                     closeModal('addModal');
                     document.getElementById('amountInput').value = '';
-                    document.getElementById('noteInput').value = '';
+                   mentById('noteInput').value = '';
                     loadDashboard();
                 }
             } catch (error) {
@@ -1563,50 +1558,49 @@
             const btn = document.getElementById('voiceBtn');
 
             if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-                showToast('Voice not supported. Use WhatsApp instead.', 'warning');
+                t('Voice not supported. Use WhatsApp instead.', 'warning');
                 return;
             }
 
-            if (isRecording) {
+            cording) {
                 stopRecording();
             } else {
                 startRecording();
-            }
+ 
         }
 
         function startRecording() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRecognition();
-            recognition.lang = state.language === 'hindi' ? 'hi-IN' : 'en-IN';
+            recog= state.language === 'hindi' ? 'hi-IN' : 'en-IN';
             recognition.continuous = false;
 
             recognition.onresult = (event) => {
-                const text = event.results[0][0].transcript;
+        const text = event.results[0][0].transcript;
                 document.getElementById('noteInput').value = text;
                 parseVoiceInput(text);
                 stopRecording();
             };
 
             recognition.onerror = () => {
-                showToast('Voice error. Try again.', 'error');
-                stopRecording();
+                showToast('Voice error. Try again.', 'error'       stopRecording();
             };
 
             recognition.start();
             isRecording = true;
             document.getElementById('voiceBtn').classList.add('recording');
-            document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i> <span>Listening...</span>';
+            document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"Listening...</span>';
         }
 
         function stopRecording() {
             if (recognition) recognition.stop();
             isRecording = false;
-            document.getElementById('voiceBtn').classList.remove('recording');
+    ment.getElementById('voiceBtn').classList.remove('recording');
             document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i> <span>Say "Spent 50 on chai"</span>';
         }
 
         function parseVoiceInput(text) {
-            // Extract amount
+            // Extrac
             const numbers = text.match(/\d+/g);
             if (numbers) {
                 document.getElementById('amountInput').value = numbers[0];
@@ -1614,29 +1608,25 @@
 
             // Detect type
             if (text.toLowerCase().includes('spent') || text.toLowerCase().includes('paid') || text.toLowerCase().includes('खर्च')) {
-                setType('expense');
+             pe('expense');
             } else if (text.toLowerCase().includes('earned') || text.toLowerCase().includes('received') || text.toLowerCase().includes('मिला')) {
                 setType('income');
             }
 
-            // Detect category
-            const categoryMap = {
+            // Detect cat      const categoryMap = {
                 'food': ['food', 'chai', 'खाना', 'lunch', 'dinner', 'breakfast'],
                 'transport': ['auto', 'bus', 'cab', 'petrol', 'uber', 'ola'],
                 'shopping': ['shopping', 'clothes', 'amazon'],
                 'bills': ['bill', 'recharge', 'electricity', 'rent'],
                 'health': ['medicine', 'doctor', 'hospital']
-            };
-
-            const textLower = text.toLowerCase();
+                const textLower = text.toLowerCase();
             for (const [cat, keywords] of Object.entries(categoryMap)) {
                 if (keywords.some(kw => textLower.includes(kw))) {
                     state.currentCategory = cat;
                     document.querySelectorAll('.category-btn').forEach(btn => {
                         btn.classList.toggle('active', btn.dataset.cat === cat);
                     });
-                    break;
-                }
+                               }
             }
         }
 
@@ -1652,12 +1642,12 @@
                 shopping: 'Shopping',
                 bills: 'Bills & Utilities',
                 health: 'Healthcare',
-                entertainment: 'Entertainment',
+                entet: 'Entertainment',
                 education: 'Education',
                 income: 'Income',
                 other: 'Other'
             };
-            return names[cat] || cat;
+            return names[cat;
         }
 
         function getCategoryIcon(cat) {
@@ -1668,7 +1658,7 @@
                 bills: '<i class="fas fa-file-invoice"></i>',
                 health: '<i class="fas fa-heartbeat"></i>',
                 entertainment: '<i class="fas fa-film"></i>',
-                education: '<i class="fas fa-book"></i>',
+                education: '<i class="fok"></i>',
                 income: '<i class="fas fa-wallet"></i>',
                 other: '<i class="fas fa-receipt"></i>'
             };
@@ -1678,12 +1668,12 @@
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${message}`;
+            toast.className = `toast ${ type } `;
+            toast.innerHTML = `< i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}" ></i > ${ message } `;
             container.appendChild(toast);
 
             setTimeout(() => {
-                toast.remove();
+        toast.remove();
             }, 3000);
         }
 
@@ -1695,28 +1685,28 @@
 
         function applyTheme() {
             document.body.classList.toggle('light-mode', state.theme === 'light');
-            document.getElementById('themeIcon').className = state.theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            document.getElementById('themeIcon').className = state.theme === 'daa-moon' : 'fas fa-sun';
         }
 
         function openWhatsApp() {
-            const message = encodeURIComponent('Hi! I want to track my expenses.');
+            const message =RIComponent('Hi! I want to track my expenses.');
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
         }
 
         function showTab(tab) {
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            docurySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             event.target.closest('.nav-item').classList.add('active');
             // Tab switching logic here
         }
 
         function showReportModal() {
-            showToast('Opening your financial report...', 'success');
+            owToast('Opening your financial report...', 'success');
             // Implement report modal
         }
 
         function showGoalsModal() {
             showToast('Set your savings goals!', 'success');
-            // Implement goals modal
+            //nt goals modal
         }
 
         function showNotifications() {
@@ -1724,7 +1714,7 @@
         }
 
         function showAllTransactions() {
-            showToast('Loading all transactions...', 'success');
+            showToast('Loading al        ns...', 'success');
         }
     </script>
 </body>
