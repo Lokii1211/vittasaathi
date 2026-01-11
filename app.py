@@ -18,7 +18,12 @@ import os
 try:
     import pytesseract
     from PIL import Image
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    import platform
+    
+    if platform.system() == "Windows":
+        pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    # On Linux/Railway, it will use default PATH
+        
     OCR_AVAILABLE = True
 except:
     OCR_AVAILABLE = False
@@ -2820,20 +2825,37 @@ async def api_verify_otp(request: Request):
             return {"success": False, "message": "Phone and OTP required"}
             
         record = OTP_CACHE.get(phone)
-        
-        if not record:
-            return {"success": False, "message": "OTP expired or not sent"}
-            
         import time
-        if time.time() > record["expires"]:
-            del OTP_CACHE[phone]
-            return {"success": False, "message": "OTP expired"}
+        valid = False
+        
+        # Check global cache (if sent via Backend/Cloud API)
+        if record:
+            if time.time() > record["expires"]:
+                del OTP_CACHE[phone]
+            elif record["otp"] == otp:
+                valid = True
+                del OTP_CACHE[phone]
+        
+        # Check user database (if requested via Agent "Send OTP")
+        if not valid:
+            user = user_repo.get_user(phone)
+            if user:
+                temp_otp = user.get("temp_otp")
+                expiry = user.get("otp_expiry", 0)
+                if temp_otp and str(temp_otp) == str(otp):
+                    if time.time() <= expiry:
+                        valid = True
+                        # Clear used OTP
+                        user["temp_otp"] = None 
+                        user_repo.update_user(phone, user)
+
+        if not valid:
+            return {"success": False, "message": "Invalid or expired OTP"}
             
-        if record["otp"] != otp:
-            return {"success": False, "message": "Invalid OTP"}
-            
-        # Success! Clear OTP and return token
-        del OTP_CACHE[phone]
+        # Success! 
+        
+        # Create user if not exists
+        user_repo.ensure_user(phone)
         
         # Create user if not exists
         user_repo.ensure_user(phone)

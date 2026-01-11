@@ -806,6 +806,13 @@
             });
 
             updateGreeting();
+
+            // Live Updates (Poll every 5 seconds)
+            setInterval(() => {
+                if (localStorage.getItem('token')) {
+                    loadData();
+                }
+            }, 5000);
         });
 
         function checkSession() {

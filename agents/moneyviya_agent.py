@@ -249,6 +249,22 @@ Based on your profile:
         if any(word in message for word in ["earned", "received", "got", "income", "कमाया", "வருமானம்"]):
             return self._log_income(message, user_data)
         
+        # Simple confirmations
+        if message in ["yes", "yeah", "yep", "correct", "complete", "done", "confirm"]:
+            return "✅ *Great!* I've updated your records. Day closed! 🌙"
+            
+        if message in ["no", "nope", "wait", "add more"]:
+            return "Okay! Just type what else you want to add (e.g. 'Spent 50 on milk')."
+
+        # OTP Request (Fallback for Baileys/Free users)
+        if any(w in message for w in ["otp", "login code", "verification code"]):
+            import random
+            import time
+            otp = str(random.randint(100000, 999999))
+            user_data["temp_otp"] = otp
+            user_data["otp_expiry"] = time.time() + 300
+            return f"🔐 Your MoneyViya Login OTP is: *{otp}*\n\n(Valid for 5 minutes). Enter this on the website to log in."
+
         # Use AI for natural conversation
         return self._ai_conversation(message, user_data)
     
