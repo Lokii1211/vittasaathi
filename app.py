@@ -133,6 +133,24 @@ def get_active_users():
         return []
 
 
+@app.post("/api/send-message")
+async def send_direct_message(request: Request):
+    """Send direct WhatsApp message (used by n8n evening check)"""
+    try:
+        data = await request.json()
+        phone = data.get("phone")
+        message = data.get("message")
+        
+        if whatsapp_cloud_service.is_available():
+            clean_phone = phone.replace("+", "")
+            result = whatsapp_cloud_service.send_text_message(clean_phone, message)
+            return {"success": True, "result": result}
+        
+        return {"success": False, "error": "WhatsApp not configured"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @app.post("/api/send-reminder")
 async def send_reminder(request: Request):
     """Send daily reminder to a user (used by n8n)"""
