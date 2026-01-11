@@ -58,6 +58,11 @@ class AIOnboardingService:
         """Detect which language user wants from their message"""
         msg = message.lower().strip()
         
+        # Common greetings should NOT trigger language selection
+        greetings = ["hi", "hello", "hey", "hii", "hiii", "namaste", "ok", "yes", "no", "start"]
+        if msg in greetings:
+            return None  # Show welcome message instead
+        
         # Direct language mentions
         language_map = {
             # English variations

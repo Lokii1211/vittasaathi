@@ -1,0 +1,357 @@
+{
+    "name": "VittaSaathi AI Agent - Smart Financial Assistant",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "vittasaathi-agent",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Incoming Message",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                200,
+                300
+            ],
+            "webhookId": "vittasaathi-agent"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Extract and normalize message data\nconst input = $input.item.json;\n\nlet phone = '';\nlet message = '';\nlet messageType = 'text';\nlet mediaUrl = null;\n\n// Handle various input formats\nif (input.From) {\n  phone = input.From.replace('whatsapp:', '').trim();\n  message = input.Body || 'hi';\n  mediaUrl = input.MediaUrl0 || null;\n  if (input.MediaContentType0?.includes('audio')) messageType = 'voice';\n  if (input.MediaContentType0?.includes('image')) messageType = 'image';\n} else if (input.phone) {\n  phone = input.phone;\n  message = input.message || 'hi';\n  messageType = input.type || 'text';\n}\n\nif (!phone.startsWith('+')) phone = '+' + phone;\n\nreturn {\n  phone,\n  message,\n  messageType,\n  mediaUrl,\n  timestamp: new Date().toISOString()\n};"
+            },
+            "id": "extract-data",
+            "name": "Extract Message Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                420,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": false
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.messageType }}",
+                            "rightValue": "voice",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        }
+                    ]
+                }
+            },
+            "id": "check-voice",
+            "name": "Is Voice Message?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                640,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://api.openai.com/v1/audio/transcriptions",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer {{ $env.OPENAI_API_KEY }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "contentType": "multipart-form-data",
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "model",
+                            "value": "whisper-1"
+                        },
+                        {
+                            "name": "file",
+                            "value": "={{ $json.mediaUrl }}"
+                        }
+                    ]
+                }
+            },
+            "id": "transcribe-voice",
+            "name": "Transcribe Voice (Whisper)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                860,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://api.openai.com/v1/chat/completions",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer {{ $env.OPENAI_API_KEY }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are VittaSaathi, a personal financial advisor AI for India. Analyze the user's message and extract:\\n1. intent: INCOME_ENTRY, EXPENSE_ENTRY, BALANCE_QUERY, REPORT_QUERY, ADVICE_REQUEST, GOAL_SETTING, GREETING, HELP\\n2. amount: number if mentioned\\n3. category: food, transport, rent, utilities, salary, etc.\\n4. response: helpful reply in same language as user\\n\\nRespond in JSON format only.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.message }}\"\n    }\n  ],\n  \"temperature\": 0.3,\n  \"response_format\": {\"type\": \"json_object\"}\n}"
+            },
+            "id": "ai-understand",
+            "name": "AI Understand Intent (GPT)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                860,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const input = $input.item.json;\nconst prevData = $('Extract Message Data').item.json;\n\nlet aiResponse;\ntry {\n  aiResponse = JSON.parse(input.choices[0].message.content);\n} catch (e) {\n  aiResponse = {\n    intent: 'UNKNOWN',\n    response: input.choices[0].message.content\n  };\n}\n\nreturn {\n  phone: prevData.phone,\n  originalMessage: prevData.message,\n  intent: aiResponse.intent || 'UNKNOWN',\n  amount: aiResponse.amount || null,\n  category: aiResponse.category || 'other',\n  aiResponse: aiResponse.response || 'I understood your message.',\n  timestamp: prevData.timestamp\n};"
+            },
+            "id": "parse-ai-response",
+            "name": "Parse AI Response",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1080,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": false
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.intent }}",
+                            "rightValue": "INCOME_ENTRY",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        },
+                        {
+                            "leftValue": "={{ $json.intent }}",
+                            "rightValue": "EXPENSE_ENTRY",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "or"
+                }
+            },
+            "id": "is-transaction",
+            "name": "Is Transaction?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                1300,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://vittasaathi-1.onrender.com/api/message",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "From",
+                            "value": "={{ 'whatsapp:' + $json.phone }}"
+                        },
+                        {
+                            "name": "Body",
+                            "value": "={{ $json.originalMessage }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "timeout": 60000
+                }
+            },
+            "id": "call-backend",
+            "name": "Process with Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1520,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const backendResponse = $input.item.json;\nconst prevData = $('Parse AI Response').item.json;\n\nconst reply = backendResponse.reply || prevData.aiResponse || 'Message processed!';\n\nreturn {\n  phone: prevData.phone,\n  reply: reply,\n  intent: prevData.intent,\n  processed: true\n};"
+            },
+            "id": "prepare-reply",
+            "name": "Prepare Reply",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1740,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"reply\": $json.reply, \"phone\": $json.phone, \"success\": true } }}"
+            },
+            "id": "respond",
+            "name": "Send Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                1960,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Incoming Message": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Message Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Message Data": {
+            "main": [
+                [
+                    {
+                        "node": "Is Voice Message?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Voice Message?": {
+            "main": [
+                [
+                    {
+                        "node": "Transcribe Voice (Whisper)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "AI Understand Intent (GPT)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Transcribe Voice (Whisper)": {
+            "main": [
+                [
+                    {
+                        "node": "AI Understand Intent (GPT)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Understand Intent (GPT)": {
+            "main": [
+                [
+                    {
+                        "node": "Parse AI Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse AI Response": {
+            "main": [
+                [
+                    {
+                        "node": "Is Transaction?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Transaction?": {
+            "main": [
+                [
+                    {
+                        "node": "Process with Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Process with Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process with Backend": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Reply",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Reply": {
+            "main": [
+                [
+                    {
+                        "node": "Send Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [
+        "hackathon",
+        "ai-agent",
+        "financial-advisor"
+    ],
+    "triggerCount": 1,
+    "updatedAt": "2026-01-11T12:00:00.000Z",
+    "versionId": "1"
+}
