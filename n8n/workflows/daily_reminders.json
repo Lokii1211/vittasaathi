@@ -1,0 +1,230 @@
+{
+    "name": "MoneyViya Daily Reminders",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 6,
+                            "triggerAtMinute": 0
+                        }
+                    ]
+                }
+            },
+            "name": "6 AM Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                250,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 21,
+                            "triggerAtMinute": 0
+                        }
+                    ]
+                }
+            },
+            "name": "9 PM Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                250,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "https://moneyviya.up.railway.app/api/users/active",
+                "options": {}
+            },
+            "name": "Get Active Users (Morning)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                450,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "https://moneyviya.up.railway.app/api/users/active",
+                "options": {}
+            },
+            "name": "Get Active Users (Evening)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                450,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "name": "Process Each User (Morning)",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                650,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "name": "Process Each User (Evening)",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                650,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://moneyviya.up.railway.app/api/send-reminder",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "phone",
+                            "value": "={{ $json.phone }}"
+                        },
+                        {
+                            "name": "type",
+                            "value": "morning"
+                        },
+                        {
+                            "name": "user_data",
+                            "value": "={{ JSON.stringify($json) }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Send Morning Reminder",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                850,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://moneyviya.up.railway.app/api/send-reminder",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "phone",
+                            "value": "={{ $json.phone }}"
+                        },
+                        {
+                            "name": "type",
+                            "value": "evening"
+                        },
+                        {
+                            "name": "user_data",
+                            "value": "={{ JSON.stringify($json) }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Send Evening Summary",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                850,
+                400
+            ]
+        }
+    ],
+    "connections": {
+        "6 AM Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Users (Morning)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "9 PM Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Users (Evening)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Active Users (Morning)": {
+            "main": [
+                [
+                    {
+                        "node": "Process Each User (Morning)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Active Users (Evening)": {
+            "main": [
+                [
+                    {
+                        "node": "Process Each User (Evening)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process Each User (Morning)": {
+            "main": [
+                [
+                    {
+                        "node": "Send Morning Reminder",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process Each User (Evening)": {
+            "main": [
+                [
+                    {
+                        "node": "Send Evening Summary",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    }
+}

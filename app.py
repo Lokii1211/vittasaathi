@@ -48,6 +48,7 @@ from services.whatsapp_cloud_service import whatsapp_cloud_service
 # Agents
 from agents.fraud_agent import check_fraud
 from agents.advanced_fraud_agent import advanced_fraud_check
+from agents.moneyviya_agent import moneyviya_agent
 
 # Config
 from config import SUPPORTED_LANGUAGES, VOICES_DIR
@@ -118,6 +119,45 @@ def whatsapp_status():
         "token_length": len(token_raw) if token_raw else 0,
         "all_whatsapp_vars": all_whatsapp_vars
     }
+
+
+# ================= AI AGENT ENDPOINTS (for n8n) =================
+@app.get("/api/users/active")
+def get_active_users():
+    """Get all active users for daily reminders (used by n8n)"""
+    try:
+        users = user_repo.get_all_users()
+        active_users = [u for u in users if u.get("onboarding_complete")]
+        return active_users
+    except Exception as e:
+        return []
+
+
+@app.post("/api/send-reminder")
+async def send_reminder(request: Request):
+    """Send daily reminder to a user (used by n8n)"""
+    try:
+        data = await request.json()
+        phone = data.get("phone")
+        reminder_type = data.get("type", "morning")
+        user_data = data.get("user_data", {})
+        
+        if isinstance(user_data, str):
+            import json
+            user_data = json.loads(user_data)
+        
+        # Generate reminder message using AI agent
+        reminder_text = moneyviya_agent.generate_daily_reminder(user_data, reminder_type)
+        
+        # Send via WhatsApp
+        if whatsapp_cloud_service.is_available():
+            clean_phone = phone.replace("+", "")
+            result = whatsapp_cloud_service.send_text_message(clean_phone, reminder_text)
+            return {"success": True, "result": result}
+        
+        return {"success": False, "error": "WhatsApp not configured"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 # Add direct report routes for n8n (without /api/v2 prefix)
@@ -1553,45 +1593,22 @@ async def handle_whatsapp_cloud_webhook(request: Request):
             # Set name if we have it
             if sender_name and sender_name != "Friend" and not user.get("name"):
                 user_repo.update_user(phone, {"name": sender_name})
+                user["name"] = sender_name
             
             language = user.get("preferred_language", user.get("language", "english"))
             
-            # Process message
-            reply_text = ""
-            
-            if not user.get("onboarding_complete"):
-                result = await handle_onboarding(phone, message_text, user)
-                reply_text = result["text"]
-            else:
-                # Use same logic as baileys endpoint
-                msg_lower = message_text.lower().strip()
-                intent = None
+            # ===== USE MONEYVIYA AI AGENT =====
+            # The agent handles everything: onboarding, NLP, goals, reminders
+            try:
+                reply_text = moneyviya_agent.process_message(phone, message_text, user)
                 
-                # Language change command
-                if any(kw in msg_lower for kw in ["change language", "change lang"]):
-                    user_repo.update_user(phone, {"onboarding_step": "language", "onboarding_complete": False})
-                    ai_onboarding = get_ai_onboarding(user_repo)
-                    reply_text = ai_onboarding.get_welcome_message()
-                elif msg_lower in ["hi", "hello", "hey", "namaste"]:
-                    intent = {"intent": "GREETING", "raw_message": message_text}
-                elif any(kw in msg_lower for kw in ["balance", "summary", "total", "status"]):
-                    intent = {"intent": "SUMMARY_QUERY", "raw_message": message_text}
-                elif any(kw in msg_lower for kw in ["report", "dashboard", "weekly", "monthly"]):
-                    intent = {"intent": "DASHBOARD_QUERY", "raw_message": message_text}
-                elif any(kw in msg_lower for kw in ["help", "commands"]):
-                    intent = {"intent": "HELP_QUERY", "raw_message": message_text}
+                # Save any updates to user data
+                user_repo.update_user(phone, user)
                 
-                if not intent and not reply_text:
-                    if openai_service.is_available():
-                        intent = understand_message(message_text, language)
-                    if not intent:
-                        intent = nlp_service.parse_message(message_text, language)
-                
-                if intent and not reply_text:
-                    result = await route_intent(phone, intent, user, language)
-                    reply_text = result.get("message", str(result))
-                elif not reply_text:
-                    reply_text = "I didn't understand. Type 'help' for commands."
+            except Exception as agent_error:
+                print(f"[Agent Error] {agent_error}")
+                # Fallback to basic response
+                reply_text = "I'm having trouble understanding. Try:\n• 'spent 50 on tea'\n• 'earned 500 delivery'\n• 'help' for menu"
             
             # Send reply via WhatsApp Cloud API
             if reply_text and whatsapp_cloud_service.is_available():
