@@ -90,11 +90,20 @@ def health_check():
 
 @app.get("/api/whatsapp-status")
 def whatsapp_status():
-    """Check WhatsApp Cloud API configuration"""
+    """Check WhatsApp Cloud API configuration with debug info"""
+    # Direct env var check
+    token_raw = os.getenv("WHATSAPP_CLOUD_TOKEN", "")
+    phone_raw = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "")
+    
+    # List all WHATSAPP related env vars
+    all_whatsapp_vars = {k: "SET" if v else "EMPTY" for k, v in os.environ.items() if "WHATSAPP" in k}
+    
     return {
         "configured": whatsapp_cloud_service.is_available(),
-        "phone_number_id": os.getenv("WHATSAPP_PHONE_NUMBER_ID", "NOT SET"),
-        "token_set": bool(os.getenv("WHATSAPP_CLOUD_TOKEN", ""))
+        "phone_number_id": phone_raw if phone_raw else "NOT SET",
+        "token_set": bool(token_raw),
+        "token_length": len(token_raw) if token_raw else 0,
+        "all_whatsapp_vars": all_whatsapp_vars
     }
 
 
