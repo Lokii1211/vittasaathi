@@ -70,14 +70,8 @@ What's your {income_type} income approximately?
                 
                 "ask_goal": """💰 Now let's set your financial goal!
 
-What do you want to achieve?
-1️⃣ Build Emergency Fund
-2️⃣ Save for a Big Purchase
-3️⃣ Pay off Debt
-4️⃣ Start Investing
-5️⃣ Achieve Financial Freedom
-
-*Reply with the number*""",
+What is your main target right now?
+(e.g., Buy a Bike, Save 1 Lakh, Clear Loan, Emergency Fund)""",
                 
                 "ask_target": """Excellent choice! 🎯
 
@@ -85,12 +79,7 @@ How much do you want to save/achieve?
 (Type amount, e.g., 100000 for ₹1 Lakh)""",
                 
                 "ask_timeline": """And by when do you want to achieve this?
-1️⃣ 6 months
-2️⃣ 1 year
-3️⃣ 2 years
-4️⃣ 5 years
-
-*Reply with the number*""",
+(e.g., 6 months, 1 year, Dec 2024)""",
                 
                 "complete": """🎉 *Your profile is ready!*
 
@@ -321,20 +310,8 @@ Based on your profile:
             return self.templates["onboarding"]["ask_goal"]
         
         elif step == 4:  # Got goal type
-            goal_map = {
-                "1": "Emergency Fund", "2": "Big Purchase", 
-                "3": "Debt Payoff", "4": "Start Investing", "5": "Financial Freedom"
-            }
-            # Fuzzy match
-            found = False
-            for k, v in goal_map.items():
-                if k in message or v.lower() in message.lower():
-                    user_data["goal_type"] = v
-                    found = True
-                    break
-            if not found:
-                 user_data["goal_type"] = "Financial Security"
-                 
+            # Free text goal
+            user_data["goal_type"] = message.strip().title()
             user_data["onboarding_step"] = 5
             return self.templates["onboarding"]["ask_target"]
         
@@ -356,19 +333,27 @@ Based on your profile:
             return self.templates["onboarding"]["ask_timeline"]
         
         elif step == 6:  # Got timeline
-            timeline_map = {"1": "6 months", "2": "1 year", "3": "2 years", "4": "5 years"}
-            days_map = {"1": 180, "2": 365, "3": 730, "4": 1825}
+            msg = message.lower()
+            import re
+            months = 12
             
-            timeline = "1 year"
-            days = 365
+            # Parse text (e.g., "6 months", "2 years")
+            if "month" in msg:
+                 nums = re.findall(r'\d+', msg)
+                 if nums: months = int(nums[0])
+            elif "year" in msg:
+                 nums = re.findall(r'\d+', msg)
+                 if nums: months = int(nums[0]) * 12
+            elif msg.strip().isdigit():
+                 num = int(msg.strip())
+                 # Heuristic: < 5 likely years, > 5 likely months
+                 if num <= 5: months = num * 12 
+                 else: months = num 
             
-            for k, v in timeline_map.items():
-                if k in message:
-                    timeline = v
-                    days = days_map[k]
-                    break
+            days = months * 30
+            timeline_str = f"{months} Months" if months < 24 else f"{months/12:.1f} Years"
             
-            user_data["timeline"] = timeline
+            user_data["timeline"] = timeline_str
             user_data["timeline_days"] = days
             user_data["onboarding_complete"] = True
             user_data["onboarding_step"] = 7
@@ -376,18 +361,18 @@ Based on your profile:
             
             # Calculate targets
             target = user_data.get("target_amount", 100000)
-            daily_target = round(target / days)
-            monthly_target = round(target / (days / 30))
+            daily_target = round(target / max(1, days))
+            monthly_target = round(target / max(0.1, (days / 30)))
             
             user_data["daily_target"] = daily_target
             
             return self.templates["onboarding"]["complete"].format(
                 name=user_data.get("name", "Friend"),
-                occupation=self.personas.get(user_data.get("occupation", "gig_worker"), {}).get("name", "User"),
+                occupation=user_data.get("occupation", "User"),
                 income=user_data.get("monthly_income", 0),
                 goal=user_data.get("goal_type", "Savings"),
                 target=target,
-                timeline=timeline,
+                timeline=timeline_str,
                 daily_target=daily_target,
                 monthly_target=monthly_target
             )
