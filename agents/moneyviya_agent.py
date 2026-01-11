@@ -256,32 +256,53 @@ Based on your profile:
         """Handle user onboarding flow"""
         step = user_data.get("onboarding_step", 0)
         
+        # Normalize step if it comes from old system (strings like "language", "name")
+        if isinstance(step, str):
+            step = 0
+            user_data["onboarding_step"] = 0
+        
         if step == 0:
             user_data["onboarding_step"] = 1
             return self.templates["onboarding"]["welcome"]
         
         elif step == 1:  # Got name
-            user_data["name"] = message.title()
+            user_data["name"] = message.strip().title()
             user_data["onboarding_step"] = 2
             return self.templates["onboarding"]["ask_occupation"].format(name=user_data["name"])
         
         elif step == 2:  # Got occupation
-            occupation_map = {
-                "1": "student", "2": "gig_worker", "3": "housewife", 
-                "4": "small_business", "5": "salaried"
-            }
-            occ = occupation_map.get(message, "gig_worker")
+            # Handle both number and text input
+            msg = message.lower()
+            if "student" in msg or "1" in msg: occ = "student"
+            elif "gig" in msg or "delivery" in msg or "2" in msg: occ = "gig_worker"
+            elif "house" in msg or "3" in msg: occ = "housewife"
+            elif "business" in msg or "4" in msg: occ = "small_business"
+            else: occ = "salaried"
+            
             user_data["occupation"] = occ
             user_data["onboarding_step"] = 3
+            
             income_type = "monthly" if occ in ["student", "housewife", "salaried"] else "average monthly"
             return self.templates["onboarding"]["ask_income"].format(income_type=income_type)
         
         elif step == 3:  # Got income
+            import re
             try:
-                income = int(''.join(filter(str.isdigit, message)))
-                user_data["monthly_income"] = income
+                # Extract first number found
+                numbers = re.findall(r'\d+', message.replace(",", ""))
+                if numbers:
+                    income = int(numbers[0])
+                    # Handle basic units like "20k"
+                    if "k" in message.lower():
+                        income *= 1000
+                    if "l" in message.lower() or "lakh" in message.lower():
+                        income *= 100000
+                    user_data["monthly_income"] = income
+                else:
+                    return "🔢 Please type just the amount (e.g. 25000)"
             except:
-                user_data["monthly_income"] = 20000  # Default
+                return "🔢 Please type a valid number for income."
+                
             user_data["onboarding_step"] = 4
             return self.templates["onboarding"]["ask_goal"]
         
@@ -290,16 +311,33 @@ Based on your profile:
                 "1": "Emergency Fund", "2": "Big Purchase", 
                 "3": "Debt Payoff", "4": "Start Investing", "5": "Financial Freedom"
             }
-            user_data["goal_type"] = goal_map.get(message, "Emergency Fund")
+            # Fuzzy match
+            found = False
+            for k, v in goal_map.items():
+                if k in message or v.lower() in message.lower():
+                    user_data["goal_type"] = v
+                    found = True
+                    break
+            if not found:
+                 user_data["goal_type"] = "Financial Security"
+                 
             user_data["onboarding_step"] = 5
             return self.templates["onboarding"]["ask_target"]
         
         elif step == 5:  # Got target amount
+            import re
             try:
-                target = int(''.join(filter(str.isdigit, message)))
-                user_data["target_amount"] = target
+                numbers = re.findall(r'\d+', message.replace(",", ""))
+                if numbers:
+                    target = int(numbers[0])
+                    if "k" in message.lower(): target *= 1000
+                    if "l" in message.lower() or "lakh" in message.lower(): target *= 100000
+                    user_data["target_amount"] = target
+                else:
+                    return "🔢 Please type just the amount (e.g. 100000)"
             except:
-                user_data["target_amount"] = 100000
+                return "🔢 Please type a valid target amount."
+            
             user_data["onboarding_step"] = 6
             return self.templates["onboarding"]["ask_timeline"]
         
@@ -307,8 +345,14 @@ Based on your profile:
             timeline_map = {"1": "6 months", "2": "1 year", "3": "2 years", "4": "5 years"}
             days_map = {"1": 180, "2": 365, "3": 730, "4": 1825}
             
-            timeline = timeline_map.get(message, "1 year")
-            days = days_map.get(message, 365)
+            timeline = "1 year"
+            days = 365
+            
+            for k, v in timeline_map.items():
+                if k in message:
+                    timeline = v
+                    days = days_map[k]
+                    break
             
             user_data["timeline"] = timeline
             user_data["timeline_days"] = days
@@ -320,6 +364,8 @@ Based on your profile:
             target = user_data.get("target_amount", 100000)
             daily_target = round(target / days)
             monthly_target = round(target / (days / 30))
+            
+            user_data["daily_target"] = daily_target
             
             return self.templates["onboarding"]["complete"].format(
                 name=user_data.get("name", "Friend"),

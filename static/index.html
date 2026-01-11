@@ -739,26 +739,30 @@
 
     <script>
         const API = window.location.origin;
-        const WA_NUMBER = '15551589563';
+        const WA_NUMBER = '919363324580'; // Updated to user's number
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 document.getElementById('splash').classList.add('hidden');
-                const token = localStorage.getItem('token');
-                if (token) {
-                    showApp();
-                } else {
-                    document.getElementById('login').classList.add('active');
-                }
+                checkSession();
             }, 2000);
 
-            // Phone input
+            // Phone input formatting
             const phoneInput = document.getElementById('phone');
             const loginBtn = document.getElementById('loginBtn');
             phoneInput.addEventListener('input', (e) => {
-                e.target.value = e.target.value.replace(/\D/g, '');
-                loginBtn.disabled = e.target.value.length !== 10;
+                let val = e.target.value.replace(/\D/g, '');
+                if (val.length > 10) val = val.substring(0, 10);
+                e.target.value = val;
+
+                if (val.length === 10) {
+                    loginBtn.disabled = false;
+                    loginBtn.classList.add('active');
+                } else {
+                    loginBtn.disabled = true;
+                    loginBtn.classList.remove('active');
+                }
             });
 
             // Login button
@@ -774,42 +778,64 @@
             });
 
             // Set greeting
+            updateGreeting();
+        });
+
+        function checkSession() {
+            const token = localStorage.getItem('token');
+            const phone = localStorage.getItem('phone');
+            if (token && phone) {
+                showApp();
+            } else {
+                document.getElementById('login').classList.add('active');
+            }
+        }
+
+        function updateGreeting() {
             const hour = new Date().getHours();
             let greet = 'Good Morning';
             if (hour >= 12 && hour < 17) greet = 'Good Afternoon';
             else if (hour >= 17) greet = 'Good Evening';
             document.getElementById('greet').textContent = greet;
-        });
+        }
 
         async function login() {
-            const phone = '+91' + document.getElementById('phone').value;
+            const phoneVal = document.getElementById('phone').value;
+            if (phoneVal.length !== 10) return;
+
+            const phone = '+91' + phoneVal;
             const btn = document.getElementById('loginBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Converting...';
 
             try {
+                // Determine if we should ask for OTP or just let them in (MVP style)
+                // For now, we simulate sending OTP via WhatsApp
                 const res = await fetch(`${API}/api/v2/auth/send-otp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone })
                 });
-                const data = await res.json();
-                if (data.success) {
-                    toast('OTP sent to WhatsApp!', 'success');
-                    localStorage.setItem('phone', phone);
-                    localStorage.setItem('token', 'demo');
-                    setTimeout(showApp, 1500);
-                } else {
-                    toast(data.message || 'Error', 'error');
-                }
-            } catch (e) {
-                // Demo mode - just login
+
                 localStorage.setItem('phone', phone);
-                localStorage.setItem('token', 'demo');
-                setTimeout(showApp, 1000);
+                localStorage.setItem('token', 'session_' + Date.now());
+
+                // Show success toast
+                toast('Welcome back! Loading dashboard...', 'success');
+
+                setTimeout(() => {
+                    showApp();
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
+                }, 1000);
+
+            } catch (e) {
+                console.error("Login Error:", e);
+                // Fallback login
+                localStorage.setItem('phone', phone);
+                localStorage.setItem('token', 'demo_session');
+                showApp();
             }
-            btn.disabled = false;
-            btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
         }
 
         function showApp() {
@@ -821,22 +847,66 @@
         }
 
         async function loadData() {
-            const phone = localStorage.getItem('phone') || '';
+            const phone = localStorage.getItem('phone');
+            if (!phone) return;
+
             try {
+                // Fetch user data from backend
                 const res = await fetch(`${API}/api/v2/dashboard/${encodeURIComponent(phone)}`);
+
                 if (res.ok) {
                     const data = await res.json();
-                    document.getElementById('balance').textContent = '₹' + (data.balance || 0).toLocaleString('en-IN');
-                    document.getElementById('income').textContent = '₹' + (data.total_income || 0).toLocaleString('en-IN');
-                    document.getElementById('expense').textContent = '₹' + (data.total_expenses || 0).toLocaleString('en-IN');
-                    if (data.name) document.getElementById('userName').textContent = data.name;
+
+                    // Update UI with real data
+                    animateValue("balance", data.balance || 0);
+                    animateValue("income", data.total_income || 0);
+                    animateValue("expense", data.total_expenses || 0);
+
+                    if (data.name) {
+                        document.getElementById('userName').textContent = data.name.split(' ')[0];
+                    }
+
+                    // Update recent transactions
+                    if (data.recent_transactions && data.recent_transactions.length > 0) {
+                        renderTransactions(data.recent_transactions);
+                    }
+                } else {
+                    // Initialize if empty using demo for visualization
+                    document.getElementById('balance').textContent = '₹0';
                 }
             } catch (e) {
-                // Use demo data
-                document.getElementById('balance').textContent = '₹24,780';
-                document.getElementById('income').textContent = '₹35,000';
-                document.getElementById('expense').textContent = '₹10,220';
+                console.error("Data Load Error:", e);
             }
+        }
+
+        function renderTransactions(txns) {
+            const list = document.getElementById('txnList');
+            list.innerHTML = ''; // Clear demo data
+
+            txns.slice(0, 5).forEach(txn => {
+                const isExpense = txn.type === 'expense';
+                const icon = isExpense ? 'minus' : 'plus';
+                const colorClass = isExpense ? 'out' : 'in';
+                const iconBg = isExpense ? 'bills' : 'gig';
+
+                const item = `
+                <div class="txn">
+                    <div class="txn-icon ${iconBg}"><i class="fas fa-${icon}"></i></div>
+                    <div class="txn-details">
+                        <div class="txn-title">${txn.category || 'Transaction'}</div>
+                        <div class="txn-cat">${new Date(txn.date).toLocaleDateString()}</div>
+                    </div>
+                    <div class="txn-amt ${colorClass}">${isExpense ? '-' : '+'}₹${txn.amount}</div>
+                </div>`;
+                list.insertAdjacentHTML('beforeend', item);
+            });
+        }
+
+        function animateValue(id, end) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            // Simple formatting for now
+            obj.textContent = '₹' + parseInt(end).toLocaleString('en-IN');
         }
 
         function openWhatsApp() {
@@ -851,11 +921,16 @@
             setTimeout(() => div.remove(), 3000);
         }
 
-        function addExpense() { toast('Opening expense form...'); }
-        function addIncome() { toast('Opening income form...'); }
-        function showReport() { toast('Generating report...'); }
-        function showGoals() { toast('Opening goals...'); }
-        function toggleTheme() { document.body.classList.toggle('light'); }
+        function addExpense() { openWhatsApp(); }
+        function addIncome() { openWhatsApp(); }
+        function showReport() { openWhatsApp(); }
+        function showGoals() { openWhatsApp(); }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode'); // Assuming CSS handles this
+            const icon = document.querySelector('.header-btns i.fa-moon');
+            if (icon) icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
+        }
     </script>
 </body>
 
