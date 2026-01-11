@@ -43,6 +43,7 @@ from services.smart_onboarding_service import get_smart_onboarding
 from services.openai_service import openai_service, transcribe_voice, understand_message
 from services.ai_onboarding_service import get_ai_onboarding
 from services.pdf_report_service import pdf_report_service
+from services.whatsapp_cloud_service import whatsapp_cloud_service
 
 # Agents
 from agents.fraud_agent import check_fraud
@@ -1420,6 +1421,146 @@ async def baileys_message(request: Request):
         traceback.print_exc()
         return {"reply": f"Error: {str(e)}"}
 
+
+# ================= WHATSAPP CLOUD API WEBHOOK (Meta Official) =================
+WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "vittasaathi_webhook_verify_2024")
+
+@app.get("/webhook/whatsapp-cloud")
+async def verify_whatsapp_webhook(request: Request):
+    """Verify webhook for WhatsApp Cloud API (Meta)"""
+    params = dict(request.query_params)
+    
+    mode = params.get("hub.mode")
+    token = params.get("hub.verify_token")
+    challenge = params.get("hub.challenge")
+    
+    print(f"[WhatsApp Cloud] Verification: mode={mode}, token={token}")
+    
+    if mode == "subscribe" and token == WHATSAPP_VERIFY_TOKEN:
+        print("[WhatsApp Cloud] Webhook verified!")
+        return int(challenge)
+    else:
+        print("[WhatsApp Cloud] Verification failed!")
+        raise HTTPException(status_code=403, detail="Verification failed")
+
+
+@app.post("/webhook/whatsapp-cloud")
+async def handle_whatsapp_cloud_webhook(request: Request):
+    """Handle incoming messages from WhatsApp Cloud API (Meta Official)"""
+    try:
+        data = await request.json()
+        print(f"[WhatsApp Cloud] Received: {data}")
+        
+        # Extract message data
+        entry = data.get("entry", [{}])[0]
+        changes = entry.get("changes", [{}])[0]
+        value = changes.get("value", {})
+        
+        # Check if it's a message
+        if "messages" not in value:
+            return {"status": "ok"}
+        
+        messages = value.get("messages", [])
+        contacts = value.get("contacts", [])
+        
+        for msg in messages:
+            msg_type = msg.get("type")
+            phone = msg.get("from")  # Sender's phone number
+            msg_id = msg.get("id")
+            
+            # Get sender name
+            sender_name = "Friend"
+            for contact in contacts:
+                if contact.get("wa_id") == phone:
+                    sender_name = contact.get("profile", {}).get("name", "Friend")
+            
+            # Extract message text
+            message_text = ""
+            if msg_type == "text":
+                message_text = msg.get("text", {}).get("body", "")
+            elif msg_type == "interactive":
+                # Button/list reply
+                interactive = msg.get("interactive", {})
+                if interactive.get("type") == "button_reply":
+                    message_text = interactive.get("button_reply", {}).get("title", "")
+                elif interactive.get("type") == "list_reply":
+                    message_text = interactive.get("list_reply", {}).get("title", "")
+            elif msg_type == "audio":
+                message_text = "[Voice message]"
+            elif msg_type == "image":
+                message_text = msg.get("image", {}).get("caption", "[Image]")
+            else:
+                message_text = f"[{msg_type}]"
+            
+            if not message_text:
+                continue
+            
+            print(f"[WhatsApp Cloud] Message from +{phone}: {message_text}")
+            
+            # Ensure phone has + prefix
+            if not phone.startswith("+"):
+                phone = "+" + phone
+            
+            # Update user activity
+            user_repo.update_activity(phone)
+            user = user_repo.ensure_user(phone)
+            
+            # Set name if we have it
+            if sender_name and sender_name != "Friend" and not user.get("name"):
+                user_repo.update_user(phone, {"name": sender_name})
+            
+            language = user.get("preferred_language", user.get("language", "english"))
+            
+            # Process message
+            reply_text = ""
+            
+            if not user.get("onboarding_complete"):
+                result = await handle_onboarding(phone, message_text, user)
+                reply_text = result["text"]
+            else:
+                # Use same logic as baileys endpoint
+                msg_lower = message_text.lower().strip()
+                intent = None
+                
+                # Language change command
+                if any(kw in msg_lower for kw in ["change language", "change lang"]):
+                    user_repo.update_user(phone, {"onboarding_step": "language", "onboarding_complete": False})
+                    ai_onboarding = get_ai_onboarding(user_repo)
+                    reply_text = ai_onboarding.get_welcome_message()
+                elif msg_lower in ["hi", "hello", "hey", "namaste"]:
+                    intent = {"intent": "GREETING", "raw_message": message_text}
+                elif any(kw in msg_lower for kw in ["balance", "summary", "total", "status"]):
+                    intent = {"intent": "SUMMARY_QUERY", "raw_message": message_text}
+                elif any(kw in msg_lower for kw in ["report", "dashboard", "weekly", "monthly"]):
+                    intent = {"intent": "DASHBOARD_QUERY", "raw_message": message_text}
+                elif any(kw in msg_lower for kw in ["help", "commands"]):
+                    intent = {"intent": "HELP_QUERY", "raw_message": message_text}
+                
+                if not intent and not reply_text:
+                    if openai_service.is_available():
+                        intent = understand_message(message_text, language)
+                    if not intent:
+                        intent = nlp_service.parse_message(message_text, language)
+                
+                if intent and not reply_text:
+                    result = await route_intent(phone, intent, user, language)
+                    reply_text = result.get("message", str(result))
+                elif not reply_text:
+                    reply_text = "I didn't understand. Type 'help' for commands."
+            
+            # Send reply via WhatsApp Cloud API
+            if reply_text and whatsapp_cloud_service.is_available():
+                clean_phone = phone.replace("+", "")
+                result = whatsapp_cloud_service.send_text_message(clean_phone, reply_text)
+                print(f"[WhatsApp Cloud] Reply sent: {result}")
+        
+        return {"status": "ok"}
+        
+    except Exception as e:
+        print(f"[WhatsApp Cloud] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "error": str(e)}
 
 # ================= MAIN WEBHOOK (for n8n) =================
 @app.post("/webhook")
