@@ -55,8 +55,8 @@ from config import SUPPORTED_LANGUAGES, VOICES_DIR
 
 # ================= APP SETUP =================
 app = FastAPI(
-    title="VittaSaathi API",
-    description="WhatsApp Financial Advisor for Gig Workers & Irregular Income Earners - v3.0",
+    title="MoneyViya API",
+    description="WhatsApp Financial Advisor for Gig Workers & Daily Earners - Track, Save, Grow",
     version="3.0.0"
 )
 
