@@ -5,61 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MoneyViya - Your Financial Friend | பண நண்பன்</title>
-
-    <!-- PWA Meta -->
-    <meta name="theme-color" content="#6366F1">
+    <meta name="theme-color" content="#10B981">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="/static/manifest.json">
-
-    <!-- SEO -->
     <meta name="description"
-        content="MoneyViya - Free financial advisor for gig workers, daily wagers & small vendors. Track expenses, save money, get investment tips in English, Tamil, Telugu.">
-    <meta name="keywords"
-        content="financial advisor, gig workers, expense tracker, savings, investment, tamil, english">
-
-    <!-- Fonts & Icons -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap"
-        rel="stylesheet">
+        content="MoneyViya - Free financial advisor for gig workers. Track expenses, save money in English, Tamil, Telugu.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         :root {
-            --primary: #6366F1;
-            --primary-dark: #4F46E5;
-            --primary-light: #A5B4FC;
-            --success: #10B981;
-            --success-light: #D1FAE5;
-            --warning: #F59E0B;
-            --warning-light: #FEF3C7;
-            --danger: #EF4444;
-            --danger-light: #FEE2E2;
+            --primary: #10B981;
+            --primary-dark: #059669;
             --bg: #0F172A;
             --bg-card: #1E293B;
-            --bg-card-hover: #334155;
             --text: #F8FAFC;
             --text-secondary: #94A3B8;
-            --text-muted: #64748B;
             --border: #334155;
-            --gradient-1: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-            --gradient-2: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
-            --gradient-3: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.4);
-            --radius: 16px;
-            --radius-sm: 10px;
-        }
-
-        .light-mode {
-            --bg: #F1F5F9;
-            --bg-card: #FFFFFF;
-            --bg-card-hover: #F8FAFC;
-            --text: #1E293B;
-            --text-secondary: #64748B;
-            --text-muted: #94A3B8;
-            --border: #E2E8F0;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --danger: #EF4444;
+            --gradient: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
         }
 
         * {
@@ -69,88 +31,83 @@
         }
 
         body {
-            font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            line-height: 1.6;
-            overflow-x: hidden;
         }
 
-        /* ========== SPLASH SCREEN ========== */
-        .splash-screen {
+        .splash {
             position: fixed;
             inset: 0;
-            background: var(--gradient-1);
+            background: var(--gradient);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.5s, visibility 0.5s;
+            transition: opacity 0.5s;
         }
 
-        .splash-screen.hidden {
+        .splash.hidden {
             opacity: 0;
-            visibility: hidden;
+            pointer-events: none;
         }
 
         .splash-logo {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             background: white;
-            border-radius: 30px;
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
-            animation: pulse 2s infinite;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
-        .splash-title {
+        .splash-logo img {
+            width: 80px;
+            height: 80px;
+        }
+
+        .splash h1 {
             font-size: 32px;
-            font-weight: 800;
             color: white;
             margin-bottom: 8px;
         }
 
-        .splash-subtitle {
-            font-size: 16px;
+        .splash p {
             color: rgba(255, 255, 255, 0.8);
         }
 
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.05);
-            }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
         }
 
-        /* ========== LOGIN SCREEN ========== */
-        .login-screen {
-            min-height: 100vh;
-            display: flex;
+        .login {
+            display: none;
             flex-direction: column;
-            padding: 24px;
-            background: var(--bg);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .login.active {
+            display: flex;
         }
 
         .login-header {
             text-align: center;
-            padding: 40px 0;
+            margin-bottom: 40px;
         }
 
         .login-logo {
             width: 80px;
             height: 80px;
-            margin: 0 auto 20px;
-            background: var(--gradient-1);
+            margin: 0 auto 16px;
+            background: var(--gradient);
             border-radius: 20px;
             display: flex;
             align-items: center;
@@ -162,23 +119,21 @@
             height: 60px;
         }
 
-        .login-title {
+        .login h1 {
             font-size: 28px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            background: var(--gradient-1);
+            background: var(--gradient);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .login-tagline {
+        .login p {
             color: var(--text-secondary);
-            font-size: 16px;
         }
 
-        .language-selector {
+        .lang-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 12px;
             margin: 30px 0;
         }
@@ -186,100 +141,64 @@
         .lang-btn {
             padding: 16px;
             border: 2px solid var(--border);
-            border-radius: var(--radius);
+            border-radius: 12px;
             background: var(--bg-card);
             color: var(--text);
-            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 8px;
+            transition: all 0.2s;
         }
 
         .lang-btn:hover,
         .lang-btn.active {
             border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
+            background: rgba(16, 185, 129, 0.1);
         }
 
         .lang-btn .flag {
-            font-size: 28px;
+            font-size: 24px;
         }
 
-        .login-form {
-            margin-top: auto;
-        }
-
-        .phone-input-group {
+        .input-group {
             display: flex;
             gap: 12px;
             margin-bottom: 16px;
         }
 
-        .country-code {
+        .country {
             width: 80px;
             padding: 16px;
             border: 2px solid var(--border);
-            border-radius: var(--radius);
+            border-radius: 12px;
             background: var(--bg-card);
             color: var(--text);
-            font-size: 18px;
             text-align: center;
+            font-size: 16px;
         }
 
-        .phone-input {
+        .phone {
             flex: 1;
-            padding: 16px 20px;
+            padding: 16px;
             border: 2px solid var(--border);
-            border-radius: var(--radius);
+            border-radius: 12px;
             background: var(--bg-card);
             color: var(--text);
-            font-size: 18px;
+            font-size: 16px;
             outline: none;
-            transition: border-color 0.3s;
         }
 
-        .phone-input:focus {
+        .phone:focus {
             border-color: var(--primary);
         }
 
-        .btn-primary {
+        .btn {
             width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: var(--radius);
-            background: var(--gradient-1);
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .whatsapp-login {
-            margin-top: 20px;
             padding: 16px;
-            border: 2px solid #25D366;
-            border-radius: var(--radius);
-            background: rgba(37, 211, 102, 0.1);
-            color: #25D366;
+            border: none;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -287,7 +206,30 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-whatsapp {
+            background: rgba(37, 211, 102, 0.1);
+            border: 2px solid #25D366;
+            color: #25D366;
+            margin-top: 16px;
         }
 
         .divider {
@@ -295,7 +237,7 @@
             align-items: center;
             gap: 16px;
             margin: 24px 0;
-            color: var(--text-muted);
+            color: var(--text-secondary);
         }
 
         .divider::before,
@@ -306,41 +248,37 @@
             background: var(--border);
         }
 
-        /* ========== MAIN APP ========== */
-        .app-container {
-            min-height: 100vh;
-            padding-bottom: 80px;
+        .app {
+            display: none;
         }
 
-        /* Top Header */
-        .top-header {
-            padding: 16px 20px;
+        .app.active {
+            display: block;
+        }
+
+        .header {
+            padding: 16px 0;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            background: var(--bg);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
+            align-items: center;
+            margin-bottom: 20px;
         }
 
-        .greeting {
-            display: flex;
-            flex-direction: column;
+        .greeting span {
+            display: block;
         }
 
-        .greeting-text {
+        .greeting .small {
             font-size: 14px;
             color: var(--text-secondary);
         }
 
-        .user-name {
+        .greeting .name {
             font-size: 20px;
             font-weight: 700;
         }
 
-        .header-actions {
+        .header-btns {
             display: flex;
             gap: 12px;
         }
@@ -354,40 +292,13 @@
             color: var(--text);
             font-size: 18px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .icon-btn:hover {
-            background: var(--bg-card-hover);
-        }
-
-        .icon-btn.notification {
-            position: relative;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 10px;
-            height: 10px;
-            background: var(--danger);
-            border-radius: 50%;
-            border: 2px solid var(--bg-card);
-        }
-
-        /* Balance Card */
-        .balance-section {
-            padding: 20px;
         }
 
         .balance-card {
-            background: var(--gradient-1);
-            border-radius: 24px;
-            padding: 28px;
+            background: var(--gradient);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
             position: relative;
             overflow: hidden;
         }
@@ -410,23 +321,22 @@
         }
 
         .balance-amount {
-            font-size: 42px;
+            font-size: 36px;
             font-weight: 800;
             color: white;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
-        .balance-stats {
+        .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
         }
 
-        .stat-item {
+        .stat {
             background: rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
-            padding: 14px;
-            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px;
         }
 
         .stat-label {
@@ -438,24 +348,9 @@
         }
 
         .stat-value {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: white;
-            margin-top: 4px;
-        }
-
-        .stat-item.income .stat-label i {
-            color: #10B981;
-        }
-
-        .stat-item.expense .stat-label i {
-            color: #EF4444;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            padding: 0 20px;
-            margin-bottom: 24px;
         }
 
         .section-title {
@@ -463,54 +358,53 @@
             font-weight: 700;
             margin-bottom: 16px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
         }
 
         .see-all {
             font-size: 14px;
             color: var(--primary);
             text-decoration: none;
-            font-weight: 500;
         }
 
-        .action-grid {
+        .actions {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
+            margin-bottom: 24px;
         }
 
-        .action-btn {
+        .action {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             padding: 16px 8px;
             background: var(--bg-card);
-            border-radius: var(--radius);
+            border-radius: 16px;
             border: none;
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .action-btn:hover {
+        .action:hover {
             transform: translateY(-4px);
-            background: var(--bg-card-hover);
         }
 
         .action-icon {
             width: 48px;
             height: 48px;
-            border-radius: 14px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 20px;
             color: white;
         }
 
-        .action-icon.add {
-            background: var(--gradient-2);
+        .action-icon.expense {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
         }
 
         .action-icon.income {
@@ -525,47 +419,35 @@
             background: linear-gradient(135deg, #F59E0B, #D97706);
         }
 
-        .action-label {
+        .action span {
             font-size: 12px;
-            font-weight: 500;
             color: var(--text);
-            text-align: center;
         }
 
-        /* Recent Transactions */
-        .transactions-section {
-            padding: 0 20px;
-        }
-
-        .transaction-list {
+        .txn-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
+            padding-bottom: 100px;
         }
 
-        .transaction-item {
+        .txn {
             display: flex;
             align-items: center;
             gap: 14px;
             padding: 16px;
             background: var(--bg-card);
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .transaction-item:hover {
-            background: var(--bg-card-hover);
+            border-radius: 16px;
         }
 
         .txn-icon {
             width: 48px;
             height: 48px;
-            border-radius: 14px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 20px;
         }
 
         .txn-icon.food {
@@ -578,12 +460,7 @@
             color: #38BDF8;
         }
 
-        .txn-icon.shopping {
-            background: rgba(251, 191, 36, 0.2);
-            color: #FBBF24;
-        }
-
-        .txn-icon.income {
+        .txn-icon.gig {
             background: rgba(16, 185, 129, 0.2);
             color: #10B981;
         }
@@ -593,40 +470,33 @@
             color: #EF4444;
         }
 
-        .txn-icon.other {
-            background: rgba(139, 92, 246, 0.2);
-            color: #8B5CF6;
-        }
-
         .txn-details {
             flex: 1;
         }
 
         .txn-title {
             font-weight: 600;
-            font-size: 15px;
             margin-bottom: 2px;
         }
 
-        .txn-category {
+        .txn-cat {
             font-size: 13px;
-            color: var(--text-muted);
+            color: var(--text-secondary);
         }
 
-        .txn-amount {
+        .txn-amt {
             font-size: 16px;
             font-weight: 700;
         }
 
-        .txn-amount.expense {
+        .txn-amt.out {
             color: #EF4444;
         }
 
-        .txn-amount.income {
+        .txn-amt.in {
             color: #10B981;
         }
 
-        /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -638,8 +508,7 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 0 10px;
-            z-index: 1000;
+            z-index: 100;
         }
 
         .nav-item {
@@ -650,11 +519,9 @@
             padding: 8px 16px;
             border: none;
             background: none;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             font-size: 12px;
             cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 12px;
         }
 
         .nav-item.active {
@@ -662,250 +529,29 @@
         }
 
         .nav-item i {
-            font-size: 22px;
+            font-size: 20px;
         }
 
         .nav-item.center {
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: var(--gradient-1);
+            background: var(--gradient);
             color: white;
-            margin-top: -30px;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+            margin-top: -28px;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
         }
 
         .nav-item.center i {
             font-size: 24px;
         }
 
-        /* ========== MODALS ========== */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal {
-            background: var(--bg-card);
-            border-radius: 24px 24px 0 0;
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            transform: translateY(100%);
-            transition: transform 0.3s;
-        }
-
-        .modal-overlay.active .modal {
-            transform: translateY(0);
-        }
-
-        .modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .modal-close {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background: var(--bg);
-            color: var(--text);
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            padding: 24px;
-        }
-
-        /* Add Transaction Modal */
-        .amount-input-wrapper {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .currency-symbol {
-            font-size: 32px;
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
-
-        .amount-input {
-            font-size: 48px;
-            font-weight: 800;
-            border: none;
-            background: transparent;
-            color: var(--text);
-            text-align: center;
-            width: 100%;
-            outline: none;
-        }
-
-        .amount-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .type-toggle {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .type-btn {
-            flex: 1;
-            padding: 14px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            background: transparent;
-            color: var(--text);
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .type-btn.expense.active {
-            border-color: var(--danger);
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
-
-        .type-btn.income.active {
-            border-color: var(--success);
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .category-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .category-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 8px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            background: transparent;
-            color: var(--text);
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .category-btn:hover,
-        .category-btn.active {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        .category-btn i {
-            font-size: 24px;
-            color: var(--text-secondary);
-        }
-
-        .category-btn.active i {
-            color: var(--primary);
-        }
-
-        .note-input {
-            width: 100%;
-            padding: 16px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg);
-            color: var(--text);
-            font-size: 16px;
-            resize: none;
-            outline: none;
-            margin-bottom: 24px;
-        }
-
-        .note-input:focus {
-            border-color: var(--primary);
-        }
-
-        /* Voice Input */
-        .voice-input-btn {
-            width: 100%;
-            padding: 16px;
-            border: 2px dashed var(--border);
-            border-radius: var(--radius);
-            background: transparent;
-            color: var(--text-secondary);
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 24px;
-            transition: all 0.2s;
-        }
-
-        .voice-input-btn:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .voice-input-btn.recording {
-            border-color: var(--danger);
-            color: var(--danger);
-            animation: pulse-border 1.5s infinite;
-        }
-
-        @keyframes pulse-border {
-
-            0%,
-            100% {
-                border-color: var(--danger);
-            }
-
-            50% {
-                border-color: transparent;
-            }
-        }
-
-        /* WhatsApp Float Button */
         .whatsapp-float {
             position: fixed;
             bottom: 90px;
             right: 20px;
-            width: 60px;
-            height: 60px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             background: #25D366;
             color: white;
@@ -916,57 +562,36 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
-            z-index: 999;
-            transition: transform 0.2s;
+            z-index: 99;
         }
 
-        .whatsapp-float:hover {
-            transform: scale(1.1);
-        }
-
-        /* Utilities */
-        .hidden {
-            display: none !important;
-        }
-
-        /* Toast Notifications */
         .toast-container {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
         }
 
         .toast {
-            padding: 14px 24px;
+            padding: 12px 24px;
             background: var(--bg-card);
-            border-radius: var(--radius);
+            border-radius: 12px;
             color: var(--text);
-            font-weight: 500;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 8px;
+            animation: slideIn 0.3s;
         }
 
         .toast.success {
-            border-left: 4px solid var(--success);
+            border-left: 4px solid var(--primary);
         }
 
         .toast.error {
             border-left: 4px solid var(--danger);
         }
 
-        .toast.warning {
-            border-left: 4px solid var(--warning);
-        }
-
-        @keyframes slideDown {
+        @keyframes slideIn {
             from {
                 transform: translateY(-20px);
                 opacity: 0;
@@ -977,745 +602,260 @@
                 opacity: 1;
             }
         }
-
-        /* Loading Spinner */
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .empty-icon {
-            font-size: 64px;
-            color: var(--text-muted);
-            margin-bottom: 16px;
-        }
-
-        .empty-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .empty-text {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* Insights Card */
-        .insights-section {
-            padding: 0 20px 24px;
-        }
-
-        .insight-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 20px;
-            border-left: 4px solid var(--warning);
-        }
-
-        .insight-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .insight-header i {
-            color: var(--warning);
-            font-size: 20px;
-        }
-
-        .insight-title {
-            font-weight: 600;
-        }
-
-        .insight-text {
-            color: var(--text-secondary);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        /* Responsive */
-        @media (min-width: 768px) {
-            .app-container {
-                max-width: 480px;
-                margin: 0 auto;
-            }
-
-            .bottom-nav {
-                max-width: 480px;
-                left: 50%;
-                transform: translateX(-50%);
-                border-radius: 20px 20px 0 0;
-            }
-        }
     </style>
 </head>
 
 <body>
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <div class="toast-container" id="toasts"></div>
 
-    <!-- Splash Screen -->
-    <div class="splash-screen" id="splashScreen">
-        <div class="splash-logo">💰</div>
-        <div class="splash-title">MoneyViya</div>
-        <div class="splash-subtitle">Your Financial Friend • உங்கள் நிதி நண்பன்</div>
+    <div class="splash" id="splash">
+        <div class="splash-logo"><img src="/static/logo.png" alt="MoneyViya"
+                onerror="this.parentElement.innerHTML='💰'"></div>
+        <h1>MoneyViya</h1>
+        <p>Your Financial Friend • உங்கள் நிதி நண்பன்</p>
     </div>
 
-    <!-- Login Screen -->
-    <div class="login-screen hidden" id="loginScreen">
-        <div class="login-header">
-            <div class="login-logo">
-                <img src="/static/logo.png" alt="MoneyViya" onerror="this.style.display='none'">
+    <div class="container">
+        <div class="login" id="login">
+            <div class="login-header">
+                <div class="login-logo"><img src="/static/logo.png" alt="MoneyViya"
+                        onerror="this.parentElement.innerHTML='💰'"></div>
+                <h1>MoneyViya</h1>
+                <p>Track • Save • Grow | கண்காணி • சேமி • வளர்</p>
             </div>
-            <h1 class="login-title">MoneyViya</h1>
-            <p class="login-tagline">Track • Save • Grow | கண்காணி • சேமி • வளர்</p>
+
+            <div class="lang-grid">
+                <button class="lang-btn active" data-lang="en"><span
+                        class="flag">🇬🇧</span><span>English</span></button>
+                <button class="lang-btn" data-lang="ta"><span class="flag">🇮🇳</span><span>தமிழ்</span></button>
+                <button class="lang-btn" data-lang="te"><span class="flag">🇮🇳</span><span>తెలుగు</span></button>
+                <button class="lang-btn" data-lang="kn"><span class="flag">🇮🇳</span><span>ಕನ್ನಡ</span></button>
+            </div>
+
+            <div style="margin-top: auto;">
+                <div class="input-group">
+                    <input type="text" class="country" value="+91" readonly>
+                    <input type="tel" class="phone" id="phone" placeholder="Enter mobile number" maxlength="10">
+                </div>
+                <button class="btn btn-primary" id="loginBtn" disabled><span>Continue</span><i
+                        class="fas fa-arrow-right"></i></button>
+                <div class="divider">or</div>
+                <button class="btn btn-whatsapp" onclick="openWhatsApp()"><i class="fab fa-whatsapp"></i><span>Chat on
+                        WhatsApp</span></button>
+            </div>
         </div>
 
-        <div class="language-selector">
-            <button class="lang-btn active" data-lang="english">
-                <span class="flag">🇬🇧</span>
-                <span>English</span>
-            </button>
-            <button class="lang-btn" data-lang="tamil">
-                <span class="flag">🇮🇳</span>
-                <span>தமிழ்</span>
-            </button>
-            <button class="lang-btn" data-lang="telugu">
-                <span class="flag">🇮🇳</span>
-                <span>తెలుగు</span>
-            </button>
-            <button class="lang-btn" data-lang="kannada">
-                <span class="flag">🇮🇳</span>
-                <span>ಕನ್ನಡ</span>
-            </button>
-        </div>
-
-        <div class="login-form">
-            <div class="phone-input-group">
-                <input type="text" class="country-code" value="+91" readonly>
-                <input type="tel" class="phone-input" id="phoneInput" placeholder="Enter mobile number" maxlength="10">
+        <div class="app" id="app">
+            <div class="header">
+                <div class="greeting">
+                    <span class="small" id="greet">Good Morning</span>
+                    <span class="name" id="userName">Friend</span>
+                </div>
+                <div class="header-btns">
+                    <button class="icon-btn"><i class="fas fa-bell"></i></button>
+                    <button class="icon-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+                </div>
             </div>
 
-            <button class="btn-primary" id="sendOtpBtn" disabled>
-                <span>Continue</span>
-                <i class="fas fa-arrow-right"></i>
-            </button>
-
-            <div class="divider">or</div>
-
-            <button class="whatsapp-login" onclick="openWhatsApp()">
-                <i class="fab fa-whatsapp"></i>
-                <span>Chat on WhatsApp</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Main App -->
-    <div class="app-container hidden" id="appContainer">
-        <!-- Top Header -->
-        <header class="top-header">
-            <div class="greeting">
-                <span class="greeting-text" id="greetingText">Good Morning</span>
-                <span class="user-name" id="userName">Friend</span>
-            </div>
-            <div class="header-actions">
-                <button class="icon-btn notification" onclick="showNotifications()">
-                    <i class="fas fa-bell"></i>
-                    <span class="notification-badge"></span>
-                </button>
-                <button class="icon-btn" onclick="toggleTheme()">
-                    <i class="fas fa-moon" id="themeIcon"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- Balance Card -->
-        <section class="balance-section">
             <div class="balance-card">
                 <div class="balance-label">This Month's Balance</div>
-                <div class="balance-amount" id="balanceAmount">₹0</div>
-                <div class="balance-stats">
-                    <div class="stat-item income">
+                <div class="balance-amount" id="balance">₹0</div>
+                <div class="stats">
+                    <div class="stat">
                         <div class="stat-label"><i class="fas fa-arrow-down"></i> Income</div>
-                        <div class="stat-value" id="incomeTotal">₹0</div>
+                        <div class="stat-value" id="income">₹0</div>
                     </div>
-                    <div class="stat-item expense">
+                    <div class="stat">
                         <div class="stat-label"><i class="fas fa-arrow-up"></i> Expenses</div>
-                        <div class="stat-value" id="expenseTotal">₹0</div>
+                        <div class="stat-value" id="expense">₹0</div>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- AI Insight -->
-        <section class="insights-section">
-            <div class="insight-card">
-                <div class="insight-header">
-                    <i class="fas fa-lightbulb"></i>
-                    <span class="insight-title">Smart Tip</span>
-                </div>
-                <p class="insight-text" id="insightText">Track your daily expenses to save up to ₹5,000 per month! Start
-                    by adding today's spending.</p>
-            </div>
-        </section>
-
-        <!-- Quick Actions -->
-        <section class="quick-actions">
-            <h2 class="section-title">Quick Actions</h2>
-            <div class="action-grid">
-                <button class="action-btn" onclick="showAddModal('expense')">
-                    <div class="action-icon add"><i class="fas fa-minus"></i></div>
-                    <span class="action-label">Add Expense</span>
+            <div class="section-title">Quick Actions</div>
+            <div class="actions">
+                <button class="action" onclick="addExpense()">
+                    <div class="action-icon expense"><i class="fas fa-minus"></i></div><span>Expense</span>
                 </button>
-                <button class="action-btn" onclick="showAddModal('income')">
-                    <div class="action-icon income"><i class="fas fa-plus"></i></div>
-                    <span class="action-label">Add Income</span>
+                <button class="action" onclick="addIncome()">
+                    <div class="action-icon income"><i class="fas fa-plus"></i></div><span>Income</span>
                 </button>
-                <button class="action-btn" onclick="showReportModal()">
-                    <div class="action-icon report"><i class="fas fa-chart-pie"></i></div>
-                    <span class="action-label">Report</span>
+                <button class="action" onclick="showReport()">
+                    <div class="action-icon report"><i class="fas fa-chart-pie"></i></div><span>Report</span>
                 </button>
-                <button class="action-btn" onclick="showGoalsModal()">
-                    <div class="action-icon goals"><i class="fas fa-bullseye"></i></div>
-                    <span class="action-label">Goals</span>
+                <button class="action" onclick="showGoals()">
+                    <div class="action-icon goals"><i class="fas fa-bullseye"></i></div><span>Goals</span>
                 </button>
             </div>
-        </section>
 
-        <!-- Recent Transactions -->
-        <section class="transactions-section">
-            <h2 class="section-title">
-                Recent Transactions
-                <a href="#" class="see-all" onclick="showAllTransactions()">See All</a>
-            </h2>
-            <div class="transaction-list" id="transactionList">
-                <!-- Transactions loaded dynamically -->
-            </div>
-        </section>
-
-        <!-- Bottom Navigation -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" onclick="showTab('home')">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
-            </button>
-            <button class="nav-item" onclick="showTab('stats')">
-                <i class="fas fa-chart-bar"></i>
-                <span>Stats</span>
-            </button>
-            <button class="nav-item center" onclick="showAddModal()">
-                <i class="fas fa-plus"></i>
-            </button>
-            <button class="nav-item" onclick="showTab('budget')">
-                <i class="fas fa-wallet"></i>
-                <span>Budget</span>
-            </button>
-            <button class="nav-item" onclick="showTab('profile')">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </button>
-        </nav>
-
-        <!-- WhatsApp Float -->
-        <button class="whatsapp-float" onclick="openWhatsApp()">
-            <i class="fab fa-whatsapp"></i>
-        </button>
-    </div>
-
-    <!-- Add Transaction Modal -->
-    <div class="modal-overlay" id="addModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Add Transaction</h3>
-                <button class="modal-close" onclick="closeModal('addModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="amount-input-wrapper">
-                    <span class="currency-symbol">₹</span>
-                    <input type="number" class="amount-input" id="amountInput" placeholder="0">
+            <div class="section-title">Recent Transactions <a href="#" class="see-all">See All</a></div>
+            <div class="txn-list" id="txnList">
+                <div class="txn">
+                    <div class="txn-icon food"><i class="fas fa-utensils"></i></div>
+                    <div class="txn-details">
+                        <div class="txn-title">Tea & Snacks</div>
+                        <div class="txn-cat">Food</div>
+                    </div>
+                    <div class="txn-amt out">-₹50</div>
                 </div>
-
-                <div class="type-toggle">
-                    <button class="type-btn expense active" onclick="setType('expense')">
-                        <i class="fas fa-arrow-up"></i> Expense
-                    </button>
-                    <button class="type-btn income" onclick="setType('income')">
-                        <i class="fas fa-arrow-down"></i> Income
-                    </button>
+                <div class="txn">
+                    <div class="txn-icon transport"><i class="fas fa-bus"></i></div>
+                    <div class="txn-details">
+                        <div class="txn-title">Auto Ride</div>
+                        <div class="txn-cat">Transport</div>
+                    </div>
+                    <div class="txn-amt out">-₹120</div>
                 </div>
-
-                <div class="category-grid" id="categoryGrid">
-                    <button class="category-btn active" data-cat="food">
-                        <i class="fas fa-utensils"></i>
-                        <span>Food</span>
-                    </button>
-                    <button class="category-btn" data-cat="transport">
-                        <i class="fas fa-bus"></i>
-                        <span>Transport</span>
-                    </button>
-                    <button class="category-btn" data-cat="shopping">
-                        <i class="fas fa-shopping-bag"></i>
-                        <span>Shopping</span>
-                    </button>
-                    <button class="category-btn" data-cat="bills">
-                        <i class="fas fa-file-invoice"></i>
-                        <span>Bills</span>
-                    </button>
-                    <button class="category-btn" data-cat="health">
-                        <i class="fas fa-heartbeat"></i>
-                        <span>Health</span>
-                    </button>
-                    <button class="category-btn" data-cat="entertainment">
-                        <i class="fas fa-film"></i>
-                        <span>Fun</span>
-                    </button>
-                    <button class="category-btn" data-cat="education">
-                        <i class="fas fa-book"></i>
-                        <span>Education</span>
-                    </button>
-                    <button class="category-btn" data-cat="other">
-                        <i class="fas fa-ellipsis-h"></i>
-                        <span>Other</span>
-                    </button>
+                <div class="txn">
+                    <div class="txn-icon gig"><i class="fas fa-briefcase"></i></div>
+                    <div class="txn-details">
+                        <div class="txn-title">Delivery Work</div>
+                        <div class="txn-cat">Gig Income</div>
+                    </div>
+                    <div class="txn-amt in">+₹850</div>
                 </div>
-
-                <button class="voice-input-btn" id="voiceBtn" onclick="toggleVoiceInput()">
-                    <i class="fas fa-microphone"></i>
-                    <span>Say "Spent 50 on chai"</span>
-                </button>
-
-                <textarea class="note-input" id="noteInput" placeholder="Add a note (optional)" rows="2"></textarea>
-
-                <button class="btn-primary" onclick="saveTransaction()">
-                    <i class="fas fa-check"></i>
-                    <span>Save Transaction</span>
-                </button>
+                <div class="txn">
+                    <div class="txn-icon bills"><i class="fas fa-mobile-alt"></i></div>
+                    <div class="txn-details">
+                        <div class="txn-title">Mobile Recharge</div>
+                        <div class="txn-cat">Bills</div>
+                    </div>
+                    <div class="txn-amt out">-₹199</div>
+                </div>
             </div>
         </div>
     </div>
 
+    <nav class="bottom-nav" id="nav" style="display:none;">
+        <button class="nav-item active"><i class="fas fa-home"></i><span>Home</span></button>
+        <button class="nav-item"><i class="fas fa-chart-bar"></i><span>Stats</span></button>
+        <button class="nav-item center"><i class="fas fa-plus"></i></button>
+        <button class="nav-item"><i class="fas fa-wallet"></i><span>Budget</span></button>
+        <button class="nav-item"><i class="fas fa-user"></i><span>Profile</span></button>
+    </nav>
+
+    <button class="whatsapp-float" onclick="openWhatsApp()" id="waBtn" style="display:none;"><i
+            class="fab fa-whatsapp"></i></button>
+
     <script>
-        // ========== APP STATE ==========
-        const state = {
-            user: null,
-            phone: localStorage.getItem('phone') || '',
-            token: localStorage.getItem('token') || '',
-            language: localStorage.getItem('language') || 'english',
-            theme: localStorage.getItem('theme') || 'dark',
-            currentType: 'expense',
-            currentCategory: 'food',
-            transactions: [],
-            balance: 0,
-            income: 0,
-            expense: 0
-        };
+        const API = window.location.origin;
+        const WA_NUMBER = '15551589563';
 
-        const API_BASE = window.location.origin;
-        const WHATSAPP_NUMBER = '15551589563';  // Meta test number
-
-        // ========== INITIALIZATION ==========
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
-                document.getElementById('splashScreen').classList.add('hidden');
-                if (state.token && state.phone) {
+                document.getElementById('splash').classList.add('hidden');
+                const token = localStorage.getItem('token');
+                if (token) {
                     showApp();
                 } else {
-                    document.getElementById('loginScreen').classList.remove('hidden');
+                    document.getElementById('login').classList.add('active');
                 }
             }, 2000);
 
-            setupEventListeners();
-            applyTheme();
-        });
-
-        function setupEvenrs() {
             // Phone input
-            const phoneInput = document.getElementById('phoneInput');
+            const phoneInput = document.getElementById('phone');
+            const loginBtn = document.getElementById('loginBtn');
             phoneInput.addEventListener('input', (e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                e.target.value = value;
-                document.getElementById('sendOtpBtn').disabled = value.length !== 10;
+                e.target.value = e.target.value.replace(/\D/g, '');
+                loginBtn.disabled = e.target.value.length !== 10;
             });
 
-            // Language selector
-            ocument.querySelectorAll('.lang-btn').forEach(btn => {
+            // Login button
+            loginBtn.addEventListener('click', login);
+
+            // Language buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    state.language = btn.dataset.lang;
-                    localStorage.setItem('language', state.language);
+                    localStorage.setItem('lang', btn.dataset.lang);
                 });
             });
 
-            // Category buttons
-            doSelectorAll('.category-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    state.currentCategory = btn.dataset.cat;
-                });
-            });
+            // Set greeting
+            const hour = new Date().getHours();
+            let greet = 'Good Morning';
+            if (hour >= 12 && hour < 17) greet = 'Good Afternoon';
+            else if (hour >= 17) greet = 'Good Evening';
+            document.getElementById('greet').textContent = greet;
+        });
 
-            // Send OTP button
-            document.getElendOtpBtn').addEventListener('click', sendOTP);
-        }
+        async function login() {
+            const phone = '+91' + document.getElementById('phone').value;
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-        // ========== AUTH ==========
-        async function sendOTP()       const phone = document.getElementById('phoneInput').value;
-        const btn = document.getElementById('sendOtpBtn');
-
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spin;
-
-        try {
-            const response = await fetch(`${API_BASE}/api/v2/auth/se                   method: 'POST',
+            try {
+                const res = await fetch(`${API}/api/v2/auth/send-otp`, {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: '+91' + phone })
+                    body: JSON.stringify({ phone })
                 });
-
-                const data = await response.json();
-
+                const data = await res.json();
                 if (data.success) {
-             ('OTP sent to your WhatsApp!', 'success');
-          phone = '+91' + phone;
-                    localStorage.setItem('phone', state.phone);
-                    // For demo, auto-login
-                    setTimeout(() => {
-                        state.token = 'demo_token';
-                        localStorage.setItem('token', state.token);
-                        document.getElementById('loginScreen').classList.add('hidden');
-                        showApp();
-                    }, 1500);
+                    toast('OTP sent to WhatsApp!', 'success');
+                    localStorage.setItem('phone', phone);
+                    localStorage.setItem('token', 'demo');
+                    setTimeout(showApp, 1500);
                 } else {
-                    showToast(data.message || 'Failed to send OTP', 'error');
+                    toast(data.message || 'Error', 'error');
                 }
-            } catch (error) {
-                showToast('Connection error. Try again.', 'error');
+            } catch (e) {
+                // Demo mode - just login
+                localStorage.setItem('phone', phone);
+                localStorage.setItem('token', 'demo');
+                setTimeout(showApp, 1000);
             }
-
             btn.disabled = false;
             btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
         }
 
-  ======= APP FUNCTIONS ==========
         function showApp() {
-            document.getElementById('loginScreen').classList.add('hidd          document.getElementById('appContainer').classList.remove('hidden');
-            setGreeting();
-            loadDashboard();
+            document.getElementById('login').classList.remove('active');
+            document.getElementById('app').classList.add('active');
+            document.getElementById('nav').style.display = 'flex';
+            document.getElementById('waBtn').style.display = 'flex';
+            loadData();
         }
 
-        function setGreeting() {
-            const hour = new Date().getHours();
-            let greeting = 'Good Morning';
-            if (hour >= 12 && 7) greeting = 'Good Afternoon';
-            else if (hour >= 17) greeting = 'Good Evening';
-
-            document.getElementById('greetingText').textContent = greeting;
-            document.getElementById('userName').textContent = state.user?.name || 'Fri  }
-
-        async function loadDashboard() {
+        async function loadData() {
+            const phone = localStorage.getItem('phone') || '';
             try {
-                const response = await fetch(`${ API_BASE } / api / v2 / dashboard / ${ encodeURIComponent(state.phone)
-        }`);
-        if (response.ok) {
-                    const data = await response.json();
-                    updateDashboard(data);
+                const res = await fetch(`${API}/api/v2/dashboard/${encodeURIComponent(phone)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('balance').textContent = '₹' + (data.balance || 0).toLocaleString('en-IN');
+                    document.getElementById('income').textContent = '₹' + (data.total_income || 0).toLocaleString('en-IN');
+                    document.getElementById('expense').textContent = '₹' + (data.total_expenses || 0).toLocaleString('en-IN');
+                    if (data.name) document.getElementById('userName').textContent = data.name;
                 }
-            } catch (error) {
-                console.error('Dashboard load error:', error);
+            } catch (e) {
+                // Use demo data
+                document.getElementById('balance').textContent = '₹24,780';
+                document.getElementById('income').textContent = '₹35,000';
+                document.getElementById('expense').textContent = '₹10,220';
             }
-
-            // Load demo data for display
-            updateDashboard({
-                balance: 24780,
-                total_income: 35000,
-                total_expenses: 10220,
-    transactions: [
-                    { description: 'Chai & Snacks', category: 'food', amount: 50, type: 'expense', date: new Date() },
-                    { description: 'Auto ride', category: 'transport', amount: 120, type: 'expense', date: new Date() },
-                    { description: 'Freelance work', category: 'income', amount: 5000, type: 'income', date: new Date() },
-                    { description: 'Mobile recharge', category: 'bills', amount: 199, type: 'expense', date: new Date() }
-                ]
-            });
-        }
-
-        function updateDashboard(data) {
-            document.getElementById('balanceAmount').textContent = formatCurrency(data.balance || 0);
-            document.getElementById('incomeTotal').ent = formatCurrency(data.total_income || 0);
-            document.getElementById('expenseTotal').textContent = formatCurrency(data.total_expenses || 0);
-
-            renderTransactions(data.transactions || []);
-        }
-
-        function renderTransactions(transactions) {
-            const list = document.getElementById('transactionList');
-
-            ions.length === 0) {
-                list.innerHTML = `
-            < div class="empty-state" >
-                        <div class="empty-icon">📝</div>
-                        <div class="emp transactions yet</div>
-                        <div class="empty-text">Add your first expense or income</div>
-                    </div >
-            `;
-                return;
-            }
-
-            list.innerHTML = transactions.slice(0, 5).map(txn => {
-                const iconClass = getCategoryIcon(txn.category);
-                const isExpense = txn.type === 'expense';
-                return `
-        "transaction-item" >
-                        <div class="txn-icon ${txn.category}">${iconClass}</div>
-                        <div class="txn-details">
-                            <div class="txn-title">${txn.description}</div>
-                            <div class="txn-category">${formatCategory(txn.category)}</div>
-                        </div>
-                        <div class="txn-amount ${txn.type}">
-                            ${isExpense ? '-' : '+'}${formatCurrency(txn.amount)}
-                        </div>
-                    </div >
-            `;
-            }).join('');
-        }
-
-        // ========== MODALS ==========
-        function showAddModal(type = 'expense') {
-            setType(type);
-            document.getElementById('addModal').classList.add('active');
-            document.getElementById('amountInput').focus    }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        function setType(type) {
-            state.currentType = type;
-            document.querySelectorAll('.type-btn').forEach(btn => {
-        btn.classList.remove('active');
-                if (btn.classList.contains(type)) btn.classList.add('active        });
-        }
-
-        async function saveTransaction() {
-            const amount = parseFloat(document.getElementById('amountInput').value);
-            const note = document.getElementById('noteInput').value;
-
-            if (!amount || amount <= 0) {
-                showToast('Entid amount', 'error');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${ API_BASE } /api/v2 / transactions`, {
-                    method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        phone: state.phone              amount: amount,
-                        type: state.currentType,
-                        category: state.currentCategory,
-                        description: note || `${ formatCategory(state.currentCategory) } ${ state.currentType } `
-                    })
-                });
-
-                if (response.ok) {
-                    showToast(`${ state.currentType === 'expense' ? '💸' : '💰' } ₹${ amount } ${ state.currentType } saved!`, 'success');
-                    closeModal('addModal');
-                    document.getElementById('amountInput').value = '';
-                   mentById('noteInput').value = '';
-                    loadDashboard();
-                }
-            } catch (error) {
-                showToast('Saved locally. Will sync when online.', 'warning');
-                closeModal('addModal');
-            }
-        }
-
-        // ========== VOICE INPUT ==========
-        let recognition = null;
-        let isRecording = false;
-
-        function toggleVoiceInput() {
-            const btn = document.getElementById('voiceBtn');
-
-            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-                t('Voice not supported. Use WhatsApp instead.', 'warning');
-                return;
-            }
-
-            cording) {
-                stopRecording();
-            } else {
-                startRecording();
- 
-        }
-
-        function startRecording() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recog= state.language === 'hindi' ? 'hi-IN' : 'en-IN';
-            recognition.continuous = false;
-
-            recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
-                document.getElementById('noteInput').value = text;
-                parseVoiceInput(text);
-                stopRecording();
-            };
-
-            recognition.onerror = () => {
-                showToast('Voice error. Try again.', 'error'       stopRecording();
-            };
-
-            recognition.start();
-            isRecording = true;
-            document.getElementById('voiceBtn').classList.add('recording');
-            document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"Listening...</span>';
-        }
-
-        function stopRecording() {
-            if (recognition) recognition.stop();
-            isRecording = false;
-    ment.getElementById('voiceBtn').classList.remove('recording');
-            document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i> <span>Say "Spent 50 on chai"</span>';
-        }
-
-        function parseVoiceInput(text) {
-            // Extrac
-            const numbers = text.match(/\d+/g);
-            if (numbers) {
-                document.getElementById('amountInput').value = numbers[0];
-            }
-
-            // Detect type
-            if (text.toLowerCase().includes('spent') || text.toLowerCase().includes('paid') || text.toLowerCase().includes('खर्च')) {
-             pe('expense');
-            } else if (text.toLowerCase().includes('earned') || text.toLowerCase().includes('received') || text.toLowerCase().includes('मिला')) {
-                setType('income');
-            }
-
-            // Detect cat      const categoryMap = {
-                'food': ['food', 'chai', 'खाना', 'lunch', 'dinner', 'breakfast'],
-                'transport': ['auto', 'bus', 'cab', 'petrol', 'uber', 'ola'],
-                'shopping': ['shopping', 'clothes', 'amazon'],
-                'bills': ['bill', 'recharge', 'electricity', 'rent'],
-                'health': ['medicine', 'doctor', 'hospital']
-                const textLower = text.toLowerCase();
-            for (const [cat, keywords] of Object.entries(categoryMap)) {
-                if (keywords.some(kw => textLower.includes(kw))) {
-                    state.currentCategory = cat;
-                    document.querySelectorAll('.category-btn').forEach(btn => {
-                        btn.classList.toggle('active', btn.dataset.cat === cat);
-                    });
-                               }
-            }
-        }
-
-        // ========== UTILITIES ==========
-        function formatCurrency(amount) {
-            return '₹' + new Intl.NumberFormat('en-IN').format(amount);
-        }
-
-        function formatCategory(cat) {
-            const names = {
-                food: 'Food & Drinks',
-                transport: 'Transport',
-                shopping: 'Shopping',
-                bills: 'Bills & Utilities',
-                health: 'Healthcare',
-                entet: 'Entertainment',
-                education: 'Education',
-                income: 'Income',
-                other: 'Other'
-            };
-            return names[cat;
-        }
-
-        function getCategoryIcon(cat) {
-            const icons = {
-                food: '<i class="fas fa-utensils"></i>',
-                transport: '<i class="fas fa-bus"></i>',
-                shopping: '<i class="fas fa-shopping-bag"></i>',
-                bills: '<i class="fas fa-file-invoice"></i>',
-                health: '<i class="fas fa-heartbeat"></i>',
-                entertainment: '<i class="fas fa-film"></i>',
-                education: '<i class="fok"></i>',
-                income: '<i class="fas fa-wallet"></i>',
-                other: '<i class="fas fa-receipt"></i>'
-            };
-            return icons[cat] || icons.other;
-        }
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${ type } `;
-            toast.innerHTML = `< i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}" ></i > ${ message } `;
-            container.appendChild(toast);
-
-            setTimeout(() => {
-        toast.remove();
-            }, 3000);
-        }
-
-        function toggleTheme() {
-            state.theme = state.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('theme', state.theme);
-            applyTheme();
-        }
-
-        function applyTheme() {
-            document.body.classList.toggle('light-mode', state.theme === 'light');
-            document.getElementById('themeIcon').className = state.theme === 'daa-moon' : 'fas fa-sun';
         }
 
         function openWhatsApp() {
-            const message =RIComponent('Hi! I want to track my expenses.');
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+            window.open(`https://wa.me/${WA_NUMBER}?text=Hi! I want to track my expenses.`, '_blank');
         }
 
-        function showTab(tab) {
-            docurySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            event.target.closest('.nav-item').classList.add('active');
-            // Tab switching logic here
+        function toast(msg, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `toast ${type}`;
+            div.textContent = msg;
+            document.getElementById('toasts').appendChild(div);
+            setTimeout(() => div.remove(), 3000);
         }
 
-        function showReportModal() {
-            owToast('Opening your financial report...', 'success');
-            // Implement report modal
-        }
-
-        function showGoalsModal() {
-            showToast('Set your savings goals!', 'success');
-            //nt goals modal
-        }
-
-        function showNotifications() {
-            showToast('No new notifications', 'info');
-        }
-
-        function showAllTransactions() {
-            showToast('Loading al        ns...', 'success');
-        }
+        function addExpense() { toast('Opening expense form...'); }
+        function addIncome() { toast('Opening income form...'); }
+        function showReport() { toast('Generating report...'); }
+        function showGoals() { toast('Opening goals...'); }
+        function toggleTheme() { document.body.classList.toggle('light'); }
     </script>
 </body>
 
