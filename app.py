@@ -56,7 +56,7 @@ from config import SUPPORTED_LANGUAGES, VOICES_DIR
 # ================= APP SETUP =================
 app = FastAPI(
     title="VittaSaathi API",
-    description="WhatsApp Financial Advisor for ALL Irregular Income Earners - v3.0",
+    description="WhatsApp Financial Advisor for Gig Workers & Irregular Income Earners - v3.0",
     version="3.0.0"
 )
 
@@ -67,6 +67,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+# Root redirect to new dashboard
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/static/index.html")
+
 
 # Include extended API routes
 try:
