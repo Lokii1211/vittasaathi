@@ -2803,12 +2803,11 @@ async def api_send_otp(request: Request):
             clean_phone = phone.replace("+", "")
             message = f"🔐 Your MoneyViya Login OTP is: *{otp}*\n\nDo not share this with anyone."
             whatsapp_cloud_service.send_text_message(clean_phone, message)
-            
             return {"success": True, "message": "OTP sent to WhatsApp"}
-        else:
-            # Fallback for dev/demo if WA not configured
-            print(f"================ OTP FOR {phone}: {otp} ================")
-            return {"success": True, "message": "OTP sent (Dev Mode)"}
+            
+        # Fallback for dev/demo if WA not configured
+        print(f"================ OTP FOR {phone}: {otp} ================")
+        return {"success": True, "message": "OTP sent (Dev Mode)"}
             
     except Exception as e:
         return {"success": False, "message": str(e)}
@@ -2825,14 +2824,18 @@ async def api_verify_otp(request: Request):
             return {"success": False, "message": "Phone and OTP required"}
             
         record = OTP_CACHE.get(phone)
-        import time
         valid = False
+        import time
+        
+        # Normalize inputs
+        otp = str(otp).replace(" ", "").strip()
         
         # Check global cache (if sent via Backend/Cloud API)
         if record:
-            if time.time() > record["expires"]:
+             if time.time() > record["expires"]:
+                print(f"[OTP] Global cache expired for {phone}")
                 del OTP_CACHE[phone]
-            elif record["otp"] == otp:
+             elif str(record["otp"]).strip() == otp:
                 valid = True
                 del OTP_CACHE[phone]
         
@@ -2842,31 +2845,36 @@ async def api_verify_otp(request: Request):
             if user:
                 temp_otp = user.get("temp_otp")
                 expiry = user.get("otp_expiry", 0)
-                if temp_otp and str(temp_otp) == str(otp):
+                
+                print(f"[OTP] Checking User Repo: Stored={temp_otp}, Input={otp}")
+                
+                if temp_otp and str(temp_otp).strip() == otp:
                     if time.time() <= expiry:
                         valid = True
                         # Clear used OTP
                         user["temp_otp"] = None 
                         user_repo.update_user(phone, user)
+                    else:
+                        print(f"[OTP] User repo OTP expired")
 
         if not valid:
-            return {"success": False, "message": "Invalid or expired OTP"}
+            print(f"[OTP] Validation Failed for {phone}. Input: {otp}")
+            return {"success": False, "message": "Invalid OTP. Ask bot for new code."}
             
         # Success! 
-        
-        # Create user if not exists
-        user_repo.ensure_user(phone)
-        
-        # Create user if not exists
         user_repo.ensure_user(phone)
         
         # Create session token (simple one for now)
         token = f"session_{phone}_{int(time.time())}"
         
+        # Get Name
+        user_data = user_repo.get_user(phone)
+        
         return {
             "success": True, 
             "token": token,
-            "phone": phone
+            "phone": phone,
+            "name": user_data.get("name") if user_data else None
         }
         
     except Exception as e:

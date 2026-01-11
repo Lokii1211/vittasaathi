@@ -259,6 +259,10 @@ Based on your profile:
             user_data["otp_expiry"] = time.time() + 300
             return f"🔐 Your MoneyViya Login OTP is: *{otp}*\n\n(Valid for 5 minutes). Enter this on the website to log in."
 
+        # Investment Advice
+        if any(w in message for w in ["invest", "market", "stock", "mutual fund", "gold", "sip", "trend", "advice", "plan"]):
+            return self._recommend_investment(message, user_data)
+
         # Use AI for natural conversation
         return self._ai_conversation(message, user_data)
     
@@ -751,7 +755,27 @@ _I'll update your dashboard immediately!_"""
             motivation_quote=random.choice(motivation_quotes),
             daily_tip=random.choice(daily_tips)
         )
-    
+
+    def _recommend_investment(self, message: str, user_data: Dict) -> str:
+        try:
+            from services.investment_service import investment_service
+            import re
+            
+            # Check for amount
+            msg = message.lower()
+            amount_match = re.search(r'\b(\d{3,})\b', msg) # At least 3 digits
+            
+            if amount_match and ("invest" in msg or "plan" in msg):
+                amount = float(amount_match.group(1))
+                return investment_service.get_portfolio_plan(amount)
+            
+            # Else default to analysis
+            return investment_service.get_market_analysis()
+
+        except Exception as e:
+             print(f"Invest Error: {e}")
+             return "I'm analyzing the market trends... Ask me 'Investment ideas' again in a moment!"
+             
     def _get_personalized_advice(self, user_data: Dict) -> str:
         """Get personalized advice based on spending patterns"""
         occupation = user_data.get("occupation", "gig_worker")
