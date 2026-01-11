@@ -461,9 +461,13 @@ Let's start your financial journey! 🚀""",
         step = user.get("onboarding_step", "language")
         language = user.get("preferred_language", "english")
         
-        # Check for restart commands
+        # Check for restart/language change commands
         msg_lower = message.lower().strip()
-        if msg_lower in ["restart", "start over", "reset"]:
+        change_lang_triggers = ["restart", "start over", "reset", "change language", 
+                                "change lang", "different language", "भाषा बदलें", 
+                                "மொழி மாற்று", "భాష మార్చు"]
+        
+        if msg_lower in change_lang_triggers or "change" in msg_lower and "language" in msg_lower:
             self.user_repo.update_user(phone, {"onboarding_step": "language"})
             return {"text": self.get_welcome_message(), "step": "language"}
         

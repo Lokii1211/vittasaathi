@@ -1304,21 +1304,69 @@ async def baileys_message(request: Request):
             msg_lower = message.lower().strip()
             intent = None
             
+            # Language change command (works anytime)
+            if any(kw in msg_lower for kw in ["change language", "change lang", "भाषा बदलें", "மொழி மாற்று"]):
+                user_repo.update_user(phone, {"onboarding_step": "language", "onboarding_complete": False})
+                ai_onboarding = get_ai_onboarding(user_repo)
+                return {"reply": ai_onboarding.get_welcome_message()}
+            
             # Greeting keywords
-            if msg_lower in ["hi", "hello", "hey", "hii", "namaste"]:
+            if msg_lower in ["hi", "hello", "hey", "hii", "namaste", "good morning", "good evening"]:
                 intent = {"intent": "GREETING", "raw_message": message}
             
             # Balance/Summary keywords
-            elif any(kw in msg_lower for kw in ["balance", "summary", "total", "status", "kitna", "बैलेंस"]):
+            elif any(kw in msg_lower for kw in ["balance", "summary", "total", "status", "kitna", "बैलेंस", "कितना", "இருப்பு"]):
                 intent = {"intent": "SUMMARY_QUERY", "raw_message": message}
             
             # Report keywords
-            elif any(kw in msg_lower for kw in ["report", "monthly", "weekly", "रिपोर्ट"]):
+            elif any(kw in msg_lower for kw in ["report", "monthly", "weekly", "रिपोर्ट", "अवलोकन", "dashboard"]):
                 intent = {"intent": "DASHBOARD_QUERY", "raw_message": message}
             
             # Help keywords
-            elif any(kw in msg_lower for kw in ["help", "commands", "मदद"]):
+            elif any(kw in msg_lower for kw in ["help", "commands", "मदद", "how to", "क्या कर सकते", "உதவி"]):
                 intent = {"intent": "HELP_QUERY", "raw_message": message}
+            
+            # Income keywords (earned, received, salary, got)
+            elif any(kw in msg_lower for kw in ["earned", "received", "salary", "got", "income", "कमाया", "मिला", "சம்பாதித்தேன்"]):
+                import re
+                amounts = re.findall(r'[\d,]+', message)
+                if amounts:
+                    amount = int(amounts[0].replace(',', ''))
+                    intent = {"intent": "INCOME_ENTRY", "amount": amount, "raw_message": message}
+            
+            # Expense keywords (spent, paid, bought, kharch)
+            elif any(kw in msg_lower for kw in ["spent", "paid", "bought", "expense", "खर्च", "दिया", "செலவு"]):
+                import re
+                amounts = re.findall(r'[\d,]+', message)
+                if amounts:
+                    amount = int(amounts[0].replace(',', ''))
+                    # Try to detect category
+                    category = "other"
+                    if any(w in msg_lower for w in ["food", "खाना", "lunch", "dinner", "restaurant"]):
+                        category = "food"
+                    elif any(w in msg_lower for w in ["petrol", "fuel", "gas"]):
+                        category = "petrol"
+                    elif any(w in msg_lower for w in ["transport", "uber", "ola", "cab", "auto"]):
+                        category = "transport"
+                    elif any(w in msg_lower for w in ["mobile", "recharge", "phone"]):
+                        category = "mobile_recharge"
+                    elif any(w in msg_lower for w in ["shopping", "clothes", "amazon", "flipkart"]):
+                        category = "shopping"
+                    elif any(w in msg_lower for w in ["medicine", "doctor", "hospital"]):
+                        category = "healthcare"
+                    intent = {"intent": "EXPENSE_ENTRY", "amount": amount, "category": category, "raw_message": message}
+            
+            # Budget keywords
+            elif any(kw in msg_lower for kw in ["budget", "limit", "बजट", "பட்ஜெட்"]):
+                intent = {"intent": "BUDGET_QUERY", "raw_message": message}
+            
+            # Goal keywords
+            elif any(kw in msg_lower for kw in ["goal", "target", "लक्ष्य", "இலக்கு", "savings goal"]):
+                intent = {"intent": "GOAL_QUERY", "raw_message": message}
+            
+            # Advice keywords
+            elif any(kw in msg_lower for kw in ["advice", "suggest", "tip", "सलाह", "ஆலோசனை", "invest"]):
+                intent = {"intent": "ADVICE_REQUEST", "raw_message": message}
             
             # Use OpenAI for complex messages
             if not intent and openai_service.is_available():
@@ -1548,14 +1596,92 @@ async def route_intent(phone: str, intent: dict, user: dict, language: str) -> d
 
 
 async def handle_greeting(phone: str, intent: dict, user: dict, language: str) -> dict:
+    import random
+    from datetime import datetime
+    
     name = user.get("name", "Friend")
+    
+    # Motivational quotes
+    motivational_quotes = {
+        "english": [
+            "💡 Small savings today = Big wealth tomorrow!",
+            "🌟 Every rupee saved is a rupee earned!",
+            "💪 Financial freedom starts with one step!",
+            "🎯 Your goals are closer than you think!",
+            "📈 Consistency beats intensity in saving!",
+            "🌱 Plant your money seeds today!",
+            "✨ Dream big, save bigger!",
+            "🚀 Your financial journey is amazing!"
+        ],
+        "hindi": [
+            "💡 आज की छोटी बचत = कल की बड़ी दौलत!",
+            "🌟 हर बचाया रुपया कमाया रुपया है!",
+            "💪 आर्थिक आज़ादी एक कदम से शुरू होती है!",
+            "🎯 आपके लक्ष्य नजदीक हैं!",
+            "📈 लगातारता हमेशा जीतती है!",
+            "🌱 आज अपने पैसे के बीज बोएं!",
+            "✨ बड़े सपने देखो, बड़ा बचाओ!"
+        ],
+        "tamil": [
+            "💡 இன்றைய சிறிய சேமிப்பு = நாளைய பெரிய செல்வம்!",
+            "🌟 சேமிக்கும் ஒவ்வொரு ரூபாயும் சம்பாதிக்கும் ரூபாய்!",
+            "💪 நிதி சுதந்திரம் ஒரு அடியில் தொடங்குகிறது!"
+        ]
+    }
+    
+    # Get time-based greeting
+    hour = datetime.now().hour
+    if hour < 12:
+        time_greeting = {"english": "Good morning", "hindi": "सुप्रभात", "tamil": "காலை வணக்கம்"}
+    elif hour < 17:
+        time_greeting = {"english": "Good afternoon", "hindi": "नमस्ते", "tamil": "மதிய வணக்கம்"}
+    else:
+        time_greeting = {"english": "Good evening", "hindi": "शुभ संध्या", "tamil": "மாலை வணக்கம்"}
+    
+    greeting = time_greeting.get(language, time_greeting["english"])
+    quotes = motivational_quotes.get(language, motivational_quotes["english"])
+    quote = random.choice(quotes)
+    
+    # Get financial summary
     daily = financial_advisor.get_daily_message(phone)
-    
-    # Add level info
     level = gamification_service.get_user_level(phone)
-    level_text = f"\n\n{level['icon']} Level: {level['level']} ({level['points']} pts)"
     
-    return {"message": daily["message"] + level_text}
+    if language == "hindi":
+        reply = f"""🙏 *{greeting}, {name}!*
+
+वापस स्वागत है! आप आर्थिक रूप से बढ़ रहे हैं! 📈
+
+{quote}
+
+{level['icon']} स्तर: {level['level']} ({level['points']} अंक)
+
+{daily['message']}
+
+💬 कमांड्स: बैलेंस, रिपोर्ट, खर्च, कमाई, भाषा बदलें"""
+    elif language == "tamil":
+        reply = f"""🙏 *{greeting}, {name}!*
+
+மீண்டும் வரவேற்கிறோம்! நீங்கள் நிதி ரீதியாக வளர்ந்து கொண்டிருக்கிறீர்கள்! 📈
+
+{quote}
+
+{level['icon']} நிலை: {level['level']} ({level['points']} புள்ளிகள்)
+
+{daily['message']}"""
+    else:
+        reply = f"""🙏 *{greeting}, {name}!*
+
+Welcome back! You're growing financially! 📈
+
+{quote}
+
+{level['icon']} Level: {level['level']} ({level['points']} points)
+
+{daily['message']}
+
+💬 Commands: balance, report, spent, earned, change language"""
+    
+    return {"message": reply}
 
 
 async def handle_income(phone: str, intent: dict, user: dict, language: str) -> dict:
