@@ -11,7 +11,7 @@ const fs = require('fs');
 
 // Configuration
 const CONFIG = {
-    BACKEND_URL: process.env.BACKEND_URL || 'https://vittasaathi-1.onrender.com',
+    BACKEND_URL: process.env.BACKEND_URL || 'https://moneyviya.up.railway.app',
     AUTH_FOLDER: './auth_info'
 };
 
@@ -22,20 +22,21 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT = 3;
 
 /**
- * Send message to VittaSaathi backend
+ * Send message to MoneyViya backend
  */
 async function processMessage(phone, message) {
     try {
         console.log(`📤 Processing: ${message.substring(0, 50)}...`);
 
+        // Use the dedicated Baileys webhook
         const response = await axios.post(
-            `${CONFIG.BACKEND_URL}/api/message`,
-            new URLSearchParams({
-                From: `whatsapp:+${phone}`,
-                Body: message
-            }),
+            `${CONFIG.BACKEND_URL}/webhook/baileys`,
             {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                phone: `+${phone}`,
+                message: message
+            },
+            {
+                headers: { 'Content-Type': 'application/json' },
                 timeout: 60000
             }
         );
@@ -46,7 +47,8 @@ async function processMessage(phone, message) {
         return null;
     } catch (error) {
         console.error('❌ Backend error:', error.message);
-        return '❌ Service temporarily unavailable. Please try again.';
+        // Fallback: don't reply if backend fails
+        return null;
     }
 }
 

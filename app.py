@@ -1277,8 +1277,40 @@ If you cannot read the amount clearly, set amount to 0."""
 # ================= TWILIO WHATSAPP WEBHOOK =================
 from fastapi import Form, Request
 
-@app.post("/webhook/whatsapp-incoming")
-async def twilio_webhook(request: Request):
+# ================= BAILEYS WEBHOOK (FREE BOT) =================
+@app.post("/webhook/baileys")
+async def handle_baileys_webhook(request: Request):
+    """Handle incoming messages from Baileys (Node.js) Bot"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "")
+        message = data.get("message", "")
+        
+        print(f"[Baileys] received from {phone}: {message}")
+        
+        if not phone or not message:
+            return {"status": "error", "message": "Missing phone or message"}
+            
+        # Ensure user exists
+        user_repo.update_activity(phone)
+        user = user_repo.ensure_user(phone)
+        
+        # Process via AI Agent
+        reply_text = moneyviya_agent.process_message(phone, message, user)
+        
+        # Save updates
+        user_repo.update_user(phone, user)
+        
+        print(f"[Baileys] Replying: {reply_text[:50]}...")
+        return {"reply": reply_text}
+        
+    except Exception as e:
+        print(f"[Baileys] Error: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/webhook/twilio")
+async def handle_twilio_webhook(request: Request):
     """Direct Twilio WhatsApp webhook - receives form data and responds via Twilio"""
     from twilio.rest import Client
     from twilio.twiml.messaging_response import MessagingResponse
