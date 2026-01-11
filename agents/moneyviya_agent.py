@@ -613,8 +613,53 @@ Focus on actionable tips. Mention specific amounts when possible."""
         
         return self._get_help_menu(user_data)
     
+    def generate_evening_checkout(self, user_data: Dict) -> str:
+        """
+        8 PM Specific Logic:
+        - Check if data entered today
+        - If yes: Summarize and ask if complete
+        - If no: Ask for totals
+        """
+        name = user_data.get("name", "Friend")
+        today_income = user_data.get("today_income", 0)
+        today_expenses = user_data.get("today_expenses", 0)
+        today_invested = user_data.get("today_inv", 0)
+        
+        has_data = today_income > 0 or today_expenses > 0 or today_invested > 0
+        
+        if has_data:
+            return f"""🌙 *Daily Closing: 8 PM Check*
+
+Hi {name}, here is what you tracked today:
+
+💰 *Income:* ₹{today_income}
+💸 *Expense:* ₹{today_expenses}
+📈 *Invested:* ₹{today_invested}
+
+*Is this complete?*
+Reply with:
+"Yes" - to close the day
+"No" - to add missing details (e.g., "Spent 50 more on milk")"""
+        
+        else:
+            return f"""🌙 *Daily Closing: 8 PM Check*
+
+Hi {name}, we haven't tracked anything today yet! 📉
+
+*Please tell me your totals for today:*
+(You can type like this)
+
+"Earned 1000, Confirmed 500 expenses"
+OR
+"0 income, 200 expense"
+
+_I'll update your dashboard immediately!_"""
+
     def generate_daily_reminder(self, user_data: Dict, time_of_day: str = "morning") -> str:
         """Generate daily reminder message"""
+        if time_of_day == "evening":
+            return self.generate_evening_checkout(user_data)
+            
         name = user_data.get("name", "Friend")
         target = user_data.get("target_amount", 100000)
         days = user_data.get("timeline_days", 365)
@@ -642,28 +687,14 @@ Focus on actionable tips. Mention specific amounts when possible."""
         
         import random
         
-        if time_of_day == "morning":
-            return self.templates["daily_reminder"]["morning"].format(
-                name=name,
-                daily_target=daily_target,
-                yesterday_saved=user_data.get("yesterday_saved", 0),
-                progress=progress,
-                motivation_quote=random.choice(motivation_quotes),
-                daily_tip=random.choice(daily_tips)
-            )
-        else:
-            return self.templates["daily_reminder"]["evening"].format(
-                name=name,
-                today_income=user_data.get("today_income", 0),
-                today_expenses=user_data.get("today_expenses", 0),
-                today_saved=user_data.get("today_saved", 0),
-                comparison="📈 Better than yesterday!" if user_data.get("today_saved", 0) > user_data.get("yesterday_saved", 0) else "💪 Tomorrow will be better!",
-                goal_progress_bar="█" * int(progress / 10) + "░" * (10 - int(progress / 10)),
-                total_saved=total_saved,
-                target=target,
-                progress=progress,
-                personalized_advice=self._get_personalized_advice(user_data)
-            )
+        return self.templates["daily_reminder"]["morning"].format(
+            name=name,
+            daily_target=daily_target,
+            yesterday_saved=user_data.get("yesterday_saved", 0),
+            progress=progress,
+            motivation_quote=random.choice(motivation_quotes),
+            daily_tip=random.choice(daily_tips)
+        )
     
     def _get_personalized_advice(self, user_data: Dict) -> str:
         """Get personalized advice based on spending patterns"""

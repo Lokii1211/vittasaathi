@@ -25,13 +25,13 @@
                 "rule": {
                     "interval": [
                         {
-                            "triggerAtHour": 21,
+                            "triggerAtHour": 20,
                             "triggerAtMinute": 0
                         }
                     ]
                 }
             },
-            "name": "9 PM Trigger",
+            "name": "8 PM Trigger",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1,
             "position": [
@@ -168,7 +168,7 @@
                 ]
             ]
         },
-        "9 PM Trigger": {
+        "8 PM Trigger": {
             "main": [
                 [
                     {
