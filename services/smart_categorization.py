@@ -454,3 +454,4 @@ class QuickActionService:
 # Global instances
 smart_categorization = SmartCategorizationService()
 quick_actions = QuickActionService()
+

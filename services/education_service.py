@@ -332,3 +332,4 @@ class FinancialLiteracyService:
 
 
 financial_literacy_service = FinancialLiteracyService()
+

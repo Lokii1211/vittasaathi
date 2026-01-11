@@ -14,3 +14,4 @@ def save_transaction(txn: dict, user_id: str):
             txn["timestamp"],
             user_id
         ])
+

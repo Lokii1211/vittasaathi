@@ -11,3 +11,4 @@ def investment_allocation(stability_score):
         "debt": "40%",
         "emergency_fund": "20%"
     }
+

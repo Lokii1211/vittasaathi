@@ -566,3 +566,4 @@ class FinancialAdvisor:
 
 # Global instance
 financial_advisor = FinancialAdvisor()
+

@@ -175,8 +175,8 @@ class WebhookService:
         
         headers = {
             "Content-Type": "application/json",
-            "X-VittaSaathi-Event": payload.get("event", "unknown"),
-            "X-VittaSaathi-Timestamp": datetime.now().isoformat()
+            "X-MoneyViya-Event": payload.get("event", "unknown"),
+            "X-MoneyViya-Timestamp": datetime.now().isoformat()
         }
         
         # Add custom headers
@@ -185,7 +185,7 @@ class WebhookService:
         # Add signature if secret is set
         if webhook.get("secret"):
             signature = self._generate_signature(json_payload, webhook["secret"])
-            headers["X-VittaSaathi-Signature"] = f"sha256={signature}"
+            headers["X-MoneyViya-Signature"] = f"sha256={signature}"
         
         try:
             if HTTPX_AVAILABLE:
@@ -215,15 +215,15 @@ class WebhookService:
         
         headers = {
             "Content-Type": "application/json",
-            "X-VittaSaathi-Event": payload.get("event", "unknown"),
-            "X-VittaSaathi-Timestamp": datetime.now().isoformat()
+            "X-MoneyViya-Event": payload.get("event", "unknown"),
+            "X-MoneyViya-Timestamp": datetime.now().isoformat()
         }
         
         headers.update(webhook.get("headers", {}))
         
         if webhook.get("secret"):
             signature = self._generate_signature(json_payload, webhook["secret"])
-            headers["X-VittaSaathi-Signature"] = f"sha256={signature}"
+            headers["X-MoneyViya-Signature"] = f"sha256={signature}"
         
         try:
             if HTTPX_AVAILABLE:
@@ -309,7 +309,7 @@ class WebhookService:
             "event": "test",
             "timestamp": datetime.now().isoformat(),
             "data": {
-                "message": "This is a test webhook from VittaSaathi",
+                "message": "This is a test webhook from MoneyViya",
                 "webhook_id": webhook_id
             }
         }
@@ -388,3 +388,4 @@ def trigger_backup_completed(backup: Dict):
 def trigger_bill_due(bill: Dict, user_id: str):
     """Trigger webhook when bill is due"""
     return webhook_service.trigger("bill.due", bill, user_id)
+

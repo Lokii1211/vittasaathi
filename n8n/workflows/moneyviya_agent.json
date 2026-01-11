@@ -4,7 +4,7 @@
         {
             "parameters": {
                 "httpMethod": "POST",
-                "path": "MoneyViya-agent",
+                "path": "moneyviya-webhook",
                 "responseMode": "responseNode",
                 "options": {}
             },
@@ -18,7 +18,7 @@
         },
         {
             "parameters": {
-                "jsCode": "const input = $input.item.json;\n\nlet phone = '';\nlet message = '';\n\nif (input.From) {\n  phone = input.From.replace('whatsapp:', '').trim();\n  message = input.Body || 'hi';\n} else if (input.phone) {\n  phone = input.phone;\n  message = input.message || 'hi';\n}\n\nif (!phone.startsWith('+')) phone = '+' + phone;\n\nreturn {\n  phone: phone,\n  message: message,\n  timestamp: new Date().toISOString()\n};"
+                "jsCode": "const input = $input.item.json;\nlet phone = input.From ? input.From.replace('whatsapp:', '').trim() : (input.phone || '');\nlet message = input.Body || input.message || 'hi';\nif (!phone.startsWith('+')) phone = '+' + phone;\nreturn { phone, message, timestamp: new Date().toISOString() };"
             },
             "name": "Extract Data",
             "type": "n8n-nodes-base.code",
@@ -31,7 +31,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://MoneyViya-1.onrender.com/api/message",
+                "url": "https://moneyviya.up.railway.app/api/message",
                 "sendBody": true,
                 "contentType": "form-urlencoded",
                 "bodyParameters": {
@@ -50,7 +50,7 @@
                     "timeout": 60000
                 }
             },
-            "name": "Call MoneyViya",
+            "name": "Call MoneyViya API",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
@@ -60,7 +60,7 @@
         },
         {
             "parameters": {
-                "jsCode": "const response = $input.item.json;\nconst prevData = $('Extract Data').item.json;\n\nconst reply = response.reply || 'Message processed!';\n\nreturn {\n  phone: prevData.phone,\n  reply: reply\n};"
+                "jsCode": "const response = $input.item.json;\nconst prevData = $('Extract Data').item.json;\nreturn { phone: prevData.phone, reply: response.reply || 'Message processed!' };"
             },
             "name": "Format Reply",
             "type": "n8n-nodes-base.code",
@@ -100,14 +100,14 @@
             "main": [
                 [
                     {
-                        "node": "Call MoneyViya",
+                        "node": "Call MoneyViya API",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Call MoneyViya": {
+        "Call MoneyViya API": {
             "main": [
                 [
                     {

@@ -495,3 +495,4 @@ peer_comparison_service = PeerComparisonService()
 streak_service = StreakService()
 tips_service = TipsService()
 bill_reminder_service = BillReminderService()
+

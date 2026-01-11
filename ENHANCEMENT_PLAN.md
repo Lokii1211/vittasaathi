@@ -1,4 +1,4 @@
-# VittaSaathi Enhancement Plan
+# MoneyViya Enhancement Plan
 # =============================
 
 ## Current Issues:
@@ -42,3 +42,4 @@
 2. Add PDF report generation
 3. Add receipt OCR
 4. Polish mobile UI
+

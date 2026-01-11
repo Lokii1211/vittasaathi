@@ -15,10 +15,10 @@ class MessageBuilder:
     def _load_templates(self) -> Dict:
         return {
             "welcome": {
-                "en": "🙏 Welcome to VittaSaathi - Your Financial Advisor!\n\nWhat's your name?",
-                "hi": "🙏 VittaSaathi में स्वागत है!\n\nआपका नाम क्या है?",
-                "ta": "🙏 VittaSaathi க்கு வரவேற்கிறோம்!\n\nஉங்கள் பெயர் என்ன?",
-                "te": "🙏 VittaSaathi కి స్వాగతం!\n\nమీ పేరు ఏమిటి?",
+                "en": "🙏 Welcome to MoneyViya - Your Financial Advisor!\n\nWhat's your name?",
+                "hi": "🙏 MoneyViya में स्वागत है!\n\nआपका नाम क्या है?",
+                "ta": "🙏 MoneyViya க்கு வரவேற்கிறோம்!\n\nஉங்கள் பெயர் என்ன?",
+                "te": "🙏 MoneyViya కి స్వాగతం!\n\nమీ పేరు ఏమిటి?",
             },
             "ask_language": {
                 "en": "Hi {name}! 👋\n\nChoose language:\n1️⃣ English\n2️⃣ हिंदी\n3️⃣ தமிழ்\n4️⃣ తెలుగు",
@@ -120,3 +120,4 @@ class MessageBuilder:
 
 
 message_builder = MessageBuilder()
+

@@ -43,3 +43,4 @@ def predict_next_month_income(df):
         "worst_case_income": round(worst_case, 2),
         "confidence_percent": confidence
     }
+

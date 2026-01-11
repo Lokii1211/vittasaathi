@@ -32,3 +32,4 @@ def calculate_loan_eligibility(stability_score, emi_data):
         "risk_level": risk_level,
         "loan_options": loan_options
     }
+

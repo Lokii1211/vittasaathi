@@ -1,12 +1,12 @@
-# VittaSaathi WhatsApp Bot (Node.js)
+# MoneyViya WhatsApp Bot (Node.js)
 
-This is a simple WhatsApp bot using Baileys library that connects to the VittaSaathi Python backend.
+This is a simple WhatsApp bot using Baileys library that connects to the MoneyViya Python backend.
 
 ## Features
 - ✅ No Docker required
 - ✅ Unlimited messages (FREE)
 - ✅ QR code authentication (like WhatsApp Web)
-- ✅ Forwards all messages to VittaSaathi backend
+- ✅ Forwards all messages to MoneyViya backend
 - ✅ Supports text, images, voice messages
 
 ## Quick Start
@@ -29,29 +29,29 @@ npm start
 - Scan the QR code
 
 ### 4. Done!
-The bot will now forward all messages to VittaSaathi backend.
+The bot will now forward all messages to MoneyViya backend.
 
 ## Configuration
 
 Edit `index.js` to change:
-- `BACKEND_URL` - URL of VittaSaathi API (default: http://localhost:8000)
+- `BACKEND_URL` - URL of MoneyViya API (default: http://localhost:8000)
 
 For production (Render), change to:
 ```javascript
-BACKEND_URL: 'https://vittasaathi-1.onrender.com'
+BACKEND_URL: 'https://MoneyViya-1.onrender.com'
 ```
 
 ## Running with Python Backend
 
 ### Terminal 1: Start Python backend
 ```bash
-cd c:\Users\dell\Desktop\vittasaathi
+cd c:\Users\dell\Desktop\MoneyViya
 python -m uvicorn app:app --reload --port 8000
 ```
 
 ### Terminal 2: Start WhatsApp bot
 ```bash
-cd c:\Users\dell\Desktop\vittasaathi\whatsapp-bot
+cd c:\Users\dell\Desktop\MoneyViya\whatsapp-bot
 npm start
 ```
 
@@ -73,3 +73,4 @@ The bot stores WhatsApp session in the `auth_info` folder.
 **Connection keeps dropping?**
 - Your phone might be offline
 - WhatsApp might have logged you out
+

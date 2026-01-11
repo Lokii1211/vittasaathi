@@ -299,7 +299,7 @@ Reply with ONLY the number (no symbols, no text)."""
     
     def get_welcome_message(self, language: str = "english") -> str:
         """Get welcome message for language selection"""
-        return """🙏 *Welcome to VittaSaathi!*
+        return """🙏 *Welcome to MoneyViya!*
 
 I'm your personal financial friend! 💰
 
@@ -414,7 +414,7 @@ Just type like: 'emergency fund and house' or 'save for education'""",
         messages = {
             "english": f"""🎉 *Congratulations, {name}!*
 
-Your VittaSaathi profile is ready!
+Your MoneyViya profile is ready!
 
 📊 *Your Financial Plan:*
 💰 Monthly Income: ₹{income:,}
@@ -445,7 +445,7 @@ Let's start your financial journey! 🚀""",
 शुरू करें! 🚀""",
             "tamil": f"""🎉 *வாழ்த்துக்கள், {name}!*
 
-உங்கள் VittaSaathi சுயவிவரம் தயார்!
+உங்கள் MoneyViya சுயவிவரம் தயார்!
 
 📊 *உங்கள் திட்டம்:*
 💰 மாத வருமானம்: ₹{income:,}
@@ -594,3 +594,4 @@ def get_ai_onboarding(user_repo):
     if _ai_onboarding is None:
         _ai_onboarding = AIOnboardingService(user_repo)
     return _ai_onboarding
+

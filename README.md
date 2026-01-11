@@ -1,4 +1,4 @@
-# 💰 VittaSaathi - Your Financial Friend on WhatsApp
+# 💰 MoneyViya - Your Financial Friend on WhatsApp
 
 > **India's First WhatsApp Financial Advisor for EVERYONE with Irregular Income**
 > 
@@ -13,9 +13,9 @@
 
 ## 🎯 Who Is This For?
 
-VittaSaathi is built for **everyone managing money on uncertain income**:
+MoneyViya is built for **everyone managing money on uncertain income**:
 
-| User Type | How VittaSaathi Helps |
+| User Type | How MoneyViya Helps |
 |-----------|----------------------|
 | 👩‍🎓 **Students** | Track pocket money, part-time earnings, hostel expenses |
 | 👩‍🍳 **Homemakers** | Manage household budget, track grocery expenses, save for goals |
@@ -118,7 +118,7 @@ Access at: `http://localhost:8000/static/dashboard.html?phone=YOUR_PHONE`
 
 ### 1. Installation
 ```bash
-cd vittasaathi
+cd MoneyViya
 pip install -r requirements.txt
 ```
 
@@ -179,7 +179,7 @@ See `n8n/N8N_SETUP_GUIDE.md` for detailed instructions.
 
 ## 💡 Key Features Comparison
 
-| Feature | VittaSaathi | Other Apps |
+| Feature | MoneyViya | Other Apps |
 |---------|-------------|------------|
 | **WhatsApp Native** | ✅ No app download | ❌ Separate app |
 | **Irregular Income Focus** | ✅ Built for variable earnings | ❌ Assumes fixed salary |
@@ -197,7 +197,7 @@ See `n8n/N8N_SETUP_GUIDE.md` for detailed instructions.
 ## 🏗️ Project Structure
 
 ```
-vittasaathi/
+MoneyViya/
 ├── app.py                        # Main FastAPI (v3.0, 130+ routes)
 ├── extended_api.py               # Extended API endpoints
 ├── config.py                     # 16 user types, all categories
@@ -278,7 +278,7 @@ We help users discover and apply for:
 
 ## 🚨 Scam Alerts
 
-VittaSaathi actively warns about:
+MoneyViya actively warns about:
 - 📱 Instant loan app traps (100-300% hidden interest)
 - 📞 OTP/KYC phone scams
 - 🔗 Fake KYC update links
@@ -319,3 +319,4 @@ For issues or feature requests, please create an issue on GitHub.
 **Made with ❤️ for India's hardworking people**
 
 *"हर रुपया मायने रखता है | ஒவ்வொரு ரூபாயும் முக்கியம் | ప్రతి రూపాయి ముఖ్యం"*
+

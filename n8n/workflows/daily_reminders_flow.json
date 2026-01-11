@@ -1,5 +1,5 @@
 {
-    "name": "VittaSaathi - Daily Reminders",
+    "name": "MoneyViya - Daily Reminders",
     "nodes": [
         {
             "parameters": {
@@ -44,7 +44,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "https://vittasaathi-1.onrender.com/users",
+                "url": "https://MoneyViya-1.onrender.com/users",
                 "options": {
                     "timeout": 30000
                 }
@@ -61,7 +61,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "https://vittasaathi-1.onrender.com/users",
+                "url": "https://MoneyViya-1.onrender.com/users",
                 "options": {
                     "timeout": 30000
                 }

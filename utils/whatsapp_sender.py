@@ -6,3 +6,4 @@ def send_whatsapp_message(to_number, message):
         body=message,
         to=f"whatsapp:{to_number}"
     )
+

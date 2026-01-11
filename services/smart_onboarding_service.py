@@ -10,7 +10,7 @@ import re
 # Language translations for onboarding
 ONBOARDING_MESSAGES = {
     "english": {
-        "welcome": """🙏 *Welcome to VittaSaathi!*
+        "welcome": """🙏 *Welcome to MoneyViya!*
 
 I'm your personal financial friend! 💰
 
@@ -65,7 +65,7 @@ Just type an amount like: 5000, 10000, 10k...""",
         
         "complete": """🎉 *Congratulations, {name}!*
 
-Your VittaSaathi profile is ready!
+Your MoneyViya profile is ready!
 
 📊 *Your Financial Plan:*
 💰 Monthly Income: ₹{income}
@@ -136,7 +136,7 @@ Based on your income of ₹{income}, we suggest saving at least ₹{suggested} (
         
         "complete": """🎉 *Congratulations, {name}!*
 
-Your VittaSaathi profile is ready!
+Your MoneyViya profile is ready!
 
 📊 *Your Personalized Financial Plan:*
 
@@ -161,7 +161,7 @@ Let's start your financial journey! 🚀""",
     },
     
     "hindi": {
-        "welcome": """🙏 *VittaSaathi में स्वागत है!*
+        "welcome": """🙏 *MoneyViya में स्वागत है!*
 
 मैं आपका वित्तीय मित्र हूं! 💰
 
@@ -242,7 +242,7 @@ Let's start your financial journey! 🚀""",
     },
     
     "tamil": {
-        "welcome": """🙏 *VittaSaathi வரவேற்கிறோம்!*
+        "welcome": """🙏 *MoneyViya வரவேற்கிறோம்!*
 
 நான் உங்கள் நிதி நண்பன்!
 
@@ -310,7 +310,7 @@ Let's start your financial journey! 🚀""",
     },
     
     "telugu": {
-        "welcome": "🙏 *VittaSaathiకి స్వాగతం!*\n\n1️⃣-8️⃣ భాష ఎంచుకోండి",
+        "welcome": "🙏 *MoneyViyaకి స్వాగతం!*\n\n1️⃣-8️⃣ భాష ఎంచుకోండి",
         "lang_set": "✅ భాష *తెలుగు* సెట్ చేయబడింది! 🎉",
         "ask_name": "📝 మీ పేరు ఏమిటి?",
         "ask_profession": "💼 {name}, మీరు ఏమి చేస్తారు?\n1️⃣-9️⃣",
@@ -323,7 +323,7 @@ Let's start your financial journey! 🚀""",
     },
     
     "kannada": {
-        "welcome": "🙏 *VittaSaathiಗೆ ಸ್ವಾಗತ!*\n\n1️⃣-8️⃣ ಭಾಷೆ",
+        "welcome": "🙏 *MoneyViyaಗೆ ಸ್ವಾಗತ!*\n\n1️⃣-8️⃣ ಭಾಷೆ",
         "lang_set": "✅ ಭಾಷೆ *ಕನ್ನಡ*! 🎉",
         "ask_name": "📝 ನಿಮ್ಮ ಹೆಸರು ಏನು?",
         "ask_profession": "💼 {name}, ನಿಮ್ಮ ಕೆಲಸ?\n1️⃣-9️⃣",
@@ -728,3 +728,4 @@ def get_smart_onboarding(user_repo):
     if smart_onboarding is None:
         smart_onboarding = SmartOnboardingService(user_repo)
     return smart_onboarding
+

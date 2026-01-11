@@ -83,18 +83,18 @@ class NotificationService:
         
         self.templates = {
             "backup_success": {
-                "whatsapp": "VittaSaathi Backup Complete\n\nBackup: {backup_name}\nDate: {date}\nSize: {size}\nEncrypted: {encrypted}\n\nYour data is safe!",
-                "email_subject": "VittaSaathi Backup Complete",
+                "whatsapp": "MoneyViya Backup Complete\n\nBackup: {backup_name}\nDate: {date}\nSize: {size}\nEncrypted: {encrypted}\n\nYour data is safe!",
+                "email_subject": "MoneyViya Backup Complete",
                 "email_body": "<html><body><h2>Backup Complete</h2><p>Backup: {backup_name}</p><p>Size: {size}</p><p>Encrypted: {encrypted}</p></body></html>"
             },
             "backup_failure": {
-                "whatsapp": "VittaSaathi Backup Failed\n\nError: {error}\nDate: {date}\n\nPlease check your backup settings.",
-                "email_subject": "VittaSaathi Backup Failed",
+                "whatsapp": "MoneyViya Backup Failed\n\nError: {error}\nDate: {date}\n\nPlease check your backup settings.",
+                "email_subject": "MoneyViya Backup Failed",
                 "email_body": "<html><body><h2>Backup Failed</h2><p>Error: {error}</p><p>Date: {date}</p></body></html>"
             },
             "security_alert": {
-                "whatsapp": "VittaSaathi Security Alert\n\n{alert_type}\nLocation: {location}\nTime: {time}\n\nIf this wasnt you, change your password!",
-                "email_subject": "VittaSaathi Security Alert",
+                "whatsapp": "MoneyViya Security Alert\n\n{alert_type}\nLocation: {location}\nTime: {time}\n\nIf this wasnt you, change your password!",
+                "email_subject": "MoneyViya Security Alert",
                 "email_body": "<html><body><h2>Security Alert</h2><p>{alert_type}</p><p>Location: {location}</p><p>Time: {time}</p></body></html>"
             },
             "goal_achieved": {
@@ -108,8 +108,8 @@ class NotificationService:
                 "email_body": "<html><body><h2>Bill Reminder</h2><p>{bill_type}: Rs{amount}</p><p>Due: {due_date}</p></body></html>"
             },
             "2fa_code": {
-                "whatsapp": "VittaSaathi Verification\n\nYour code is: {code}\n\nValid for {validity} minutes.",
-                "email_subject": "VittaSaathi Verification Code",
+                "whatsapp": "MoneyViya Verification\n\nYour code is: {code}\n\nValid for {validity} minutes.",
+                "email_subject": "MoneyViya Verification Code",
                 "email_body": "<html><body><h2>Verification Code</h2><p style='font-size:32px'>{code}</p><p>Valid for {validity} minutes</p></body></html>"
             }
         }
@@ -263,3 +263,4 @@ class NotificationService:
 
 # Global instance
 notification_service = NotificationService()
+

@@ -1,5 +1,5 @@
 """
-VittaSaathi Extended API
+MoneyViya Extended API
 ========================
 Additional endpoints for advanced features
 """
@@ -524,7 +524,7 @@ def export_user_json(user_id: str):
     return Response(
         content=json_data,
         media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename=vittasaathi_user_{user_id}.json"}
+        headers={"Content-Disposition": f"attachment; filename=MoneyViya_user_{user_id}.json"}
     )
 
 @extended_router.post("/backup/{user_id}/import-json")
@@ -639,12 +639,12 @@ def get_notification_status():
     return notification_service.get_config_status()
 
 @extended_router.post("/notifications/test/whatsapp")
-def test_whatsapp_notification(phone: str, message: str = "VittaSaathi test notification"):
+def test_whatsapp_notification(phone: str, message: str = "MoneyViya test notification"):
     """Test WhatsApp notification"""
     return notification_service.send_whatsapp(phone, message)
 
 @extended_router.post("/notifications/test/email")
-def test_email_notification(email: str, subject: str = "VittaSaathi Test", body: str = "<h1>Test Email</h1>"):
+def test_email_notification(email: str, subject: str = "MoneyViya Test", body: str = "<h1>Test Email</h1>"):
     """Test email notification"""
     return notification_service.send_email(email, subject, body)
 
@@ -656,12 +656,12 @@ def get_cloud_backup_status():
     return cloud_backup_service.get_status()
 
 @extended_router.post("/cloud-backup/configure/aws")
-def configure_aws_backup(access_key: str, secret_key: str, region: str = "ap-south-1", bucket: str = "vittasaathi-backups"):
+def configure_aws_backup(access_key: str, secret_key: str, region: str = "ap-south-1", bucket: str = "MoneyViya-backups"):
     """Configure AWS S3 backup"""
     return cloud_backup_service.configure_aws(access_key, secret_key, region, bucket)
 
 @extended_router.post("/cloud-backup/configure/gcs")
-def configure_gcs_backup(credentials_path: str, bucket: str = "vittasaathi-backups"):
+def configure_gcs_backup(credentials_path: str, bucket: str = "MoneyViya-backups"):
     """Configure Google Cloud Storage backup"""
     return cloud_backup_service.configure_gcs(credentials_path, bucket)
 
@@ -991,3 +991,4 @@ def get_monthly_comparison(phone: str):
         "categories": categories,
         "goals_progress": goals_progress
     }
+

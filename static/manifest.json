@@ -1,6 +1,6 @@
 {
-    "name": "VittaSaathi",
-    "short_name": "VittaSaathi",
+    "name": "MoneyViya",
+    "short_name": "MoneyViya",
     "description": "Your Financial Friend - Track expenses, save money, grow wealth",
     "start_url": "/static/index.html",
     "display": "standalone",

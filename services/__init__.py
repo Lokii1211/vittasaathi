@@ -1,4 +1,4 @@
-# Services module for VittaSaathi
+# Services module for MoneyViya
 from .nlp_service import NLPService, nlp_service
 from .document_processor import DocumentProcessor, document_processor
 from .financial_advisor import FinancialAdvisor, financial_advisor
@@ -11,3 +11,4 @@ from .advanced_features import (
     SmartInsightsService, smart_insights,
     SmartReplyService, smart_reply_service
 )
+

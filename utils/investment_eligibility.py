@@ -18,3 +18,4 @@ def check_investment_eligibility(stability_score, prediction):
             else "MEDIUM"
         )
     }
+

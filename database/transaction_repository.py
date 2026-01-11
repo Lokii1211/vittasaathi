@@ -324,3 +324,4 @@ class TransactionRepository:
 
 # Global instance  
 transaction_repo = TransactionRepository()
+

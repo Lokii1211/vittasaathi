@@ -17,3 +17,4 @@ def classify_months(monthly_income: dict):
             month_classification[month] = "BAD"
 
     return month_classification
+

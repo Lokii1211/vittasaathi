@@ -30,3 +30,4 @@ def calculate_monthly_estimate(user_id: str):
 def calculate_monthly_expense(user_id: str):
     user_records = [r for r in CASH_DB if r["user_id"] == user_id and r["type"] == "expense"]
     return sum(r["amount"] for r in user_records)
+

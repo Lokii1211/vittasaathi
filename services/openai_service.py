@@ -278,3 +278,4 @@ def understand_message(message: str, language: str = "english") -> Dict[str, Any
 def generate_plan(user_data: dict, language: str = "english") -> str:
     """Generate personalized plan"""
     return openai_service.generate_financial_plan(user_data, language)
+

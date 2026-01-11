@@ -32,3 +32,4 @@ def classify_transaction(transaction: dict, original_message: str):
         return "EXPENSE"
 
     return "UNKNOWN"
+

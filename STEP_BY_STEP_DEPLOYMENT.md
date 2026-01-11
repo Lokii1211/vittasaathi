@@ -1,6 +1,6 @@
-# 🚀 VittaSaathi Deployment - Complete Step-by-Step Guide
+# 🚀 MoneyViya Deployment - Complete Step-by-Step Guide
 
-This guide will walk you through EVERY single step to deploy VittaSaathi for FREE.
+This guide will walk you through EVERY single step to deploy MoneyViya for FREE.
 
 ---
 
@@ -46,7 +46,7 @@ You should see something like: `git version 2.43.0`
 2. Click the **+** icon (top right corner)
 3. Click "New repository"
 4. Fill in:
-   - **Repository name**: `vittasaathi`
+   - **Repository name**: `MoneyViya`
    - **Description**: `WhatsApp Financial Advisor for India`
    - **Visibility**: Select **Public** (required for free deployment)
    - ❌ Do NOT check "Add a README file"
@@ -63,7 +63,7 @@ Open PowerShell and run these commands ONE BY ONE:
 
 ### Command 1: Go to your project folder
 ```powershell
-cd C:\Users\dell\Desktop\vittasaathi
+cd C:\Users\dell\Desktop\MoneyViya
 ```
 
 ### Command 2: Initialize Git
@@ -78,12 +78,12 @@ git add .
 
 ### Command 4: Create first commit
 ```powershell
-git commit -m "VittaSaathi v3.0 - WhatsApp Financial Advisor"
+git commit -m "MoneyViya v3.0 - WhatsApp Financial Advisor"
 ```
 
 ### Command 5: Add GitHub as remote (REPLACE YOUR_USERNAME)
 ```powershell
-git remote add origin https://github.com/YOUR_USERNAME/vittasaathi.git
+git remote add origin https://github.com/YOUR_USERNAME/MoneyViya.git
 ```
 ⚠️ Replace `YOUR_USERNAME` with your actual GitHub username!
 
@@ -100,7 +100,7 @@ When prompted:
 ### 💡 If password doesn't work:
 1. Go to: https://github.com/settings/tokens
 2. Click "Generate new token (classic)"
-3. Give it a name: "VittaSaathi Deploy"
+3. Give it a name: "MoneyViya Deploy"
 4. Check: `repo` (all checkboxes under repo)
 5. Click "Generate token"
 6. Copy the token
@@ -110,7 +110,7 @@ When prompted:
 
 ## Step 2.3: Verify Upload
 
-1. Go to: https://github.com/YOUR_USERNAME/vittasaathi
+1. Go to: https://github.com/YOUR_USERNAME/MoneyViya
 2. You should see all your files listed!
 3. Make sure you see: `app.py`, `requirements.txt`, `config.py`, etc.
 
@@ -133,7 +133,7 @@ When prompted:
 1. Click **"New +"** button (top right)
 2. Click **"Web Service"**
 3. Click **"Connect a repository"**
-4. Find `vittasaathi` in the list
+4. Find `MoneyViya` in the list
 5. Click **"Connect"** next to it
 
 ---
@@ -144,7 +144,7 @@ Fill in these settings:
 
 | Setting | Value |
 |---------|-------|
-| **Name** | `vittasaathi` |
+| **Name** | `MoneyViya` |
 | **Region** | `Singapore` (or closest to India) |
 | **Branch** | `main` |
 | **Runtime** | `Python 3` |
@@ -184,18 +184,18 @@ Scroll down and click **"Create Web Service"**
 2. Wait for "Deploy succeeded" message (takes 2-5 minutes)
 3. Once done, you'll see your URL at the top:
    ```
-   https://vittasaathi.onrender.com
+   https://MoneyViya.onrender.com
    ```
 
 ---
 
 ## Step 3.6: Test Your Deployment
 
-1. Click your URL (e.g., `https://vittasaathi.onrender.com`)
+1. Click your URL (e.g., `https://MoneyViya.onrender.com`)
 2. You should see:
    ```json
    {
-     "service": "VittaSaathi",
+     "service": "MoneyViya",
      "version": "3.0.0",
      "status": "running",
      ...
@@ -229,7 +229,7 @@ Scroll down and click **"Create Web Service"**
 2. Find **"WHEN A MESSAGE COMES IN"**
 3. Enter your Render URL + webhook path:
    ```
-   https://vittasaathi.onrender.com/webhook/whatsapp-incoming
+   https://MoneyViya.onrender.com/webhook/whatsapp-incoming
    ```
 4. Make sure method is **POST**
 5. Click **"Save"**
@@ -252,7 +252,7 @@ Scroll down and click **"Create Web Service"**
 Share this message:
 
 ```
-🙏 Try VittaSaathi - Your FREE Financial Friend!
+🙏 Try MoneyViya - Your FREE Financial Friend!
 
 To start:
 1. Save this number as contact: +14155238886
@@ -285,7 +285,7 @@ Free Render apps sleep after 15 minutes of inactivity. To keep it awake:
 3. Click "Add New Monitor"
 4. Settings:
    - Type: HTTP(s)
-   - URL: `https://vittasaathi.onrender.com/`
+   - URL: `https://MoneyViya.onrender.com/`
    - Interval: 5 minutes
 5. Click "Create Monitor"
 
@@ -295,16 +295,16 @@ This pings your app every 5 minutes, keeping it awake!
 
 # 🎉 CONGRATULATIONS!
 
-Your VittaSaathi is now LIVE and anyone can use it!
+Your MoneyViya is now LIVE and anyone can use it!
 
 ## Your URLs:
 
 | Service | URL |
 |---------|-----|
-| **API** | `https://vittasaathi.onrender.com` |
-| **API Docs** | `https://vittasaathi.onrender.com/docs` |
-| **Dashboard** | `https://vittasaathi.onrender.com/static/dashboard.html` |
-| **Admin Panel** | `https://vittasaathi.onrender.com/static/admin.html` |
+| **API** | `https://MoneyViya.onrender.com` |
+| **API Docs** | `https://MoneyViya.onrender.com/docs` |
+| **Dashboard** | `https://MoneyViya.onrender.com/static/dashboard.html` |
+| **Admin Panel** | `https://MoneyViya.onrender.com/static/admin.html` |
 
 ---
 
@@ -329,7 +329,7 @@ Your VittaSaathi is now LIVE and anyone can use it!
 
 ```powershell
 # Go to project
-cd C:\Users\dell\Desktop\vittasaathi
+cd C:\Users\dell\Desktop\MoneyViya
 
 # Check git status
 git status
@@ -346,3 +346,4 @@ python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ---
 
 **Need help?** Check Render and Twilio dashboards for logs!
+

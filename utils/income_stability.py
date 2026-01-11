@@ -40,3 +40,4 @@ def calculate_income_stability(monthly_income: dict):
         "stability_score": stability_score,
         "remark": remark
     }
+

@@ -429,3 +429,4 @@ Mon  Tue  Wed  Thu  Fri  Sat  Sun
 
 # Global instance
 calendar_service = FinancialCalendarService()
+

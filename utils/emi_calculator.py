@@ -16,3 +16,4 @@ def calculate_safe_emi(prediction: dict):
         "safe_emi": safe_emi,
         "aggressive_emi": aggressive_emi
     }
+

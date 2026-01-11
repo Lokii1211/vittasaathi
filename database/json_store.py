@@ -91,3 +91,4 @@ class JSONStore:
         """Check if key exists"""
         with self.lock:
             return key in self._data
+

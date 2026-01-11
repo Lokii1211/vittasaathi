@@ -1,10 +1,10 @@
 {
-    "name": "VittaSaathi AI Agent - Main Orchestrator",
+    "name": "MoneyViya AI Agent - Main Orchestrator",
     "nodes": [
         {
             "parameters": {
                 "httpMethod": "POST",
-                "path": "vittasaathi-agent",
+                "path": "MoneyViya-agent",
                 "responseMode": "responseNode",
                 "options": {}
             },
@@ -16,7 +16,7 @@
                 200,
                 300
             ],
-            "webhookId": "vittasaathi-agent"
+            "webhookId": "MoneyViya-agent"
         },
         {
             "parameters": {
@@ -34,7 +34,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://vittasaathi-1.onrender.com/api/message",
+                "url": "https://MoneyViya-1.onrender.com/api/message",
                 "sendBody": true,
                 "bodyParameters": {
                     "parameters": [
@@ -63,7 +63,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// AI Agent: Format response\n\nconst backendResponse = $input.item.json;\nconst inputData = $('AI Agent: Extract Input').item.json;\n\nconst reply = backendResponse.reply || backendResponse.message || 'Welcome to VittaSaathi!';\n\nconsole.log('=== AI AGENT RESPONSE ===');\nconsole.log('Reply:', reply.substring(0, 100));\n\nreturn {\n  success: true,\n  phone: inputData.phone,\n  reply: reply,\n  processedAt: new Date().toISOString()\n};"
+                "jsCode": "// AI Agent: Format response\n\nconst backendResponse = $input.item.json;\nconst inputData = $('AI Agent: Extract Input').item.json;\n\nconst reply = backendResponse.reply || backendResponse.message || 'Welcome to MoneyViya!';\n\nconsole.log('=== AI AGENT RESPONSE ===');\nconsole.log('Reply:', reply.substring(0, 100));\n\nreturn {\n  success: true,\n  phone: inputData.phone,\n  reply: reply,\n  processedAt: new Date().toISOString()\n};"
             },
             "id": "format-response",
             "name": "AI Agent: Format Response",
@@ -142,7 +142,7 @@
     "staticData": null,
     "tags": [
         "AI Agent",
-        "VittaSaathi",
+        "MoneyViya",
         "Main"
     ]
 }

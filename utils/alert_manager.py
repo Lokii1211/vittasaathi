@@ -21,3 +21,4 @@ def create_alert(user_id, txn, fraud_result):
         ])
 
     return alert_id
+

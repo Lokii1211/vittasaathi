@@ -8,3 +8,4 @@ def should_pause_investment(prediction, current_sip):
     return {
         "pause": False
     }
+

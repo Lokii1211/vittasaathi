@@ -386,3 +386,4 @@ class FamilyFinanceService:
 
 # Global instance
 family_service = FamilyFinanceService()
+

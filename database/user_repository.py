@@ -261,3 +261,4 @@ class UserRepository:
 
 # Global instance
 user_repo = UserRepository()
+

@@ -1,5 +1,5 @@
 {
-    "name": "VittaSaathi - Weekly & Monthly Reports",
+    "name": "MoneyViya - Weekly & Monthly Reports",
     "nodes": [
         {
             "parameters": {
@@ -44,7 +44,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "https://vittasaathi-1.onrender.com/users",
+                "url": "https://MoneyViya-1.onrender.com/users",
                 "options": {
                     "timeout": 30000
                 }
@@ -61,7 +61,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "https://vittasaathi-1.onrender.com/users",
+                "url": "https://MoneyViya-1.onrender.com/users",
                 "options": {
                     "timeout": 30000
                 }
@@ -132,7 +132,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=https://vittasaathi-1.onrender.com/reports/{{ $json.phone }}/weekly-comparison",
+                "url": "=https://MoneyViya-1.onrender.com/reports/{{ $json.phone }}/weekly-comparison",
                 "options": {
                     "timeout": 30000
                 }
@@ -150,7 +150,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=https://vittasaathi-1.onrender.com/reports/{{ $json.phone }}/monthly-comparison",
+                "url": "=https://MoneyViya-1.onrender.com/reports/{{ $json.phone }}/monthly-comparison",
                 "options": {
                     "timeout": 30000
                 }

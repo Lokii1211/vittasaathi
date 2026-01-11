@@ -173,7 +173,7 @@ class ExportService:
             return None
         
         date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"vittasaathi_export_{user_id}_{date_str}.xlsx"
+        filename = f"MoneyViya_export_{user_id}_{date_str}.xlsx"
         filepath = self.exports_dir / filename
         
         user = user_repo.get_user(user_id)
@@ -316,3 +316,4 @@ class ExportService:
 
 # Global instance
 export_service = ExportService()
+

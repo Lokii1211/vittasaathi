@@ -18,7 +18,7 @@ Business Account ID: 876858271395794
 Add these to your Render.com environment variables:
 
 1. Go to: https://dashboard.render.com
-2. Select your **vittasaathi-1** service
+2. Select your **MoneyViya-1** service
 3. Go to **Environment** tab
 4. Add these variables:
 
@@ -29,7 +29,7 @@ WHATSAPP_PHONE_NUMBER_ID=950285898166827
 
 WHATSAPP_BUSINESS_ACCOUNT_ID=876858271395794
 
-WHATSAPP_VERIFY_TOKEN=vittasaathi_webhook_verify_2024
+WHATSAPP_VERIFY_TOKEN=MoneyViya_webhook_verify_2024
 ```
 
 5. Click **Save Changes** (service will redeploy)
@@ -39,19 +39,19 @@ WHATSAPP_VERIFY_TOKEN=vittasaathi_webhook_verify_2024
 ## 📋 Step 2: Configure Webhook in Meta Dashboard
 
 1. Go to: https://developers.facebook.com/apps/
-2. Select your VittaSaathi app
+2. Select your MoneyViya app
 3. Go to **WhatsApp** → **Configuration**
 4. Find **Webhook** section
 5. Click **Edit** or **Configure Webhooks**
 
 ### Webhook URL:
 ```
-https://vittasaathi-1.onrender.com/webhook/whatsapp-cloud
+https://MoneyViya-1.onrender.com/webhook/whatsapp-cloud
 ```
 
 ### Verify Token:
 ```
-vittasaathi_webhook_verify_2024
+MoneyViya_webhook_verify_2024
 ```
 
 6. Click **Verify and Save**
@@ -81,7 +81,7 @@ After verifying, subscribe to these events:
 1. Open WhatsApp
 2. Message the **test phone number** shown in Meta Dashboard (e.g., +1 555 158 9563)
 3. Send "Hi"
-4. You should receive a reply from VittaSaathi!
+4. You should receive a reply from MoneyViya!
 
 ---
 
@@ -92,9 +92,9 @@ User sends message to Meta's test number
            ↓
 Meta's servers receive it (24/7 cloud)
            ↓
-Webhook POST to https://vittasaathi-1.onrender.com/webhook/whatsapp-cloud
+Webhook POST to https://MoneyViya-1.onrender.com/webhook/whatsapp-cloud
            ↓
-VittaSaathi processes message
+MoneyViya processes message
            ↓
 WhatsApp Cloud API sends reply
            ↓
@@ -163,4 +163,5 @@ You'll see:
 
 ---
 
-**Your VittaSaathi is now running 24/7 in the cloud! 🚀**
+**Your MoneyViya is now running 24/7 in the cloud! 🚀**
+

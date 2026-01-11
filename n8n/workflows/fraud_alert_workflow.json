@@ -1,5 +1,5 @@
 {
-    "name": "VittaSaathi - Fraud Alert",
+    "name": "MoneyViya - Fraud Alert",
     "nodes": [
         {
             "parameters": {
@@ -21,7 +21,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=https://vittasaathi-1.onrender.com/user/{{ $json.phone || $json.user_id }}",
+                "url": "=https://MoneyViya-1.onrender.com/user/{{ $json.phone || $json.user_id }}",
                 "options": {}
             },
             "id": "d1b2c3d4-2222-2222-2222-222222222222",

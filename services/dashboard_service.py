@@ -387,3 +387,4 @@ class DashboardService:
 
 # Global instance
 dashboard_service = DashboardService()
+

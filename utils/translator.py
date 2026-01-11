@@ -22,3 +22,4 @@ def translate_text(text, language="en"):
         translated = translated.replace(eng, local)
 
     return translated
+

@@ -1,7 +1,7 @@
 {
-    "name": "vittasaathi-whatsapp-bot",
+    "name": "MoneyViya-whatsapp-bot",
     "version": "1.0.0",
-    "description": "WhatsApp Bot for VittaSaathi using Baileys",
+    "description": "WhatsApp Bot for MoneyViya using Baileys",
     "main": "index.js",
     "scripts": {
         "start": "node index.js",

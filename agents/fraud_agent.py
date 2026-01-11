@@ -56,3 +56,4 @@ def check_fraud(transaction: dict) -> dict:
         "decision": decision,
         "reasons": reasons
     }
+

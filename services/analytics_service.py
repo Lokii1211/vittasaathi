@@ -407,7 +407,7 @@ class ReportGenerator:
         # Build report
         report = f"""
 ╔══════════════════════════════════════════════════════════════╗
-║             💰 VittaSaathi Financial Report                  ║
+║             💰 MoneyViya Financial Report                  ║
 ║                    {month_name:^20}                    ║
 ╚══════════════════════════════════════════════════════════════╝
 
@@ -503,7 +503,7 @@ Expense Trend: {trends.get('expense_trend', 'N/A').upper()} ({trends.get('expens
         report += """
 ═══════════════════════════════════════════════════════════════
 
-        Thank you for using VittaSaathi! 🙏
+        Thank you for using MoneyViya! 🙏
         "हर रुपया मायने रखता है"
 
 ═══════════════════════════════════════════════════════════════
@@ -560,7 +560,7 @@ Expense Trend: {trends.get('expense_trend', 'N/A').upper()} ({trends.get('expens
 🏆 Grade: *{savings_health.get('grade', 'N/A')}*
 📊 Savings: {savings_health.get('savings_rate', 0)}%
 
-_Tracked with VittaSaathi_ 📱
+_Tracked with MoneyViya_ 📱
 """
         
         return card
@@ -569,3 +569,4 @@ _Tracked with VittaSaathi_ 📱
 # Global instances
 analytics_service = AnalyticsService()
 report_generator = ReportGenerator()
+

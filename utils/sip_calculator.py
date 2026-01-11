@@ -8,3 +8,4 @@ def calculate_sip_amount(prediction, stability_score):
         sip = worst_case * 0.08  # 8%
 
     return round(sip, 2)
+

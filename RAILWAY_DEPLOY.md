@@ -1,4 +1,4 @@
-# VittaSaathi - Railway Deployment Guide
+# MoneyViya - Railway Deployment Guide
 ## 24/7 Cloud Hosting (Free Tier)
 
 ---
@@ -26,7 +26,7 @@
 
 1. Click **New Project**
 2. Select **Deploy from GitHub repo**
-3. Find and select **Lokii1211/vittasaathi**
+3. Find and select **Lokii1211/MoneyViya**
 4. Click **Deploy Now**
 
 ---
@@ -41,7 +41,7 @@
 OPENAI_API_KEY=sk-proj-xxxxx
 WHATSAPP_CLOUD_TOKEN=EAFp3Mo4Xz2gBQTJiNQJKK4Exzvd...
 WHATSAPP_PHONE_NUMBER_ID=950285898166827
-WHATSAPP_VERIFY_TOKEN=vittasaathi_webhook_verify_2024
+WHATSAPP_VERIFY_TOKEN=MoneyViya_webhook_verify_2024
 ```
 
 4. Railway automatically redeploys when you add variables!
@@ -52,7 +52,7 @@ WHATSAPP_VERIFY_TOKEN=vittasaathi_webhook_verify_2024
 
 1. Go to **Settings** tab
 2. Under **Domains**, click **Generate Domain**
-3. You'll get something like: `vittasaathi-production.up.railway.app`
+3. You'll get something like: `MoneyViya-production.up.railway.app`
 
 ---
 
@@ -85,7 +85,7 @@ npm install -g @railway/cli
 railway login
 
 # Link project
-cd vittasaathi
+cd MoneyViya
 railway link
 
 # Deploy
@@ -130,3 +130,4 @@ Add payment method for $5/month starter plan.
 ---
 
 **Railway is faster and more reliable than Render for Python apps!** 🚀
+

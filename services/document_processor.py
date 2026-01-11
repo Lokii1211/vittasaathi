@@ -355,3 +355,4 @@ class DocumentProcessor:
 
 # Global instance
 document_processor = DocumentProcessor()
+

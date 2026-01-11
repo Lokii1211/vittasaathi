@@ -165,3 +165,4 @@ def generate_recommendations(reasons: list, score: float) -> list:
         recommendations.append("🌙 Be extra careful with late-night transactions")
     
     return recommendations
+

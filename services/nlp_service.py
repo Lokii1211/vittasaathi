@@ -443,3 +443,4 @@ class NLPService:
 
 # Global instance
 nlp_service = NLPService()
+

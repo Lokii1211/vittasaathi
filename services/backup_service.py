@@ -38,7 +38,7 @@ class BackupService:
         """Create a full backup of all data"""
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_name = backup_name or f"vittasaathi_backup_{timestamp}"
+        backup_name = backup_name or f"MoneyViya_backup_{timestamp}"
         
         backup_path = self.backups_dir / f"{backup_name}.zip"
         
@@ -397,3 +397,4 @@ class BackupService:
 
 # Global instance
 backup_service = BackupService()
+

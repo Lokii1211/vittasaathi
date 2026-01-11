@@ -6,3 +6,4 @@ def send_whatsapp_voice(to_number, audio_url):
         to=f"whatsapp:{to_number}",
         media_url=[audio_url]
     )
+

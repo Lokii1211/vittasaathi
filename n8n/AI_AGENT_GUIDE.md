@@ -1,11 +1,11 @@
-# VittaSaathi n8n AI Agent Workflows
+# MoneyViya n8n AI Agent Workflows
 ## Complete Guide - What, Why, and How
 
 ---
 
 ## 📋 Overview
 
-n8n is a **workflow automation platform** that acts as the "brain" connecting all parts of VittaSaathi. It's like having a smart assistant that:
+n8n is a **workflow automation platform** that acts as the "brain" connecting all parts of MoneyViya. It's like having a smart assistant that:
 - Receives messages
 - Understands what user wants (using AI)
 - Routes to appropriate handler
@@ -42,7 +42,7 @@ The **main intelligent workflow** that processes all WhatsApp messages using AI 
        ↓
 [6. Parse AI Response] ← Extract intent, amount, category
        ↓
-[7. Call Backend API] ← Process with VittaSaathi
+[7. Call Backend API] ← Process with MoneyViya
        ↓
 [8. Prepare Reply] ← Format response
        ↓
@@ -58,7 +58,7 @@ The **main intelligent workflow** that processes all WhatsApp messages using AI 
   "messages": [
     {
       "role": "system",
-      "content": "You are VittaSaathi, analyze user message and extract: intent, amount, category, response"
+      "content": "You are MoneyViya, analyze user message and extract: intent, amount, category, response"
     },
     {
       "role": "user", 
@@ -104,7 +104,7 @@ The **main intelligent workflow** that processes all WhatsApp messages using AI 
 6. **Get Webhook URL:**
    - Click on "Webhook Trigger" node
    - Copy the "Production URL"
-   - Example: `https://your-n8n.app/webhook/vittasaathi-agent`
+   - Example: `https://your-n8n.app/webhook/MoneyViya-agent`
 
 7. **Connect to WhatsApp Bot:**
    - Update `whatsapp-bot/index.js`:
@@ -308,7 +308,7 @@ n8n start
                            │
                            ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  VITTASAATHI BACKEND (Render)                   │
+│                  MoneyViya BACKEND (Render)                   │
 │              Transaction Processing, Reports, etc.              │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -316,3 +316,4 @@ n8n start
 ---
 
 **Good luck with your hackathon! 🚀**
+

@@ -1,5 +1,5 @@
 """
-VittaSaathi Configuration v3.0
+MoneyViya Configuration v3.0
 ==============================
 For ALL irregular income earners - Students, Housewives, Gig Workers, 
 Freelancers, Small Vendors, BPO Workers, and Middle Class families
@@ -522,3 +522,4 @@ TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 # Market data (optional)
 ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "YUBGZ4Y4QS5SI0IX")
+

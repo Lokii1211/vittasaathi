@@ -27,3 +27,4 @@ def get_monthly_income(user_id):
             monthly_income[month_key] += float(row["amount"])
 
     return dict(monthly_income)
+

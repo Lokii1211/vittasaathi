@@ -33,3 +33,4 @@ def save_language(phone: str, language: str):
     user = ensure_user(phone)
     user["language"] = language
     user["onboarding_step"] = "DONE"
+

@@ -38,3 +38,4 @@ def build_daily_income_series(user_id):
         return None
 
     return df.sort_values("ds")
+

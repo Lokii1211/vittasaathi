@@ -1,4 +1,4 @@
-# VittaSaathi n8n Agentic Workflows
+# MoneyViya n8n Agentic Workflows
 ## Hackathon Showcase Guide
 
 ---
@@ -25,7 +25,7 @@
 │                           │                                      │
 │                           ▼                                      │
 │  ┌──────────────────────────────────────────────────────┐       │
-│  │           VITTASAATHI BACKEND (FastAPI)               │       │
+│  │           MoneyViya BACKEND (FastAPI)               │       │
 │  │  • Transaction Processing  • User Management          │       │
 │  │  • Report Generation       • Goal Tracking            │       │
 │  └──────────────────────────────────────────────────────┘       │
@@ -145,7 +145,7 @@ Click **Active** toggle to enable the workflow
 
 ```
 OPENAI_API_KEY=sk-proj-xxxxx
-VITTASAATHI_API_URL=https://vittasaathi-1.onrender.com
+MoneyViya_API_URL=https://MoneyViya-1.onrender.com
 ```
 
 ---
@@ -274,8 +274,9 @@ Transaction Event → Fraud Check → Alert if Suspicious
 
 - n8n Docs: https://docs.n8n.io
 - OpenAI API: https://platform.openai.com
-- VittaSaathi Backend: https://vittasaathi-1.onrender.com
+- MoneyViya Backend: https://MoneyViya-1.onrender.com
 
 ---
 
 **Good luck with your hackathon! 🚀**
+

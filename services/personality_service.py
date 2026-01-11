@@ -1,7 +1,7 @@
 """
 AI Personality Service
 ======================
-Gives VittaSaathi a friendly, relatable personality
+Gives MoneyViya a friendly, relatable personality
 """
 import random
 from datetime import datetime
@@ -179,3 +179,4 @@ class PersonalityService:
 
 
 personality_service = PersonalityService()
+

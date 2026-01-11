@@ -170,3 +170,4 @@ class GoalRepository:
 
 # Global instance
 goal_repo = GoalRepository()
+

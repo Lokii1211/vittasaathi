@@ -1,4 +1,4 @@
-# 🔄 VittaSaathi n8n Setup - Simple Import Guide
+# 🔄 MoneyViya n8n Setup - Simple Import Guide
 
 > **All workflows are ready to import! Just follow these steps.**
 
@@ -28,7 +28,7 @@ For each workflow file, do these steps:
 1. In n8n, click **Workflows** (left sidebar)
 2. Click **+ Add Workflow** button
 3. Click the **⋮** (three dots) menu → **Import from File**
-4. Navigate to: `c:\Users\dell\Desktop\vittasaathi\n8n\workflows\`
+4. Navigate to: `c:\Users\dell\Desktop\MoneyViya\n8n\workflows\`
 5. Select the workflow file
 6. Click **Save** → **Activate** (toggle switch)
 
@@ -87,7 +87,7 @@ This gives you a public URL like: `https://abc123.ngrok.io`
 - [ ] All workflows activated (toggle is ON)
 - [ ] ngrok running (`ngrok http 5678`)
 - [ ] Twilio webhook configured with ngrok URL
-- [ ] VittaSaathi API running (`python -m uvicorn app:app --port 8000`)
+- [ ] MoneyViya API running (`python -m uvicorn app:app --port 8000`)
 
 ---
 
@@ -106,7 +106,7 @@ This gives you a public URL like: `https://abc123.ngrok.io`
 
 | Service | URL |
 |---------|-----|
-| VittaSaathi API | http://localhost:8000 |
+| MoneyViya API | http://localhost:8000 |
 | API Docs | http://localhost:8000/docs |
 | Admin Panel | http://localhost:8000/static/admin.html |
 | Dashboard | http://localhost:8000/static/dashboard.html |
@@ -120,9 +120,9 @@ This gives you a public URL like: `https://abc123.ngrok.io`
 → Make sure to name your Twilio credential exactly: `Twilio account`
 
 ### "Cannot connect to localhost:8000"
-→ Make sure VittaSaathi is running:
+→ Make sure MoneyViya is running:
 ```bash
-cd c:\Users\dell\Desktop\vittasaathi
+cd c:\Users\dell\Desktop\MoneyViya
 python -m uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
@@ -135,3 +135,4 @@ python -m uvicorn app:app --host 0.0.0.0 --port 8000
 ---
 
 **Ready to go! 🎉 Just import and activate!**
+

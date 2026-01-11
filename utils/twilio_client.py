@@ -14,3 +14,4 @@ WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886")
 client = None
 if ACCOUNT_SID and AUTH_TOKEN:
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
+

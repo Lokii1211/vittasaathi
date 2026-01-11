@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VittaSaathi - Smart Financial Dashboard</title>
+    <title>MoneyViya - Smart Financial Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1203,7 +1203,7 @@
     <div class="login-screen" id="loginScreen">
         <div class="login-card">
             <div class="login-logo">💰</div>
-            <h1 class="login-title">VittaSaathi</h1>
+            <h1 class="login-title">MoneyViya</h1>
             <p class="login-subtitle">Your Smart Financial Friend</p>
 
             <div id="phoneStep">
@@ -1257,9 +1257,9 @@
         <header class="header">
             <div class="header-content">
                 <div class="logo">
-                    <img src="/static/logo.png" alt="VittaSaathi"
+                    <img src="/static/logo.png" alt="MoneyViya"
                         style="height: 40px; width: auto; margin-right: 10px;">
-                    <span class="logo-text">VittaSaathi</span>
+                    <span class="logo-text">MoneyViya</span>
                 </div>
                 <div class="header-actions">
                     <button class="btn-outline" onclick="downloadReport()">
@@ -1424,7 +1424,7 @@
             <div class="add-testimonial">
                 <h4 style="margin-bottom: 12px; font-size: 16px;">Share Your Success Story</h4>
                 <textarea id="testimonialInput"
-                    placeholder="How has VittaSaathi helped you manage your finances better?"></textarea>
+                    placeholder="How has MoneyViya helped you manage your finances better?"></textarea>
                 <button class="btn" style="width: auto; padding: 10px 24px;" onclick="submitTestimonial()">
                     <span class="btn-text">Submit</span>
                 </button>
@@ -1621,7 +1621,7 @@
                     if (!currentUser.name || currentUser.name === 'User') {
                         showNamePrompt(formattedPhone);
                     } else {
-                        localStorage.setItem('vittasaathi_user', JSON.stringify(currentUser));
+                        localStorage.setItem('MoneyViya_user', JSON.stringify(currentUser));
                         showDashboard();
                         showToast(`Welcome back, ${currentUser.name}!`, 'success');
                     }
@@ -1659,9 +1659,9 @@
             } catch { }
 
             currentUser.name = name;
-            localStorage.setItem('vittasaathi_user', JSON.stringify(currentUser));
+            localStorage.setItem('MoneyViya_user', JSON.stringify(currentUser));
             showDashboard();
-            showToast(`Welcome to VittaSaathi, ${name}!`, 'success');
+            showToast(`Welcome to MoneyViya, ${name}!`, 'success');
         }
 
         // Show Dashboard
@@ -1674,7 +1674,7 @@
 
         // Check login
         function checkLogin() {
-            const saved = localStorage.getItem('vittasaathi_user');
+            const saved = localStorage.getItem('MoneyViya_user');
             if (saved) {
                 currentUser = JSON.parse(saved);
                 showDashboard();
@@ -1951,7 +1951,7 @@
 
         // Testimonials
         const defaultTestimonials = [
-            { name: 'Rajesh Kumar', role: 'Delivery Partner, Mumbai', content: 'VittaSaathi helped me save ₹50,000 in just 6 months! The daily reminders made all the difference.', saved: '50K', improvement: '40%' },
+            { name: 'Rajesh Kumar', role: 'Delivery Partner, Mumbai', content: 'MoneyViya helped me save ₹50,000 in just 6 months! The daily reminders made all the difference.', saved: '50K', improvement: '40%' },
             { name: 'Priya Sharma', role: 'Homemaker, Delhi', content: 'As a homemaker, I now manage our budget perfectly. Just send a voice note and done!', saved: '25K', improvement: '100%' },
             { name: 'Amit Patel', role: 'Auto Driver, Ahmedabad', content: 'Hindi voice messages make it so easy! My emergency fund is now ready.', saved: '35K', improvement: '2x' },
             { name: 'Sunita Devi', role: 'Shop Owner, Lucknow', content: 'Best financial advisor! Understanding my business cash flow is now simple.', saved: '75K', improvement: '60%' },
@@ -2023,8 +2023,8 @@
         }
 
         function chatWhatsApp() {
-            // Opens WhatsApp chat with the VittaSaathi bot
-            const botNumber = '919363324580'; // VittaSaathi WhatsApp Bot
+            // Opens WhatsApp chat with the MoneyViya bot
+            const botNumber = '919363324580'; // MoneyViya WhatsApp Bot
             window.open(`https://wa.me/${botNumber}?text=Hi`, '_blank');
         }
 
@@ -2211,7 +2211,7 @@
 
                 if (data.user || response.ok) {
                     currentUser.name = name;
-                    localStorage.setItem('vittasaathi_user', JSON.stringify(currentUser));
+                    localStorage.setItem('MoneyViya_user', JSON.stringify(currentUser));
                     document.getElementById('userName').textContent = name;
                     document.getElementById('userAvatar').textContent = name[0].toUpperCase();
                     showToast('Profile updated!', 'success');
@@ -2221,7 +2221,7 @@
                 console.error('Profile update error:', error);
                 // Update locally even if API fails
                 currentUser.name = name;
-                localStorage.setItem('vittasaathi_user', JSON.stringify(currentUser));
+                localStorage.setItem('MoneyViya_user', JSON.stringify(currentUser));
                 document.getElementById('userName').textContent = name;
                 document.getElementById('userAvatar').textContent = name[0].toUpperCase();
                 showToast('Profile saved locally', 'success');
@@ -2231,7 +2231,7 @@
 
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('vittasaathi_user');
+                localStorage.removeItem('MoneyViya_user');
                 location.reload();
             }
         }

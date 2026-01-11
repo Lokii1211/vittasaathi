@@ -487,3 +487,4 @@ class SmartReplyService:
 gamification_service = GamificationService()
 smart_insights = SmartInsightsService()
 smart_reply_service = SmartReplyService()
+

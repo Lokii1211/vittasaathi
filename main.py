@@ -51,12 +51,12 @@ from utils.call_alert import make_fraud_call
 # ======================
 # APP
 # ======================
-app = FastAPI(title="VittaSaathi API", version="1.0")
+app = FastAPI(title="MoneyViya API", version="1.0")
 
 
 @app.get("/")
 def root():
-    return {"message": "VittaSaathi backend running successfully"}
+    return {"message": "MoneyViya backend running successfully"}
 
 
 # ======================
@@ -260,3 +260,4 @@ def save_user_name(payload: dict):
 def save_user_language(payload: dict):
     save_language(payload["phone"], payload["language_choice"])
     return {"reply_text": "🎉 Setup complete. How can I help?"}
+

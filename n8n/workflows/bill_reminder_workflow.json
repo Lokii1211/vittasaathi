@@ -1,5 +1,5 @@
 {
-    "name": "VittaSaathi - Bill Reminders (9 AM)",
+    "name": "MoneyViya - Bill Reminders (9 AM)",
     "nodes": [
         {
             "parameters": {
@@ -24,7 +24,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "https://vittasaathi-1.onrender.com/api/v2/bills/due-today",
+                "url": "https://MoneyViya-1.onrender.com/api/v2/bills/due-today",
                 "options": {}
             },
             "id": "c1b2c3d4-2222-2222-2222-222222222222",
@@ -86,7 +86,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=https://vittasaathi-1.onrender.com/user/{{ $json.user_id }}",
+                "url": "=https://MoneyViya-1.onrender.com/user/{{ $json.user_id }}",
                 "options": {}
             },
             "id": "c1b2c3d4-5555-5555-5555-555555555555",
@@ -242,3 +242,4 @@
     "updatedAt": "2026-01-07T20:08:00.000Z",
     "versionId": "1"
 }
+

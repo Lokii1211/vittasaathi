@@ -24,3 +24,4 @@ def count_recent_transactions(user_id, minutes=10):
                 count += 1
 
     return count
+

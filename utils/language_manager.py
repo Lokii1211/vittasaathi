@@ -19,3 +19,4 @@ def get_user_language(user_id):
                 return row["language"], row["voice_enabled"]
 
     return "en", False
+

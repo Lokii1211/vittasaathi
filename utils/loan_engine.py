@@ -24,3 +24,4 @@ def loan_decision(stability_score: float):
         return "MEDIUM"
     else:
         return "HIGH"
+

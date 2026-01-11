@@ -17,7 +17,7 @@ class EvolutionAPIService:
     def __init__(self):
         self.base_url = os.getenv("EVOLUTION_API_URL", "http://localhost:8080")
         self.api_key = os.getenv("EVOLUTION_API_KEY", "")
-        self.instance_name = os.getenv("EVOLUTION_INSTANCE_NAME", "vittasaathi")
+        self.instance_name = os.getenv("EVOLUTION_INSTANCE_NAME", "MoneyViya")
         
     def _get_headers(self) -> dict:
         """Get API headers"""
@@ -290,3 +290,4 @@ def send_whatsapp_message(phone: str, message: str) -> dict:
     
     else:
         return {"success": False, "error": "No messaging service configured"}
+

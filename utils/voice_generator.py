@@ -9,3 +9,4 @@ def generate_voice(text, language="en"):
     tts = gTTS(text=text, lang=language)
     tts.save(file_path)
     return str(file_path)
+

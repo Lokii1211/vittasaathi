@@ -1,4 +1,4 @@
-# Evolution API Setup Guide for VittaSaathi
+# Evolution API Setup Guide for MoneyViya
 
 ## ⚡ Why Evolution API?
 
@@ -57,19 +57,19 @@ You should see:
 curl -X POST "http://localhost:8080/instance/create" `
   -H "apikey: MySecretKey123" `
   -H "Content-Type: application/json" `
-  -d '{"instanceName":"vittasaathi","qrcode":true,"integration":"WHATSAPP-BAILEYS"}'
+  -d '{"instanceName":"MoneyViya","qrcode":true,"integration":"WHATSAPP-BAILEYS"}'
 ```
 
 **Or use Postman:**
 - POST http://localhost:8080/instance/create
 - Header: `apikey: MySecretKey123`
-- Body: `{"instanceName":"vittasaathi","qrcode":true,"integration":"WHATSAPP-BAILEYS"}`
+- Body: `{"instanceName":"MoneyViya","qrcode":true,"integration":"WHATSAPP-BAILEYS"}`
 
 ### Step 5: Connect WhatsApp (Scan QR Code)
 
 1. Get QR Code:
    - Open browser: http://localhost:8080/manager
-   - Or call: GET http://localhost:8080/instance/connect/vittasaathi
+   - Or call: GET http://localhost:8080/instance/connect/MoneyViya
 
 2. Open WhatsApp on your phone:
    - Go to Settings > Linked Devices
@@ -83,7 +83,7 @@ curl -X POST "http://localhost:8080/instance/create" `
 Configure Evolution to send incoming messages to your n8n workflow:
 
 ```powershell
-curl -X POST "http://localhost:8080/webhook/set/vittasaathi" `
+curl -X POST "http://localhost:8080/webhook/set/MoneyViya" `
   -H "apikey: MySecretKey123" `
   -H "Content-Type: application/json" `
   -d '{
@@ -96,7 +96,7 @@ curl -X POST "http://localhost:8080/webhook/set/vittasaathi" `
 
 ---
 
-## 🔧 VittaSaathi Configuration
+## 🔧 MoneyViya Configuration
 
 Add these to your `.env` file:
 
@@ -104,7 +104,7 @@ Add these to your `.env` file:
 # Evolution API Configuration
 EVOLUTION_API_URL=http://localhost:8080
 EVOLUTION_API_KEY=MySecretKey123
-EVOLUTION_INSTANCE_NAME=vittasaathi
+EVOLUTION_INSTANCE_NAME=MoneyViya
 ```
 
 For Render deployment, you'll need to:
@@ -118,12 +118,12 @@ For Render deployment, you'll need to:
 ### Send a test message:
 
 ```powershell
-curl -X POST "http://localhost:8080/message/sendText/vittasaathi" `
+curl -X POST "http://localhost:8080/message/sendText/MoneyViya" `
   -H "apikey: MySecretKey123" `
   -H "Content-Type: application/json" `
   -d '{
     "number": "919003360494",
-    "text": "Hello from VittaSaathi! 🙏"
+    "text": "Hello from MoneyViya! 🙏"
   }'
 ```
 
@@ -140,7 +140,7 @@ curl -X POST "http://localhost:8080/message/sendText/vittasaathi" `
 
 ## 🔄 Switching from Twilio to Evolution
 
-VittaSaathi has built-in support for both. The `evolution_service.py` automatically:
+MoneyViya has built-in support for both. The `evolution_service.py` automatically:
 1. Checks if Evolution API is available
 2. Falls back to Twilio if Evolution is not configured
 3. Uses a universal `send_whatsapp_message()` function
@@ -159,7 +159,7 @@ Evolution sends messages in this format:
 ```json
 {
   "event": "messages.upsert",
-  "instance": "vittasaathi",
+  "instance": "MoneyViya",
   "data": {
     "key": {
       "remoteJid": "919003360494@s.whatsapp.net"
@@ -186,7 +186,7 @@ Evolution sends messages in this format:
 
 **Problem: Messages not sending**
 - Check if WhatsApp is still connected
-- GET http://localhost:8080/instance/connectionState/vittasaathi
+- GET http://localhost:8080/instance/connectionState/MoneyViya
 
 ---
 
@@ -194,3 +194,4 @@ Evolution sends messages in this format:
 
 - Evolution API Docs: https://doc.evolution-api.com
 - Evolution GitHub: https://github.com/EvolutionAPI/evolution-api
+

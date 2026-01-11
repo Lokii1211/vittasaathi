@@ -103,7 +103,7 @@ class TwoFactorAuthService:
         totp = pyotp.TOTP(secret)
         provisioning_uri = totp.provisioning_uri(
             name=user_name,
-            issuer_name="VittaSaathi"
+            issuer_name="MoneyViya"
         )
         
         result = {
@@ -382,3 +382,4 @@ class TwoFactorAuthService:
 
 # Global instance
 tfa_service = TwoFactorAuthService()
+

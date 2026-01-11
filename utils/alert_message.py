@@ -20,3 +20,4 @@ def build_alert_message(txn, fraud_result):
         )
 
     return None
+

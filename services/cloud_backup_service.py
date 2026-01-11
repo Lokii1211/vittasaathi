@@ -47,12 +47,12 @@ class CloudBackupService:
                     "access_key_id": "",
                     "secret_access_key": "",
                     "region": "ap-south-1",
-                    "bucket_name": "vittasaathi-backups"
+                    "bucket_name": "MoneyViya-backups"
                 },
                 "gcs": {
                     "enabled": False,
                     "credentials_path": "",
-                    "bucket_name": "vittasaathi-backups"
+                    "bucket_name": "MoneyViya-backups"
                 },
                 "default_provider": "aws",
                 "auto_sync": False,
@@ -65,7 +65,7 @@ class CloudBackupService:
         with open(self.config_file, 'w') as f:
             json.dump(self.config, f, indent=2)
     
-    def configure_aws(self, access_key_id: str, secret_access_key: str, region: str = "ap-south-1", bucket_name: str = "vittasaathi-backups") -> Dict:
+    def configure_aws(self, access_key_id: str, secret_access_key: str, region: str = "ap-south-1", bucket_name: str = "MoneyViya-backups") -> Dict:
         """Configure AWS S3"""
         if not AWS_AVAILABLE:
             return {"success": False, "error": "boto3 not installed. Run: pip install boto3"}
@@ -100,7 +100,7 @@ class CloudBackupService:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def configure_gcs(self, credentials_path: str, bucket_name: str = "vittasaathi-backups") -> Dict:
+    def configure_gcs(self, credentials_path: str, bucket_name: str = "MoneyViya-backups") -> Dict:
         """Configure Google Cloud Storage"""
         if not GCS_AVAILABLE:
             return {"success": False, "error": "google-cloud-storage not installed. Run: pip install google-cloud-storage"}
@@ -365,3 +365,4 @@ class CloudBackupService:
 
 # Global instance
 cloud_backup_service = CloudBackupService()
+

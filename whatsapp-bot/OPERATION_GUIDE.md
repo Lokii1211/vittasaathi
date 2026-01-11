@@ -1,4 +1,4 @@
-# VittaSaathi WhatsApp Bot - Complete Operation Guide
+# MoneyViya WhatsApp Bot - Complete Operation Guide
 
 ## 🏗️ Architecture
 
@@ -20,7 +20,7 @@
                         │ HTTP POST /api/message
                         ▼
 ┌─────────────────────────────────────────────────────────┐
-│              VITTASAATHI BACKEND                         │
+│              MoneyViya BACKEND                         │
 │           (Hosted on Render.com)                         │
 │                                                          │
 │  • AI-powered message understanding                      │
@@ -42,7 +42,7 @@ Press `Win + R`, type `powershell`, press Enter
 
 ### Step 2: Navigate to bot folder
 ```powershell
-cd C:\Users\dell\Desktop\vittasaathi\whatsapp-bot
+cd C:\Users\dell\Desktop\MoneyViya\whatsapp-bot
 ```
 
 ### Step 3: Start the bot
@@ -61,7 +61,7 @@ You'll see:
 ```
 ✅ CONNECTED TO WHATSAPP SUCCESSFULLY!
 📞 Bot is ready to receive messages
-🔗 Backend: https://vittasaathi-1.onrender.com
+🔗 Backend: https://MoneyViya-1.onrender.com
 ```
 
 ## 🔄 How to Restart the Bot
@@ -90,17 +90,17 @@ Just don't close the PowerShell window. Bot stays running.
 npm install -g pm2
 
 # Start bot with PM2
-cd C:\Users\dell\Desktop\vittasaathi\whatsapp-bot
-pm2 start index.js --name vittasaathi-bot
+cd C:\Users\dell\Desktop\MoneyViya\whatsapp-bot
+pm2 start index.js --name MoneyViya-bot
 
 # View logs
-pm2 logs vittasaathi-bot
+pm2 logs MoneyViya-bot
 
 # Stop bot
-pm2 stop vittasaathi-bot
+pm2 stop MoneyViya-bot
 
 # Restart bot
-pm2 restart vittasaathi-bot
+pm2 restart MoneyViya-bot
 ```
 
 ## 🔧 Troubleshooting
@@ -146,7 +146,7 @@ pm2 restart vittasaathi-bot
 
 The bot uses these environment variables (optional):
 ```
-BACKEND_URL=https://vittasaathi-1.onrender.com
+BACKEND_URL=https://MoneyViya-1.onrender.com
 ```
 
 To set custom backend:
@@ -157,7 +157,7 @@ npm start
 
 ## 📊 Dashboard Access
 
-Web dashboard: https://vittasaathi-1.onrender.com/dashboard
+Web dashboard: https://MoneyViya-1.onrender.com/dashboard
 
 ## 🗂️ File Structure
 
@@ -192,3 +192,4 @@ whatsapp-bot/
 - Check logs in terminal for errors
 - Reset by deleting auth_info folder
 - Restart bot if not responding
+

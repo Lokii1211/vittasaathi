@@ -44,3 +44,4 @@ def detect_intent(text: str):
         return {"intent": "EXPENSE_QUERY", "amount": amount}
 
     return {"intent": "UNKNOWN", "amount": amount}
+

@@ -213,3 +213,4 @@ from datetime import timedelta
 
 # Global instance
 budget_repo = BudgetRepository()
+

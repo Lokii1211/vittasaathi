@@ -22,3 +22,4 @@ def is_amount_spike(user_id, amount):
     avg = statistics.mean(amounts)
 
     return amount > (avg * 3)
+
