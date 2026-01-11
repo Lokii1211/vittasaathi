@@ -779,6 +779,9 @@ def add_testimonial(data: dict):
 
 
 # ================= OTP AUTHENTICATION =================
+# Store for pending WhatsApp messages (bot will pick these up)
+pending_whatsapp_messages = {}
+
 @app.post("/api/v2/auth/send-otp")
 async def send_otp(payload: OTPSendPayload):
     """Send OTP via WhatsApp for web login"""
@@ -797,33 +800,58 @@ async def send_otp(payload: OTPSendPayload):
         "expires": datetime.now().timestamp() + 300
     }
     
-    # Send OTP via Twilio WhatsApp
-    try:
-        from twilio.rest import Client
-        
-        account_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
-        auth_token = os.getenv("TWILIO_AUTH_TOKEN", "")
-        
-        if account_sid and auth_token:
-            client = Client(account_sid, auth_token)
-            
-            message = client.messages.create(
-                from_="whatsapp:+14155238886",
-                to=f"whatsapp:{phone}",
-                body=f"🔐 Your VittaSaathi login OTP is: *{otp}*\n\nThis code expires in 5 minutes.\n\n⚠️ Do not share this code with anyone!"
-            )
-            
-            print(f"[OTP] Sent to {phone}: {otp}")
-            return {"success": True, "message": "OTP sent to your WhatsApp"}
-        else:
-            # Demo mode - just store OTP
-            print(f"[OTP] Demo mode - OTP for {phone}: {otp}")
-            return {"success": True, "message": "OTP sent to your WhatsApp", "demo_otp": otp}
-            
-    except Exception as e:
-        print(f"[OTP] Error sending: {e}")
-        # Return success anyway with demo OTP for testing
-        return {"success": True, "message": "OTP sent to your WhatsApp", "demo_otp": otp}
+    # Create OTP message
+    otp_message = f"""🔐 *VittaSaathi Login OTP*
+
+Your verification code is: *{otp}*
+
+⏰ This code expires in 5 minutes.
+⚠️ Do not share this code with anyone!
+
+If you didn't request this, please ignore."""
+    
+    # Store pending message for WhatsApp bot to send
+    pending_whatsapp_messages[phone] = {
+        "message": otp_message,
+        "created": datetime.now().timestamp()
+    }
+    
+    print(f"[OTP] Generated for {phone}: {otp}")
+    
+    # Return success - bot will send the message
+    return {
+        "success": True, 
+        "message": "OTP will be sent to your WhatsApp",
+        "phone": phone
+    }
+
+
+# Endpoint for bot to fetch pending messages
+@app.get("/api/pending-messages/{phone}")
+async def get_pending_messages(phone: str):
+    """Get pending messages for a phone number (used by WhatsApp bot)"""
+    if not phone.startswith("+"):
+        phone = "+" + phone
+    
+    if phone in pending_whatsapp_messages:
+        msg = pending_whatsapp_messages.pop(phone)
+        return {"has_message": True, "message": msg["message"]}
+    
+    return {"has_message": False}
+
+
+@app.post("/api/send-whatsapp")
+async def queue_whatsapp_message(phone: str, message: str):
+    """Queue a message to be sent via WhatsApp bot"""
+    if not phone.startswith("+"):
+        phone = "+" + phone
+    
+    pending_whatsapp_messages[phone] = {
+        "message": message,
+        "created": datetime.now().timestamp()
+    }
+    
+    return {"success": True, "queued": True}
 
 
 @app.post("/api/v2/auth/verify-otp")

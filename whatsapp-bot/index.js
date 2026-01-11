@@ -1,7 +1,6 @@
 /**
- * VittaSaathi WhatsApp Bot v2
- * Uses Baileys library for WhatsApp Web integration
- * Fixed QR code display
+ * VittaSaathi WhatsApp Bot v3.0
+ * Fixed session handling and QR code display
  */
 
 const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
@@ -16,11 +15,11 @@ const CONFIG = {
     AUTH_FOLDER: './auth_info'
 };
 
-// Simple logger
-const logger = pino({ level: 'warn' });
+const logger = pino({ level: 'silent' });
 
+let sock = null;
 let reconnectAttempts = 0;
-const MAX_RECONNECT = 5;
+const MAX_RECONNECT = 3;
 
 /**
  * Send message to VittaSaathi backend
@@ -47,7 +46,7 @@ async function processMessage(phone, message) {
         return null;
     } catch (error) {
         console.error('❌ Backend error:', error.message);
-        return '❌ Error processing your request. Please try again.';
+        return '❌ Service temporarily unavailable. Please try again.';
     }
 }
 
@@ -56,15 +55,6 @@ async function processMessage(phone, message) {
  */
 async function startBot() {
     console.log('\n🚀 Starting VittaSaathi WhatsApp Bot...\n');
-
-    // Clear old auth if too many reconnects
-    if (reconnectAttempts >= MAX_RECONNECT) {
-        console.log('🔄 Too many reconnects. Clearing session...');
-        if (fs.existsSync(CONFIG.AUTH_FOLDER)) {
-            fs.rmSync(CONFIG.AUTH_FOLDER, { recursive: true });
-        }
-        reconnectAttempts = 0;
-    }
 
     // Create auth folder
     if (!fs.existsSync(CONFIG.AUTH_FOLDER)) {
@@ -78,49 +68,60 @@ async function startBot() {
     // Load auth state
     const { state, saveCreds } = await useMultiFileAuthState(CONFIG.AUTH_FOLDER);
 
-    // Create socket
-    const sock = makeWASocket({
+    // Create socket - FIXED: removed deprecated option
+    sock = makeWASocket({
         version,
         auth: state,
-        printQRInTerminal: true,  // Enable built-in QR printing
         logger: logger,
-        browser: ['VittaSaathi Bot', 'Chrome', '120.0.0'],
+        browser: ['VittaSaathi', 'Chrome', '120.0.0'],
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
-        keepAliveIntervalMs: 25000,
-        emitOwnEvents: false,
-        markOnlineOnConnect: true
+        keepAliveIntervalMs: 30000,
+        markOnlineOnConnect: false,
+        syncFullHistory: false
     });
 
     // Connection updates
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
-        // Show QR code (backup method)
+        // Show QR code
         if (qr) {
             console.log('\n' + '='.repeat(50));
             console.log('📱 SCAN THIS QR CODE WITH WHATSAPP:');
             console.log('='.repeat(50) + '\n');
             qrcode.generate(qr, { small: true });
             console.log('\n' + '='.repeat(50));
-            console.log('Go to WhatsApp → Settings → Linked Devices → Link');
+            console.log('WhatsApp → Settings → Linked Devices → Link');
             console.log('='.repeat(50) + '\n');
         }
 
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut &&
+                statusCode !== 440; // Don't reconnect on conflict
 
-            console.log(`🔌 Disconnected. Code: ${statusCode}. Reconnecting: ${shouldReconnect}`);
+            console.log(`🔌 Disconnected. Code: ${statusCode}`);
 
-            if (shouldReconnect && reconnectAttempts < MAX_RECONNECT) {
-                reconnectAttempts++;
-                console.log(`⏳ Reconnect attempt ${reconnectAttempts}/${MAX_RECONNECT}...`);
+            if (statusCode === 440) {
+                console.log('\n⚠️ Session conflict detected!');
+                console.log('Clearing session and restarting...\n');
+                // Clear auth and restart
+                if (fs.existsSync(CONFIG.AUTH_FOLDER)) {
+                    fs.rmSync(CONFIG.AUTH_FOLDER, { recursive: true });
+                }
+                reconnectAttempts = 0;
                 setTimeout(startBot, 3000);
             } else if (statusCode === DisconnectReason.loggedOut) {
-                console.log('\n❌ Logged out from WhatsApp.');
-                console.log('Delete the auth_info folder and restart.\n');
-                process.exit(0);
+                console.log('\n❌ Logged out. Scan QR code again.\n');
+                if (fs.existsSync(CONFIG.AUTH_FOLDER)) {
+                    fs.rmSync(CONFIG.AUTH_FOLDER, { recursive: true });
+                }
+                setTimeout(startBot, 2000);
+            } else if (shouldReconnect && reconnectAttempts < MAX_RECONNECT) {
+                reconnectAttempts++;
+                console.log(`⏳ Reconnecting... (${reconnectAttempts}/${MAX_RECONNECT})`);
+                setTimeout(startBot, 5000);
             }
         }
         else if (connection === 'open') {
@@ -143,14 +144,12 @@ async function startBot() {
 
         for (const message of messages) {
             try {
-                // Skip own messages and broadcasts
                 if (message.key.fromMe) continue;
                 if (message.key.remoteJid === 'status@broadcast') continue;
 
                 const jid = message.key.remoteJid;
                 const phone = jid.split('@')[0].split(':')[0];
 
-                // Extract message text
                 let text = '';
                 const msg = message.message;
 
@@ -170,10 +169,9 @@ async function startBot() {
 
                 console.log(`\n📩 From +${phone}: ${text.substring(0, 100)}`);
 
-                // Process and reply
                 const reply = await processMessage(phone, text);
 
-                if (reply) {
+                if (reply && sock) {
                     await sock.sendMessage(jid, { text: reply });
                     console.log(`📤 Replied: ${reply.substring(0, 50)}...`);
                 }
@@ -187,11 +185,17 @@ async function startBot() {
 
 // Main
 console.log('╔══════════════════════════════════════════════════╗');
-console.log('║      VittaSaathi WhatsApp Bot v2.0               ║');
+console.log('║      VittaSaathi WhatsApp Bot v3.0               ║');
 console.log('║      Personal Financial Advisor                  ║');
 console.log('╚══════════════════════════════════════════════════╝');
 
 startBot().catch(err => {
     console.error('Fatal error:', err);
     process.exit(1);
+});
+
+// Handle process termination
+process.on('SIGINT', () => {
+    console.log('\n👋 Shutting down bot...');
+    process.exit(0);
 });
