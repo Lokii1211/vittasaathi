@@ -16,14 +16,26 @@ class WhatsAppCloudAPIService:
     """
     
     def __init__(self):
-        self.access_token = os.getenv("WHATSAPP_CLOUD_TOKEN", "")
-        self.phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "")
         self.api_version = "v18.0"
-        self.base_url = f"https://graph.facebook.com/{self.api_version}/{self.phone_number_id}"
+    
+    @property
+    def access_token(self):
+        return os.getenv("WHATSAPP_CLOUD_TOKEN", "")
+    
+    @property
+    def phone_number_id(self):
+        return os.getenv("WHATSAPP_PHONE_NUMBER_ID", "")
+    
+    @property
+    def base_url(self):
+        return f"https://graph.facebook.com/{self.api_version}/{self.phone_number_id}"
     
     def is_available(self) -> bool:
         """Check if WhatsApp Cloud API is configured"""
-        return bool(self.access_token and self.phone_number_id)
+        token = self.access_token
+        phone_id = self.phone_number_id
+        print(f"[WhatsApp Cloud] Checking config: token={bool(token)}, phone_id={phone_id}")
+        return bool(token and phone_id)
     
     def _get_headers(self) -> dict:
         return {
