@@ -212,6 +212,16 @@ Enter this code on the website to access your dashboard.""",
 📅 {date}
 
 💰 आज का कुल खर्च: ₹{today_total}""",
+                "income_logged": """✅ *आय दर्ज!*
+
+💵 राशि: ₹{amount}
+📁 स्रोत: {category}
+📅 {date}
+
+💰 *आज की कमाई:* ₹{today_income}
+🎯 *लक्ष्य प्रगति:* +₹{amount} और करीब!
+
+{motivation}""",
             },
             "ta": {
                 "welcome": """👋 *மணிவியாவுக்கு வரவேற்கிறோம்!*
@@ -224,6 +234,45 @@ Enter this code on the website to access your dashboard.""",
 
 *இயல்பாக அரட்டை அடிக்கவும்!*
 """,
+                "expense_logged": """✅ *செலவு பதிவு செய்யப்பட்டது!*
+
+💸 தொகை: ₹{amount}
+📁 வகை: {category}
+📅 {date}
+
+💰 இன்றைய மொத்த செலவு: ₹{today_total}
+📊 மீதமுள்ள பட்ஜெட்: ₹{remaining}
+
+{tip}""",
+                "income_logged": """✅ *வருமானம் பதிவு செய்யப்பட்டது!*
+
+💵 தொகை: ₹{amount}
+📁 ஆதாரம்: {category}
+📅 {date}
+
+💰 *இன்றைய வருமானம்:* ₹{today_income}
+🎯 *இலக்கு முன்னேற்றம்:* +₹{amount} நெருக்கமாக!
+
+{motivation}""",
+                "balance_summary": """📊 *உங்கள் நிதி சுருக்கம்*
+
+💰 *தற்போதைய இருப்பு:* ₹{balance}
+━━━━━━━━━━━━━━━━━
+📈 வருமானம்: ₹{income}
+📉 செலவுகள்: ₹{expenses}
+💵 சேமிப்பு: ₹{savings}
+
+{insight}""",
+                "help_menu": """📱 *மணிவியா உதவி*
+
+*விரைவான கட்டளைகள்:*
+━━━━━━━━━━━━━━━━━
+💸 *செலவு:* "உணவில் 200 செலவழித்தேன்"
+💵 *வருமானம்:* "டெலிவரியில் 5000 சம்பாதித்தேன்"
+📊 *இருப்பு:* "என் இருப்பு என்ன?"
+📋 *அறிக்கை:* "வாராந்திர அறிக்கை காட்டு"
+
+*அல்லது இயல்பாக அரட்டை அடிக்கவும்!* 💪""",
             }
         }
 
@@ -592,15 +641,17 @@ _(Reply with 1, 2, 3, or 4)_"""
         phone = user_data.get("phone")
         ist_now = datetime.now(ist)
         try:
-            transaction_repo.add_transaction(phone, {
-                "type": "expense",
-                "amount": amount,
-                "category": category,
-                "date": ist_now.isoformat(),
-                "description": message
-            })
+            transaction_repo.add_transaction(
+                user_id=phone,
+                amount=amount,
+                txn_type="expense",
+                category=category,
+                description=message
+            )
         except Exception as e:
             print(f"Error logging expense: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Get today's total (accumulated)
         today_total = self._get_today_expenses(phone)
@@ -643,16 +694,18 @@ _(Reply with 1, 2, 3, or 4)_"""
         # Log the income WITH IST timestamp
         phone = user_data.get("phone")
         try:
-            transaction_repo.add_transaction(phone, {
-                "type": "income",
-                "amount": amount,
-                "category": category,
-                "date": ist_now.isoformat(),  # IST timestamp!
-                "description": message
-            })
+            transaction_repo.add_transaction(
+                user_id=phone,
+                amount=amount,
+                txn_type="income",
+                category=category,
+                description=message
+            )
             print(f"[Income] Logged ₹{amount} for {phone} at {ist_now.strftime('%I:%M %p IST')}")
         except Exception as e:
             print(f"Error logging income: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Get today's total income (accumulated) - INCLUDING this transaction
         today_income = self._get_today_income(phone)
