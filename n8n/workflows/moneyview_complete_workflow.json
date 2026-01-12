@@ -4,7 +4,7 @@
         {
             "parameters": {
                 "httpMethod": "POST",
-                "path": "MoneyViya-webhook",
+                "path": "moneyview-webhook",
                 "responseMode": "responseNode",
                 "options": {}
             },
@@ -34,7 +34,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://moneyviya.up.railway.app/api/MoneyViya/process",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/process",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
@@ -110,7 +110,7 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/MoneyViya/morning-briefing",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/morning-briefing",
                 "options": {}
             },
             "id": "get-morning",
@@ -176,7 +176,7 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/MoneyViya/market-analysis",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/market-analysis",
                 "options": {}
             },
             "id": "get-market",
@@ -242,7 +242,7 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/MoneyViya/evening-checkin",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/evening-checkin",
                 "options": {}
             },
             "id": "get-evening",
@@ -309,7 +309,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://moneyviya.up.railway.app/api/MoneyViya/weekly-reports",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/weekly-reports",
                 "options": {}
             },
             "id": "get-weekly",
@@ -376,7 +376,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://moneyviya.up.railway.app/api/MoneyViya/monthly-reports",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/monthly-reports",
                 "options": {}
             },
             "id": "get-monthly",
