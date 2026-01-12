@@ -560,6 +560,78 @@ async def get_user_profile(phone: str):
     }
 
 
+# User update model
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    occupation: Optional[str] = None
+    monthly_income: Optional[float] = None
+    monthly_expenses: Optional[float] = None
+    current_savings: Optional[float] = None
+    risk_appetite: Optional[str] = None
+
+
+@moneyview_router.post("/user/{phone}/update")
+async def update_user_profile(phone: str, updates: UserUpdate):
+    """Update user profile from dashboard"""
+    
+    # Try to find user with various formats
+    user = None
+    actual_phone = phone
+    for p in [phone, "91" + phone, phone.replace("91", "")]:
+        user = moneyview_agent.user_store.get(p)
+        if user:
+            actual_phone = p
+            break
+    
+    if not user:
+        # Create new user if not exists
+        user = {
+            "phone": phone,
+            "language": "en",
+            "onboarding_complete": False
+        }
+        moneyview_agent.user_store[phone] = user
+        actual_phone = phone
+    
+    # Update fields
+    if updates.name is not None:
+        user["name"] = updates.name
+    if updates.occupation is not None:
+        user["occupation"] = updates.occupation
+    if updates.monthly_income is not None:
+        user["monthly_income"] = updates.monthly_income
+        # Recalculate daily budget
+        expenses = user.get("monthly_expenses", 0)
+        surplus = updates.monthly_income - expenses
+        user["daily_budget"] = int(updates.monthly_income / 30)
+        user["monthly_surplus"] = surplus
+    if updates.monthly_expenses is not None:
+        user["monthly_expenses"] = updates.monthly_expenses
+        income = user.get("monthly_income", 0)
+        user["monthly_surplus"] = income - updates.monthly_expenses
+    if updates.current_savings is not None:
+        user["current_savings"] = updates.current_savings
+    if updates.risk_appetite is not None:
+        user["risk_appetite"] = updates.risk_appetite
+    
+    # Save
+    moneyview_agent.user_store[actual_phone] = user
+    
+    return {
+        "success": True,
+        "message": "Profile updated",
+        "user": {
+            "name": user.get("name"),
+            "occupation": user.get("occupation"),
+            "monthly_income": user.get("monthly_income"),
+            "monthly_expenses": user.get("monthly_expenses"),
+            "current_savings": user.get("current_savings"),
+            "daily_budget": user.get("daily_budget"),
+            "risk_appetite": user.get("risk_appetite")
+        }
+    }
+
+
 # ==================== HEALTH CHECK ====================
 
 @moneyview_router.get("/health")
@@ -568,7 +640,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "MoneyView API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "features": [
             "onboarding",
             "expense_tracking",
@@ -576,6 +648,8 @@ async def health_check():
             "goal_management",
             "market_analysis",
             "scheduled_messages",
-            "multilingual"
+            "multilingual",
+            "profile_editing",
+            "dashboard_sync"
         ]
     }
