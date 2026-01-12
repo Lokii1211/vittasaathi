@@ -13,15 +13,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #10B981;
-            --primary-dark: #059669;
-            --bg: #0F172A;
-            --bg-card: #1E293B;
+            --primary: #059669;
+            /* Slightly darker/richer green */
+            --primary-dark: #047857;
+            --bg: #020617;
+            /* Deep slate */
+            --bg-card: #1e293b80;
+            /* Glass effect base */
             --text: #F8FAFC;
             --text-secondary: #94A3B8;
             --border: #334155;
             --danger: #EF4444;
-            --gradient: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
+            --gradient: linear-gradient(135deg, #059669 0%, #0891b2 100%);
+            --glass: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
         }
 
         * {
@@ -700,6 +705,12 @@
                         <input type="tel" class="phone" id="otp-input" placeholder="- - - - - -" maxlength="6"
                             style="text-align:center;letter-spacing:5px;font-weight:bold;">
                     </div>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span id="timer" style="color: var(--text-secondary); font-size: 14px;">Resend in 30s</span>
+                        <a href="#" id="resendLink" onclick="resendOTP()"
+                            style="color: var(--primary); text-decoration: none; font-size: 14px; display: none;">Resend
+                            OTP</a>
+                    </div>
                 </div>
 
                 <button class="btn btn-primary" id="loginBtn" disabled><span>Continue</span><i
@@ -926,6 +937,7 @@
                     document.getElementById('otp-input').focus();
                     btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
                     btn.disabled = true; // Wait for input
+                    startTimer();
                 } else {
                     toast(data.message || 'Error sending OTP', 'error');
                     btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
@@ -973,6 +985,31 @@
                 btn.disabled = false;
                 btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
             }
+        }
+
+        function startTimer() {
+            let timeLeft = 30;
+            const timer = document.getElementById('timer');
+            const link = document.getElementById('resendLink');
+
+            link.style.display = 'none';
+            timer.style.display = 'inline';
+
+            const interval = setInterval(() => {
+                timeLeft--;
+                timer.textContent = `Resend in ${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    timer.style.display = 'none';
+                    link.style.display = 'inline';
+                }
+            }, 1000);
+        }
+
+        async function resendOTP() {
+            startTimer();
+            await sendOTP();
         }
 
         function showApp() {

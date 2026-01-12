@@ -55,6 +55,14 @@ from agents.fraud_agent import check_fraud
 from agents.advanced_fraud_agent import advanced_fraud_check
 from agents.moneyviya_agent import moneyviya_agent
 
+# Advanced WhatsApp Agent (v4.0 - Primary Agent)
+try:
+    from agents.advanced_whatsapp_agent import advanced_agent
+    ADVANCED_AGENT_AVAILABLE = True
+except ImportError as e:
+    print(f"Note: Advanced agent not loaded: {e}")
+    ADVANCED_AGENT_AVAILABLE = False
+
 # Config
 from config import SUPPORTED_LANGUAGES, VOICES_DIR
 
@@ -272,12 +280,25 @@ async def handle_whatsapp_cloud_webhook(request: Request):
                 user_repo.update_user(phone, {"name": sender_name})
                 user["name"] = sender_name
             
-            # Process with AI Agent
+            # Process with AI Agent (Use Advanced Agent if available)
             try:
-                reply_text = moneyviya_agent.process_message(phone, message_text, user)
+                if ADVANCED_AGENT_AVAILABLE:
+                    # Advanced Agent with NLP and context awareness
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    reply_text = loop.run_until_complete(
+                        advanced_agent.process_message(phone, message_text, user)
+                    )
+                    loop.close()
+                else:
+                    # Fallback to original agent
+                    reply_text = moneyviya_agent.process_message(phone, message_text, user)
                 user_repo.update_user(phone, user)
             except Exception as agent_error:
                 print(f"[Agent Error] {agent_error}")
+                import traceback
+                traceback.print_exc()
                 reply_text = "I'm having trouble. Try:\n• 'spent 50 on tea'\n• 'earned 500 delivery'\n• 'help'"
             
             # Send reply
@@ -389,12 +410,52 @@ try:
         except Exception as e:
             print(f"[Scheduler] Backup check failed: {e}")
     
+    
     # Add scheduled backup check (runs every hour)
     scheduler.add_job(
         check_scheduled_backups,
         trigger=IntervalTrigger(hours=1),
         id='scheduled_backup_check',
         name='Check and run scheduled backups',
+        replace_existing=True
+    )
+
+    # -------------------------------------------------------
+    # NEW: Daily Reminder Job (Native fallback for N8N)
+    # -------------------------------------------------------
+    from apscheduler.triggers.cron import CronTrigger
+    
+    def run_daily_reminders():
+        """Send daily reminders to all active users (8 AM)"""
+        print("[Scheduler] Running daily reminders...")
+        try:
+            users = user_repo.get_all_users()
+            count = 0
+            for user in users:
+                if user.get("onboarding_complete"):
+                    try:
+                        msg = moneyviya_agent.generate_daily_reminder(user, "morning")
+                        phone = user.get("phone", "").replace("+", "")
+                        
+                        # Try Cloud API first
+                        if whatsapp_cloud_service.is_available():
+                            whatsapp_cloud_service.send_text_message(phone, msg)
+                            count += 1
+                        else:
+                            # Log for fallback or N8N to pick up
+                            print(f"[Scheduler] Pending reminder for {phone} (WhatsApp not configured)")
+                            
+                    except Exception as e:
+                        print(f"[Scheduler] Error sending reminder to {user.get('phone')}: {e}")
+            print(f"[Scheduler] Daily reminders sent: {count}")
+        except Exception as e:
+            print(f"[Scheduler] Daily reminder job failed: {e}")
+
+    scheduler.add_job(
+        run_daily_reminders,
+        trigger=CronTrigger(hour=8, minute=0),
+        id='daily_morning_reminder',
+        name='Daily Morning Reminder',
         replace_existing=True
     )
     
