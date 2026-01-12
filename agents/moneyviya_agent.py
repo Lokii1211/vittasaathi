@@ -681,17 +681,17 @@ Examples:
                     # Here we would normally call the DB, but since we are simulating the agent response in this standalone file (conceptually linked):
                     return f"""✅ *Expense Detected & Recorded!*
                     
-💸 Amount: ₹{{data['amount']}}
-📁 Category: {{str(data.get('category', 'Other')).title()}}
-📝 Note: {{data.get('description', 'Expense')}}
+💸 Amount: ₹{data['amount']}
+📁 Category: {str(data.get('category', 'Other')).title()}
+📝 Note: {data.get('description', 'Expense')}
 
 _Auto-detected by AI Agent_ 🤖"""
 
                 elif intent == "log_income" and data.get("amount"):
                      return f"""✅ *Income Detected & Recorded!*
                     
-💵 Amount: ₹{{data['amount']}}
-📁 Source: {{str(data.get('source', 'Other')).title()}}
+💵 Amount: ₹{data['amount']}
+📁 Source: {str(data.get('source', 'Other')).title()}
 
 _Auto-detected by AI Agent_ 🤖"""
                 

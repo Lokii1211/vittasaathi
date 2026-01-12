@@ -61,3 +61,6 @@ qrcode[pil]>=7.4.2
 
 # OpenAI (for voice transcription and smart NLP)
 openai>=1.12.0
+
+# Timezone Support
+pytz>=2023.3
