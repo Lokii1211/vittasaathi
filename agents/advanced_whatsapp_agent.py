@@ -816,11 +816,19 @@ Or just tell me what you need!"""
         
         try:
             user_repo.update_user(phone, user_data)
+            print(f"[OTP] Generated {otp} for {phone}, stored in user_repo")
         except Exception as e:
             print(f"Error storing OTP: {e}")
         
-        lang = user_data.get("detected_language", "en")
-        template = self.templates.get(lang, self.templates["en"])["otp_sent"]
+        lang = user_data.get("language", "en")
+        template = self.templates.get(lang, self.templates["en"]).get("otp_sent", """🔐 *Your Login Code:*
+
+*{otp}*
+
+⏰ Valid for 5 minutes
+Do NOT share this with anyone!
+
+Enter this code on the website to access your dashboard.""")
         
         return template.format(otp=otp)
     
