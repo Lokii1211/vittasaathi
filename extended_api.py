@@ -11,7 +11,7 @@ from datetime import datetime
 
 # Import services
 from services.analytics_service import analytics_service, report_generator
-from services.pdf_service import pdf_service
+from services.pdf_report_service import pdf_report_service as pdf_service
 from services.smart_categorization import smart_categorization, quick_actions
 from services.family_service import family_service
 from services.engagement_service import (
@@ -62,6 +62,135 @@ class BillReminder(BaseModel):
 class ChallengeAction(BaseModel):
     user_id: str
     challenge_id: str
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    language: Optional[str] = None
+    occupation: Optional[str] = None
+
+
+# ============== DASHBOARD & USER ENDPOINTS ==============
+@extended_router.get("/dashboard/{phone}")
+def get_dashboard(phone: str):
+    """Get user dashboard data for website"""
+    from database.transaction_repository import transaction_repo
+    import pytz
+    
+    # Normalize phone
+    phone_clean = phone.replace("+", "").replace(" ", "").replace("%2B", "")
+    if not phone_clean.startswith("91"):
+        phone_clean = "91" + phone_clean
+    full_phone = "+" + phone_clean
+    
+    # Get user
+    user = user_repo.get_user(full_phone)
+    if not user:
+        return {"error": "User not found", "phone": full_phone}
+    
+    # Get transactions
+    transactions = transaction_repo.get_transactions(full_phone) or []
+    
+    # Calculate totals for this month
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(ist)
+    
+    total_income = 0
+    total_expenses = 0
+    recent_txns = []
+    
+    for tx in transactions:
+        tx_date_str = tx.get("date", "")
+        try:
+            if "+" in tx_date_str:
+                tx_date_str = tx_date_str.split("+")[0]
+            tx_date = datetime.fromisoformat(tx_date_str)
+            
+            # Only this month
+            if tx_date.month == now.month and tx_date.year == now.year:
+                if tx.get("type") == "income":
+                    total_income += tx.get("amount", 0)
+                elif tx.get("type") == "expense":
+                    total_expenses += tx.get("amount", 0)
+            
+            # Add to recent (last 10)
+            if len(recent_txns) < 10:
+                recent_txns.append(tx)
+        except:
+            pass
+    
+    # Sort recent by date desc
+    recent_txns.sort(key=lambda x: x.get("date", ""), reverse=True)
+    
+    return {
+        "name": user.get("name", "Friend"),
+        "phone": full_phone,
+        "language": user.get("language", "en"),
+        "total_income": total_income,
+        "total_expenses": total_expenses,
+        "balance": total_income - total_expenses,
+        "goal_type": user.get("goal_type"),
+        "target_amount": user.get("target_amount"),
+        "recent_transactions": recent_txns[:5]
+    }
+
+@extended_router.get("/user/{phone}")
+def get_user_profile(phone: str):
+    """Get user profile data"""
+    from database.transaction_repository import transaction_repo
+    
+    # Normalize phone
+    phone_clean = phone.replace("+", "").replace(" ", "").replace("%2B", "")
+    if not phone_clean.startswith("91"):
+        phone_clean = "91" + phone_clean
+    full_phone = "+" + phone_clean
+    
+    user = user_repo.get_user(full_phone)
+    if not user:
+        return {"error": "User not found"}
+    
+    # Get totals
+    transactions = transaction_repo.get_transactions(full_phone) or []
+    total_income = sum(tx.get("amount", 0) for tx in transactions if tx.get("type") == "income")
+    total_expenses = sum(tx.get("amount", 0) for tx in transactions if tx.get("type") == "expense")
+    
+    return {
+        "name": user.get("name"),
+        "phone": full_phone,
+        "language": user.get("language"),
+        "occupation": user.get("occupation"),
+        "goal_type": user.get("goal_type"),
+        "target_amount": user.get("target_amount"),
+        "timeline": user.get("timeline"),
+        "monthly_income": user.get("monthly_income"),
+        "total_income": total_income,
+        "total_expenses": total_expenses,
+        "onboarding_complete": user.get("onboarding_complete", False)
+    }
+
+@extended_router.post("/user/{phone}/update")
+def update_user_profile(phone: str, update: UserUpdate):
+    """Update user profile"""
+    # Normalize phone
+    phone_clean = phone.replace("+", "").replace(" ", "").replace("%2B", "")
+    if not phone_clean.startswith("91"):
+        phone_clean = "91" + phone_clean
+    full_phone = "+" + phone_clean
+    
+    user = user_repo.get_user(full_phone)
+    if not user:
+        return {"success": False, "message": "User not found"}
+    
+    # Update fields
+    if update.name:
+        user["name"] = update.name.strip().title()
+    if update.language:
+        user["language"] = update.language
+    if update.occupation:
+        user["occupation"] = update.occupation
+    
+    user_repo.update_user(full_phone, user)
+    
+    return {"success": True, "message": "Profile updated", "user": user}
 
 
 # ============== ANALYTICS ENDPOINTS ==============

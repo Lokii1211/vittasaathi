@@ -1240,31 +1240,69 @@
                 });
                 app.appendChild(homeView);
 
-                // Create Stats View
+                // Create Stats View - REAL DATA
                 const stats = document.createElement('div');
                 stats.id = 'stats-view';
                 stats.className = 'view';
-                stats.innerHTML = `<div class="section-title">Analytics</div><div style="text-align:center;padding:40px;opacity:0.6"><i class="fas fa-chart-pie" style="font-size:48px;margin-bottom:10px"></i><p>Coming Soon</p></div>`;
+                stats.innerHTML = `
+                    <div class="section-title">📊 Analytics</div>
+                    <div style="background:var(--bg-card);padding:20px;border-radius:16px;margin-bottom:16px">
+                        <h3 style="margin-bottom:15px">This Month</h3>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                            <span>💵 Total Income</span>
+                            <span id="statsIncome" style="color:#10B981;font-weight:bold">₹0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                            <span>💸 Total Expenses</span>
+                            <span id="statsExpenses" style="color:#EF4444;font-weight:bold">₹0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between">
+                            <span>💰 Savings</span>
+                            <span id="statsSavings" style="color:#3B82F6;font-weight:bold">₹0</span>
+                        </div>
+                    </div>
+                    <div style="background:var(--bg-card);padding:20px;border-radius:16px">
+                        <h3 style="margin-bottom:15px">💡 Tips</h3>
+                        <p style="opacity:0.8">Track all your expenses on WhatsApp to see detailed analytics here!</p>
+                        <button class="btn btn-primary" style="margin-top:15px;width:100%" onclick="openWhatsApp('Show my report')">Get Full Report</button>
+                    </div>`;
                 app.appendChild(stats);
 
-                // Create Budget View
+                // Create Budget View - REAL GOALS
                 const budget = document.createElement('div');
                 budget.id = 'budget-view';
                 budget.className = 'view';
-                budget.innerHTML = `<div class="section-title">Budget</div><div style="text-align:center;padding:40px;opacity:0.6"><i class="fas fa-wallet" style="font-size:48px;margin-bottom:10px"></i><p>Coming Soon</p></div>`;
+                budget.innerHTML = `
+                    <div class="section-title">🎯 Goals</div>
+                    <div id="goalCard" style="background:var(--bg-card);padding:20px;border-radius:16px;margin-bottom:16px">
+                        <h3 id="goalName" style="margin-bottom:10px">Loading...</h3>
+                        <div style="background:rgba(255,255,255,0.1);border-radius:10px;height:20px;overflow:hidden;margin-bottom:10px">
+                            <div id="goalProgress" style="background:var(--gradient);height:100%;width:0%;transition:width 1s"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:14px;opacity:0.8">
+                            <span id="goalSaved">₹0 saved</span>
+                            <span id="goalTarget">Target: ₹0</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%" onclick="openWhatsApp('Set a new goal')">Set New Goal</button>`;
                 app.appendChild(budget);
 
-                // Create Profile View
+                // Create Profile View - WITH EDIT
                 const profile = document.createElement('div');
                 profile.id = 'profile-view';
                 profile.className = 'view';
                 profile.innerHTML = `
-                    <div class="section-title">Profile</div>
+                    <div class="section-title">👤 Profile</div>
                     <div style="background:var(--bg-card);padding:20px;border-radius:16px;text-align:center;margin-bottom:20px">
                         <div style="width:80px;height:80px;background:var(--gradient);border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:30px">👤</div>
-                        <h2 id="profileName" style="margin-bottom:5px">User</h2>
-                        <p id="profilePhone" style="opacity:0.7;margin-bottom:20px">+91...</p>
+                        <input type="text" id="profileNameInput" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:18px;text-align:center;color:var(--text);width:80%;margin-bottom:10px" placeholder="Your Name">
+                        <p id="profilePhone" style="opacity:0.7;margin-bottom:15px">+91...</p>
+                        <button class="btn" style="background:var(--primary);color:white;margin-bottom:10px" onclick="updateProfile()">Save Changes</button>
                         <button class="btn" style="background:rgba(239,68,68,0.2);color:#EF4444" onclick="logout()">Logout</button>
+                    </div>
+                    <div style="background:var(--bg-card);padding:15px;border-radius:16px;text-align:center">
+                        <p style="font-size:13px;opacity:0.7">VittaSaathi v5.0.0</p>
+                        <p style="font-size:12px;opacity:0.5">Your AI Financial Advisor</p>
                     </div>`;
                 app.appendChild(profile);
             }
@@ -1282,11 +1320,87 @@
             const view = document.getElementById(tabId + '-view');
             if (view) view.classList.add('active');
 
-            // Load Profile if needed
+            // Load data for specific tabs
             if (tabId === 'profile') {
-                const user = JSON.parse(localStorage.getItem('user_data') || '{}');
-                document.getElementById('profileName').textContent = (user.name || 'Friend').split(' ')[0];
-                document.getElementById('profilePhone').textContent = localStorage.getItem('phone') || '';
+                loadProfile();
+            } else if (tabId === 'stats') {
+                loadStats();
+            } else if (tabId === 'budget') {
+                loadGoals();
+            }
+        }
+
+        function loadProfile() {
+            const phone = localStorage.getItem('phone') || '';
+            const user = JSON.parse(localStorage.getItem('user_data') || '{}');
+            const nameInput = document.getElementById('profileNameInput');
+            if (nameInput) nameInput.value = user.name || '';
+            const phoneEl = document.getElementById('profilePhone');
+            if (phoneEl) phoneEl.textContent = phone;
+        }
+
+        async function updateProfile() {
+            const phone = localStorage.getItem('phone');
+            const newName = document.getElementById('profileNameInput').value.trim();
+            if (!newName) {
+                toast('Please enter a name', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API}/api/v2/user/${encodeURIComponent(phone)}/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    let userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+                    userData.name = newName;
+                    localStorage.setItem('user_data', JSON.stringify(userData));
+                    document.getElementById('userName').textContent = newName.split(' ')[0];
+                    toast('Profile updated!', 'success');
+                } else {
+                    toast(data.message || 'Update failed', 'error');
+                }
+            } catch (e) {
+                toast('Network error', 'error');
+            }
+        }
+
+        async function loadStats() {
+            const phone = localStorage.getItem('phone');
+            if (!phone) return;
+            try {
+                const res = await fetch(`${API}/api/v2/dashboard/${encodeURIComponent(phone)}`);
+                const data = await res.json();
+                document.getElementById('statsIncome').textContent = '₹' + (data.total_income || 0).toLocaleString('en-IN');
+                document.getElementById('statsExpenses').textContent = '₹' + (data.total_expenses || 0).toLocaleString('en-IN');
+                document.getElementById('statsSavings').textContent = '₹' + ((data.total_income || 0) - (data.total_expenses || 0)).toLocaleString('en-IN');
+            } catch (e) {
+                console.error('Stats load error:', e);
+            }
+        }
+
+        async function loadGoals() {
+            const phone = localStorage.getItem('phone');
+            if (!phone) return;
+            try {
+                const res = await fetch(`${API}/api/v2/user/${encodeURIComponent(phone)}`);
+                const data = await res.json();
+                if (data.target_amount) {
+                    document.getElementById('goalName').textContent = data.goal_type || 'Savings Goal';
+                    document.getElementById('goalTarget').textContent = 'Target: ₹' + parseInt(data.target_amount).toLocaleString('en-IN');
+                    const saved = Math.max(0, (data.total_income || 0) - (data.total_expenses || 0));
+                    document.getElementById('goalSaved').textContent = '₹' + saved.toLocaleString('en-IN') + ' saved';
+                    const progress = Math.min(100, (saved / data.target_amount) * 100);
+                    document.getElementById('goalProgress').style.width = progress + '%';
+                } else {
+                    document.getElementById('goalName').textContent = 'No Goal Set';
+                    document.getElementById('goalSaved').textContent = 'Set a goal to track progress';
+                    document.getElementById('goalTarget').textContent = '';
+                }
+            } catch (e) {
+                console.error('Goals load error:', e);
             }
         }
 
