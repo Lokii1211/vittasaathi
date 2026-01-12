@@ -509,22 +509,54 @@ async def get_active_users():
 
 @moneyview_router.get("/user/{phone}")
 async def get_user_profile(phone: str):
-    """Get user profile and summary"""
-    user = moneyview_agent.user_store.get(phone)
+    """Get user profile and summary for dashboard"""
+    
+    # Try to find user with various formats
+    user = None
+    for p in [phone, "91" + phone, phone.replace("91", "")]:
+        user = moneyview_agent.user_store.get(p)
+        if user:
+            break
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get today's transactions
+    today = datetime.now(IST).strftime("%Y-%m-%d") if IST else datetime.now().strftime("%Y-%m-%d")
+    transactions = moneyview_agent.transaction_store.get(phone, [])
+    
+    today_income = sum(
+        t["amount"] for t in transactions 
+        if t["type"] == "income" and t["date"].startswith(today)
+    )
+    today_expense = sum(
+        t["amount"] for t in transactions 
+        if t["type"] == "expense" and t["date"].startswith(today)
+    )
+    
+    # Get recent transactions (last 10)
+    recent_transactions = sorted(
+        transactions, 
+        key=lambda x: x.get("date", ""), 
+        reverse=True
+    )[:10]
     
     return {
         "phone": phone,
         "name": user.get("name"),
         "language": user.get("language"),
         "occupation": user.get("occupation"),
-        "monthly_income": user.get("monthly_income"),
-        "daily_budget": user.get("daily_budget"),
+        "monthly_income": user.get("monthly_income", 0),
+        "monthly_expenses": user.get("monthly_expenses", 0),
+        "daily_budget": user.get("daily_budget", 0),
+        "current_savings": user.get("current_savings", 0),
         "goals": user.get("goals", []),
         "risk_appetite": user.get("risk_appetite"),
-        "onboarding_complete": user.get("onboarding_complete")
+        "onboarding_complete": user.get("onboarding_complete"),
+        "today_income": today_income,
+        "today_expense": today_expense,
+        "today_net": today_income - today_expense,
+        "recent_transactions": recent_transactions
     }
 
 

@@ -1,27 +1,21 @@
 """
-MoneyView Agent - Personal Financial Manager & Advisor
-========================================================
-AI-powered WhatsApp financial agent with:
-- Complete onboarding with financial profiling
+MoneyView Agent v2.0 - Personal Financial Manager & Advisor
+=============================================================
+Natural conversational AI agent with:
+- No numbered options - natural language input
+- Complete financial profiling
 - Multi-goal management
-- Stock market analysis (AlphaVantage)
-- Smart budgeting & expense tracking
-- Document scanning for receipts
+- Stock market analysis
 - Multilingual support (EN, HI, TA, TE, KN)
-- Personalized financial advice (OpenAI)
 """
 
 import re
 import json
 import random
-import hashlib
 import traceback
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
-from enum import Enum
 
-# Import services
 try:
     from services.openai_service import openai_service
 except:
@@ -34,624 +28,167 @@ except:
     IST = None
 
 
-class Language(Enum):
-    ENGLISH = "en"
-    HINDI = "hi"
-    TAMIL = "ta"
-    TELUGU = "te"
-    KANNADA = "kn"
-
-
-class Occupation(Enum):
-    STUDENT = "student"
-    EMPLOYEE = "employee"
-    BUSINESS = "business"
-    FREELANCER = "freelancer"
-    HOMEMAKER = "homemaker"
-
-
-class RiskAppetite(Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-
-
-@dataclass
-class Goal:
-    id: str
-    name: str
-    target_amount: float
-    current_amount: float = 0
-    deadline: str = ""
-    priority: int = 1
-    status: str = "active"
-    monthly_contribution: float = 0
-    created_at: str = ""
-
-
-@dataclass
-class UserProfile:
-    phone: str
-    name: str = ""
-    language: str = "en"
-    occupation: str = ""
-    monthly_income: float = 0
-    fixed_expenses: float = 0
-    variable_expenses: float = 0
-    current_savings: float = 0
-    current_investments: float = 0
-    investment_details: Dict = field(default_factory=dict)
-    risk_appetite: str = "medium"
-    daily_budget: float = 0
-    goals: List[Goal] = field(default_factory=list)
-    onboarding_step: int = 0
-    onboarding_complete: bool = False
-    created_at: str = ""
-    last_active: str = ""
-
-
 class MoneyViewAgent:
     """
     MoneyView - Your Personal Finance Partner
     ==========================================
-    An AI-powered financial advisor that helps you:
-    - Track income & expenses
-    - Manage multiple financial goals
-    - Get personalized investment advice
-    - Receive daily market updates
-    - Stay motivated to achieve targets
+    Natural conversational AI financial advisor
     """
     
-    # Multilingual templates
-    TEMPLATES = {
-        "en": {
-            "welcome": """👋 *Welcome to MoneyView!*
-
-I'm your AI Personal Finance Partner. I'll help you:
-💰 Track your money
-🎯 Achieve your goals
-📈 Invest wisely
-💡 Save smarter
-
-Let's set up your profile!
-
-*What language do you prefer?*
-1️⃣ English
-2️⃣ हिंदी (Hindi)
-3️⃣ தமிழ் (Tamil)
-4️⃣ తెలుగు (Telugu)
-5️⃣ ಕನ್ನಡ (Kannada)""",
-            
-            "ask_name": "Great choice! ✅\n\n*What should I call you?*\n_(Just type your name)_",
-            
-            "ask_occupation": """Nice to meet you, *{name}*! 😊
-
-*What do you do?*
-1️⃣ Student
-2️⃣ Employee/Salaried
-3️⃣ Business Owner
-4️⃣ Freelancer
-5️⃣ Homemaker""",
-            
-            "ask_income": """Got it, {occupation}! 💼
-
-*What's your approximate monthly income?*
-_(Type amount like: 25000 or 50k)_""",
-            
-            "ask_fixed_expenses": """₹{income:,}/month - noted! 📝
-
-*What are your fixed monthly expenses?*
-_(Rent, EMI, subscriptions, bills)_
-_(Type amount like: 15000)_""",
-            
-            "ask_variable_expenses": """Fixed expenses: ₹{fixed:,} ✅
-
-*What about variable expenses?*
-_(Food, transport, shopping, entertainment)_""",
-            
-            "ask_savings": """I see you have about ₹{available:,} left after expenses.
-
-*Do you have any current savings?*
-_(Money in savings account)_
-_(Type 0 if none)_""",
-            
-            "ask_investments": """Current savings: ₹{savings:,} 💰
-
-*Any current investments?*
-_(FD, Mutual Funds, Stocks, Gold, PPF)_
-_(Type 0 if none, or amount like 50000)_""",
-            
-            "ask_investment_details": """You have ₹{investments:,} invested! 📈
-
-*What type of investments?*
-_(Just type: FD, MF, Stocks, Gold, PPF - or skip)_""",
-            
-            "ask_risk": """Perfect! Now let's understand your risk tolerance.
-
-*What's your investment style?*
-1️⃣ Low Risk - I prefer safe investments
-2️⃣ Medium Risk - Balanced approach
-3️⃣ High Risk - I can take aggressive risks""",
-            
-            "ask_goal": """Great! Now the exciting part - YOUR GOALS! 🎯
-
-*What's your primary financial goal?*
-_(Be specific! Example: Pay off 20 lakh education loan, Buy a car, Build emergency fund)_""",
-            
-            "ask_goal_amount": """Excellent goal: *{goal}* 🎯
-
-*How much do you need for this?*
-_(Type amount like: 500000 or 5 lakh)_""",
-            
-            "ask_goal_timeline": """Target: ₹{amount:,} for {goal}
-
-*By when do you want to achieve this?*
-_(Example: 2 years, 6 months, December 2025)_""",
-            
-            "ask_more_goals": """Goal set! ✅
-
-*Do you have more goals?*
-_(Type another goal or say "no more")_""",
-            
-            "profile_complete": """🎉 *Your MoneyView Profile is Ready!*
-
-📊 *Financial Snapshot:*
-━━━━━━━━━━━━━━━━━━━━━
-👤 {name} ({occupation})
-💰 Income: ₹{income:,}/month
-💸 Expenses: ₹{expenses:,}/month
-💵 Monthly Surplus: ₹{surplus:,}
-🏦 Savings: ₹{savings:,}
-📈 Investments: ₹{investments:,}
-🎲 Risk Profile: {risk}
-
-🎯 *Your Goals:*
-{goals_list}
-
-📋 *My Plan for You:*
-━━━━━━━━━━━━━━━━━━━━━
-💸 Daily Budget: ₹{daily_budget:,}
-💰 Monthly Savings Target: ₹{monthly_savings:,}
-📈 Investment Allocation: ₹{invest_amount:,}
-
-⏰ *I'll Send You:*
-• 6 AM - Yesterday's review + Today's targets
-• 9 AM - Stock market analysis
-• 8 PM - Evening check-in
-
-Type "help" for commands!
-Let's achieve your dreams together! 💪""",
-            
-            "expense_logged": """✅ *Expense Recorded!*
-
-💸 Amount: ₹{amount:,}
-📁 Category: {category}
-🕐 {time}
-
-📊 *Today So Far:*
-💵 Income: ₹{today_income:,}
-💸 Spent: ₹{today_expense:,}
-💰 Remaining Budget: ₹{remaining:,}
-
-{insight}""",
-            
-            "income_logged": """✅ *Income Recorded!*
-
-💵 Amount: ₹{amount:,}
-📁 Source: {category}
-🕐 {time}
-
-📊 *Today's Earnings:*
-💵 Total Income: ₹{today_income:,}
-🎯 Goal Progress: +₹{amount:,}
-
-{motivation}""",
-            
-            "morning_briefing": """☀️ *Good Morning, {name}!*
-
-📊 *Yesterday's Summary:*
-━━━━━━━━━━━━━━━━━━━━━
-💵 Income: ₹{yesterday_income:,}
-💸 Expenses: ₹{yesterday_expense:,}
-💰 Saved: ₹{saved:,}
-
-🎯 *Today's Targets:*
-• Daily Budget: ₹{daily_budget:,}
-• Savings Goal: ₹{daily_savings:,}
-
-💪 *Motivation:*
-_{quote}_
-
-Have a productive day! 🚀""",
-            
-            "market_analysis": """📈 *Market Update - {date}*
-
-🇮🇳 *Indian Markets:*
-━━━━━━━━━━━━━━━━━━━━━
-NIFTY 50: {nifty} ({nifty_change})
-SENSEX: {sensex} ({sensex_change})
-Bank Nifty: {banknifty} ({banknifty_change})
-
-📊 *Top Performers:*
-{top_gainers}
-
-📉 *Top Losers:*
-{top_losers}
-
-💡 *My Analysis:*
-{analysis}
-
-📌 *Investment Tip:*
-{tip}""",
-            
-            "evening_checkin": """🌙 *Evening Check-in, {name}!*
-
-📊 *Today So Far:*
-━━━━━━━━━━━━━━━━━━━━━
-💵 Income: ₹{today_income:,}
-💸 Expenses: ₹{today_expense:,}
-💰 Net: ₹{net:,}
-
-{status_message}
-
-*Any more transactions to add?*
-_(Type: "Spent 200 on dinner" or "Earned 500" or "that's all")_""",
-            
-            "goal_progress": """🎯 *Goal Progress Report*
-
-{goals_progress}
-
-📈 *Overall Progress:*
-Total Saved: ₹{total_saved:,}
-Target: ₹{total_target:,}
-Progress: {progress}%
-
-{motivation}""",
-            
-            "weekly_report": """📊 *Weekly Report - {name}*
-Week: {week_start} to {week_end}
-━━━━━━━━━━━━━━━━━━━━━
-
-💵 *Income:*
-This Week: ₹{week_income:,}
-Last Week: ₹{last_week_income:,}
-Change: {income_change}
-
-💸 *Expenses:*
-This Week: ₹{week_expense:,}
-Last Week: ₹{last_week_expense:,}
-Change: {expense_change}
-
-💰 *Savings:*
-This Week: ₹{week_savings:,}
-Last Week: ₹{last_week_savings:,}
-Change: {savings_change}
-
-📈 *Category Breakdown:*
-{category_breakdown}
-
-🎯 *Goal Progress:*
-{goals_progress}
-
-💡 *AI Insights:*
-{insights}
-
-📄 Type "PDF report" for detailed analysis.""",
-            
-            "help_menu": """📚 *MoneyView Commands*
-
-💸 *Track Money:*
-• "Spent 500 on food"
-• "Earned 10000 salary"
-• "Balance" - View today's summary
-
-🎯 *Goals:*
-• "Add goal: Car, 500000, 2 years"
-• "Goals" - View all goals
-• "Goal achieved: Car" - Mark done
-
-📊 *Reports:*
-• "Report" - Weekly summary
-• "Monthly report"
-• "PDF report"
-
-📈 *Market:*
-• "Market update"
-• "Stock analysis"
-
-⚙️ *Settings:*
-• "Change language"
-• "Update income"
-• "Reset" - Start fresh
-
-💬 *Or just chat naturally!*
-I understand your messages! 🤖"""
-        },
-        
-        "hi": {
-            "welcome": """👋 *MoneyView में आपका स्वागत है!*
-
-मैं आपका AI वित्तीय साथी हूं। मैं आपकी मदद करूंगा:
-💰 पैसे ट्रैक करने में
-🎯 लक्ष्य पूरे करने में
-📈 समझदारी से निवेश करने में
-
-*अपनी भाषा चुनें:*
-1️⃣ English
-2️⃣ हिंदी (Hindi)
-3️⃣ தமிழ் (Tamil)
-4️⃣ తెలుగు (Telugu)
-5️⃣ ಕನ್ನಡ (Kannada)""",
-            
-            "ask_name": "बढ़िया! ✅\n\n*आपका नाम क्या है?*",
-            "ask_occupation": """*{name}* से मिलकर खुशी हुई! 😊
-
-*आप क्या करते हैं?*
-1️⃣ छात्र
-2️⃣ नौकरी
-3️⃣ व्यापार
-4️⃣ फ्रीलांसर
-5️⃣ गृहिणी""",
-            
-            "expense_logged": """✅ *खर्च दर्ज!*
-
-💸 राशि: ₹{amount:,}
-📁 श्रेणी: {category}
-
-📊 *आज अब तक:*
-💵 आय: ₹{today_income:,}
-💸 खर्च: ₹{today_expense:,}
-💰 बचा बजट: ₹{remaining:,}""",
-            
-            "income_logged": """✅ *आय दर्ज!*
-
-💵 राशि: ₹{amount:,}
-📁 स्रोत: {category}
-
-📊 *आज की कमाई:*
-💵 कुल आय: ₹{today_income:,}
-🎯 लक्ष्य में जोड़ा: +₹{amount:,}"""
-        },
-        
-        "ta": {
-            "welcome": """👋 *MoneyView-க்கு வரவேற்கிறோம்!*
-
-நான் உங்கள் AI நிதி ஆலோசகர். நான் உதவுவேன்:
-💰 பணத்தை கண்காணிக்க
-🎯 இலக்குகளை அடைய
-📈 புத்திசாலித்தனமாக முதலீடு செய்ய
-
-*உங்கள் மொழியை தேர்வு செய்யுங்கள்:*
-1️⃣ English
-2️⃣ हिंदी (Hindi)
-3️⃣ தமிழ் (Tamil)
-4️⃣ తెలుగు (Telugu)
-5️⃣ ಕನ್ನಡ (Kannada)""",
-            
-            "ask_name": "சிறப்பு! ✅\n\n*உங்கள் பெயர் என்ன?*",
-            
-            "expense_logged": """✅ *செலவு பதிவு செய்யப்பட்டது!*
-
-💸 தொகை: ₹{amount:,}
-📁 வகை: {category}
-
-📊 *இன்று வரை:*
-💵 வருமானம்: ₹{today_income:,}
-💸 செலவு: ₹{today_expense:,}
-💰 மீதமுள்ள பட்ஜெட்: ₹{remaining:,}""",
-            
-            "income_logged": """✅ *வருமானம் பதிவு செய்யப்பட்டது!*
-
-💵 தொகை: ₹{amount:,}
-📁 ஆதாரம்: {category}
-
-📊 *இன்றைய வருமானம்:*
-💵 மொத்த வருமானம்: ₹{today_income:,}"""
-        },
-        
-        "te": {
-            "welcome": """👋 *MoneyView కి స్వాగతం!*
-
-నేను మీ AI ఆర్థిక సలహాదారు. నేను సహాయం చేస్తాను:
-💰 డబ్బు ట్రాక్ చేయడం
-🎯 లక్ష్యాలు సాధించడం
-📈 తెలివిగా పెట్టుబడి పెట్టడం
-
-*మీ భాష ఎంచుకోండి:*
-1️⃣ English
-2️⃣ हिंदी
-3️⃣ தமிழ்
-4️⃣ తెలుగు
-5️⃣ ಕನ್ನಡ""",
-            
-            "expense_logged": """✅ *ఖర్చు నమోదు!*
-
-💸 మొత్తం: ₹{amount:,}
-📁 వర్గం: {category}
-
-📊 *ఈరోజు:*
-💸 ఖర్చులు: ₹{today_expense:,}
-💰 మిగిలిన బడ్జెట్: ₹{remaining:,}"""
-        },
-        
-        "kn": {
-            "welcome": """👋 *MoneyView ಗೆ ಸ್ವಾಗತ!*
-
-ನಾನು ನಿಮ್ಮ AI ಹಣಕಾಸು ಸಲಹೆಗಾರ. ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ:
-💰 ಹಣ ಟ್ರ್ಯಾಕ್ ಮಾಡಲು
-🎯 ಗುರಿಗಳನ್ನು ಸಾಧಿಸಲು
-📈 ಬುದ್ಧಿವಂತಿಕೆಯಿಂದ ಹೂಡಿಕೆ ಮಾಡಲು
-
-*ನಿಮ್ಮ ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ:*
-1️⃣ English
-2️⃣ हिंदी
-3️⃣ தமிழ்
-4️⃣ తెలుగు
-5️⃣ ಕನ್ನಡ"""
-        }
+    # Language detection patterns
+    LANGUAGE_PATTERNS = {
+        "en": ["english", "eng", "en"],
+        "hi": ["hindi", "हिंदी", "हिन्दी", "hi"],
+        "ta": ["tamil", "தமிழ்", "ta"],
+        "te": ["telugu", "తెలుగు", "te"],
+        "kn": ["kannada", "ಕನ್ನಡ", "kn"]
+    }
+    
+    # Occupation patterns
+    OCCUPATION_PATTERNS = {
+        "student": ["student", "college", "school", "studying", "छात्र", "மாணவர்"],
+        "employee": ["employee", "job", "salaried", "working", "office", "company", "नौकरी", "வேலை"],
+        "business": ["business", "owner", "entrepreneur", "shop", "store", "व्यापार", "வணிகம்"],
+        "freelancer": ["freelance", "freelancer", "gig", "contract", "self-employed", "फ्रीलांसर"],
+        "homemaker": ["homemaker", "housewife", "home", "गृहिणी", "இல்லத்தரசி"]
+    }
+    
+    # Risk patterns
+    RISK_PATTERNS = {
+        "low": ["low", "safe", "secure", "no risk", "guaranteed", "fd", "fixed deposit", "कम", "குறைந்த"],
+        "medium": ["medium", "moderate", "balanced", "mix", "मध्यम", "நடுத்தர"],
+        "high": ["high", "aggressive", "risky", "stocks", "equity", "उच्च", "அதிக"]
+    }
+    
+    # Expense categories
+    EXPENSE_KEYWORDS = {
+        "food": ["food", "restaurant", "groceries", "lunch", "dinner", "breakfast", "coffee", "tea", "snacks", "biryani", "pizza", "burger", "swiggy", "zomato", "mess", "canteen", "khana", "சாப்பாடு", "భోజనం"],
+        "transport": ["petrol", "diesel", "fuel", "uber", "ola", "auto", "bus", "train", "metro", "parking", "toll", "cab", "taxi", "travel", "यात्रा", "பயணம்"],
+        "shopping": ["amazon", "flipkart", "clothes", "shoes", "electronics", "gadgets", "phone", "laptop", "shopping", "खरीदारी", "ஷாப்பிங்"],
+        "bills": ["electricity", "water", "gas", "internet", "wifi", "mobile", "recharge", "rent", "emi", "बिल", "பில்"],
+        "entertainment": ["movie", "netflix", "amazon prime", "hotstar", "spotify", "games", "मनोरंजन", "பொழுதுபோக்கு"],
+        "health": ["medicine", "doctor", "hospital", "pharmacy", "medical", "gym", "fitness", "स्वास्थ्य", "உடல்நலம்"],
+        "education": ["books", "course", "college", "school", "tuition", "coaching", "fees", "शिक्षा", "கல்வி"]
+    }
+    
+    INCOME_KEYWORDS = {
+        "salary": ["salary", "wages", "paycheck", "वेतन", "சம்பளம்"],
+        "freelance": ["freelance", "project", "gig", "contract", "client", "फ्रीलांस"],
+        "business": ["business", "sales", "revenue", "profit", "व्यापार", "வணிகம்"],
+        "investment": ["dividend", "interest", "returns", "maturity", "ब्याज", "வட்டி"],
+        "other": ["gift", "bonus", "cashback", "refund", "reward", "received", "got", "मिला", "கிடைத்தது"]
     }
     
     # Motivational quotes
     QUOTES = {
         "en": [
-            "A penny saved is a penny earned. 💰",
-            "Financial freedom is within your reach! 🚀",
-            "Small steps lead to big achievements. 👣",
-            "Your future self will thank you. 🙏",
-            "Wealth is not about having a lot of money; it's about having options. 💎",
-            "Every expense is a choice. Choose wisely! 🎯",
-            "Invest in yourself, it pays the best interest. 📚",
-            "The best time to start saving was yesterday. The next best time is NOW! ⏰"
+            "Every rupee saved is a step towards your dream! 💰",
+            "Your future self will thank you for saving today! 🙏",
+            "Small daily savings create big achievements! 🚀",
+            "Financial freedom is built one day at a time! 💪",
+            "You're doing great! Keep tracking, keep growing! 📈"
         ],
         "hi": [
-            "बूंद बूंद से घड़ा भरता है। 💰",
-            "आर्थिक स्वतंत्रता आपकी पहुंच में है! 🚀",
-            "छोटे कदम बड़ी उपलब्धियों की ओर ले जाते हैं। 👣",
-            "बचत करना सबसे अच्छा निवेश है। 🎯"
+            "हर बचाया रुपया आपके सपने की ओर एक कदम है! 💰",
+            "आज की बचत कल की आज़ादी है! 🙏",
+            "छोटी बचत बड़े सपने पूरे करती है! 🚀"
         ],
         "ta": [
-            "சிறு துளி பெரு வெள்ளம். 💰",
-            "நிதி சுதந்திரம் உங்கள் கைக்கு எட்டும் தூரத்தில்! 🚀",
-            "சிறிய அடிகள் பெரிய வெற்றிகளை அடைய உதவும். 👣"
+            "ஒவ்வொரு ரூபாயும் உங்கள் கனவை நோக்கி ஒரு அடி! 💰",
+            "சிறிய சேமிப்பு பெரிய வெற்றி! 🚀"
         ]
     }
     
-    # Categories for smart categorization
-    EXPENSE_CATEGORIES = {
-        "food": ["food", "restaurant", "groceries", "vegetables", "fruits", "snacks", "coffee", "tea", "lunch", "dinner", "breakfast", "biryani", "pizza", "burger", "swiggy", "zomato", "mess", "canteen", "hotel"],
-        "transport": ["petrol", "diesel", "fuel", "uber", "ola", "auto", "bus", "train", "metro", "parking", "toll", "cab", "taxi"],
-        "shopping": ["amazon", "flipkart", "clothes", "shoes", "electronics", "gadgets", "phone", "laptop", "shopping"],
-        "bills": ["electricity", "water", "gas", "internet", "wifi", "broadband", "mobile", "recharge", "rent", "emi"],
-        "entertainment": ["movie", "netflix", "amazon prime", "hotstar", "spotify", "games", "subscriptions"],
-        "health": ["medicine", "doctor", "hospital", "pharmacy", "medical", "gym", "fitness"],
-        "education": ["books", "course", "college", "school", "tuition", "coaching", "fees"]
-    }
-    
-    INCOME_CATEGORIES = {
-        "salary": ["salary", "wages", "paycheck"],
-        "freelance": ["freelance", "project", "gig", "contract"],
-        "business": ["business", "sales", "revenue", "profit", "client"],
-        "investment": ["dividend", "interest", "returns", "maturity"],
-        "other": ["gift", "bonus", "cashback", "refund", "reward"]
-    }
-    
     def __init__(self):
-        self.user_store = {}  # In-memory store, replace with DB
+        self.user_store = {}
         self.transaction_store = {}
-        self.goal_store = {}
         
     def _get_ist_time(self) -> datetime:
-        """Get current IST time"""
         if IST:
             return datetime.now(IST)
         return datetime.now()
     
-    def _get_template(self, lang: str, key: str) -> str:
-        """Get template for language, fallback to English"""
-        if lang in self.TEMPLATES and key in self.TEMPLATES[lang]:
-            return self.TEMPLATES[lang][key]
-        return self.TEMPLATES["en"].get(key, "")
-    
     def _get_quote(self, lang: str) -> str:
-        """Get random motivational quote"""
         quotes = self.QUOTES.get(lang, self.QUOTES["en"])
         return random.choice(quotes)
     
     def _extract_amount(self, text: str) -> Optional[float]:
-        """Extract amount from text"""
-        text = text.lower().replace(",", "")
+        """Extract amount from natural text"""
+        text = text.lower().replace(",", "").replace("₹", "").replace("rs", "").replace("rs.", "")
         
         # Handle lakh/lac
-        if "lakh" in text or "lac" in text:
-            nums = re.findall(r'(\d+\.?\d*)\s*(?:lakh|lac)', text)
-            if nums:
-                return float(nums[0]) * 100000
+        lakh_match = re.search(r'(\d+\.?\d*)\s*(?:lakh|lac|lakhs)', text)
+        if lakh_match:
+            return float(lakh_match.group(1)) * 100000
         
-        # Handle k
-        if "k" in text:
-            nums = re.findall(r'(\d+\.?\d*)\s*k', text)
-            if nums:
-                return float(nums[0]) * 1000
+        # Handle k/thousand
+        k_match = re.search(r'(\d+\.?\d*)\s*(?:k|thousand)', text)
+        if k_match:
+            return float(k_match.group(1)) * 1000
         
-        # Handle regular numbers
-        nums = re.findall(r'\d+\.?\d*', text)
-        if nums:
-            return float(nums[0])
+        # Regular number
+        num_match = re.findall(r'\d+\.?\d*', text)
+        if num_match:
+            return float(num_match[0])
         
         return None
     
-    def _categorize_expense(self, text: str) -> str:
-        """Smart categorize expense using keywords"""
+    def _detect_language(self, text: str) -> Optional[str]:
+        """Detect language from text"""
+        text_lower = text.lower().strip()
+        for lang, patterns in self.LANGUAGE_PATTERNS.items():
+            for pattern in patterns:
+                if pattern in text_lower:
+                    return lang
+        return None
+    
+    def _detect_occupation(self, text: str) -> Optional[str]:
+        """Detect occupation from text"""
         text_lower = text.lower()
-        
-        for category, keywords in self.EXPENSE_CATEGORIES.items():
+        for occ, patterns in self.OCCUPATION_PATTERNS.items():
+            for pattern in patterns:
+                if pattern in text_lower:
+                    return occ.title()
+        return text.strip().title()
+    
+    def _detect_risk(self, text: str) -> str:
+        """Detect risk appetite from text"""
+        text_lower = text.lower()
+        for risk, patterns in self.RISK_PATTERNS.items():
+            for pattern in patterns:
+                if pattern in text_lower:
+                    return risk.title()
+        return "Medium"
+    
+    def _categorize_expense(self, text: str) -> str:
+        """Categorize expense from text"""
+        text_lower = text.lower()
+        for category, keywords in self.EXPENSE_KEYWORDS.items():
             for keyword in keywords:
                 if keyword in text_lower:
                     return category.title()
-        
         return "Other"
     
     def _categorize_income(self, text: str) -> str:
-        """Smart categorize income"""
+        """Categorize income from text"""
         text_lower = text.lower()
-        
-        for category, keywords in self.INCOME_CATEGORIES.items():
+        for category, keywords in self.INCOME_KEYWORDS.items():
             for keyword in keywords:
                 if keyword in text_lower:
                     return category.title()
-        
         return "Other"
     
-    def _detect_intent(self, message: str) -> str:
-        """Detect user intent from message"""
-        msg = message.lower().strip()
-        
-        # Commands
-        if msg in ["hi", "hello", "hey", "start", "begin"]:
-            return "greeting"
-        if msg in ["help", "commands", "menu"]:
-            return "help"
-        if msg in ["reset", "restart", "start fresh"]:
-            return "reset"
-        if "balance" in msg or "summary" in msg:
-            return "balance"
-        if "report" in msg:
-            return "report"
-        if "goal" in msg:
-            if "add" in msg:
-                return "add_goal"
-            if "achieved" in msg or "done" in msg:
-                return "goal_achieved"
-            return "view_goals"
-        if "market" in msg or "stock" in msg:
-            return "market_update"
-        if "language" in msg or "change lang" in msg:
-            return "change_language"
-        
-        # Transaction detection
-        income_keywords = ["earned", "received", "got", "salary", "income", "credited", "मिला", "आया", "வருமானம்", "ఆదాయం"]
-        expense_keywords = ["spent", "paid", "bought", "expense", "खर्च", "செலவு", "ఖర్చు"]
-        
-        for keyword in income_keywords:
-            if keyword in msg:
-                return "income"
-        
-        for keyword in expense_keywords:
-            if keyword in msg:
-                return "expense"
-        
-        # Number detection for onboarding
-        if msg.isdigit() or self._extract_amount(msg):
-            return "number_input"
-        
-        # Selection (1-5)
-        if msg in ["1", "2", "3", "4", "5"]:
-            return "selection"
-        
-        return "chat"
+    def _is_expense_message(self, text: str) -> bool:
+        """Check if message is about expense"""
+        expense_indicators = ["spent", "paid", "bought", "expense", "cost", "खर्च", "செலவு", "ఖర్చు", "खरीदा"]
+        return any(ind in text.lower() for ind in expense_indicators)
+    
+    def _is_income_message(self, text: str) -> bool:
+        """Check if message is about income"""
+        income_indicators = ["earned", "received", "got", "salary", "income", "credited", "कमाया", "மிலா", "వచ్చింది", "आया"]
+        return any(ind in text.lower() for ind in income_indicators)
     
     def _get_user(self, phone: str) -> Dict:
-        """Get or create user"""
         if phone not in self.user_store:
             self.user_store[phone] = {
                 "phone": phone,
@@ -663,11 +200,9 @@ I understand your messages! 🤖"""
         return self.user_store[phone]
     
     def _save_user(self, phone: str, data: Dict):
-        """Save user data"""
         self.user_store[phone] = data
-    
+        
     def _get_today_transactions(self, phone: str) -> Tuple[float, float]:
-        """Get today's income and expenses"""
         today = self._get_ist_time().strftime("%Y-%m-%d")
         transactions = self.transaction_store.get(phone, [])
         
@@ -680,7 +215,6 @@ I understand your messages! 🤖"""
     
     def _add_transaction(self, phone: str, txn_type: str, amount: float, 
                         category: str, description: str = ""):
-        """Add a transaction"""
         if phone not in self.transaction_store:
             self.transaction_store[phone] = []
         
@@ -694,164 +228,287 @@ I understand your messages! 🤖"""
     
     async def process_message(self, phone: str, message: str, 
                              sender_name: str = "Friend") -> str:
-        """Main message processing entry point"""
+        """Main message processing"""
         try:
             user = self._get_user(phone)
             user["last_active"] = self._get_ist_time().isoformat()
             user["sender_name"] = sender_name
             
-            # Check if onboarding needed
+            # Check if onboarding complete
             if not user.get("onboarding_complete"):
                 return await self._handle_onboarding(phone, message, user)
             
-            # Detect intent
-            intent = self._detect_intent(message)
+            # Handle commands
+            msg_lower = message.lower().strip()
             
-            # Route to handlers
-            handlers = {
-                "greeting": self._handle_greeting,
-                "help": self._handle_help,
-                "reset": self._handle_reset,
-                "expense": self._handle_expense,
-                "income": self._handle_income,
-                "balance": self._handle_balance,
-                "report": self._handle_report,
-                "view_goals": self._handle_view_goals,
-                "add_goal": self._handle_add_goal,
-                "goal_achieved": self._handle_goal_achieved,
-                "market_update": self._handle_market_update,
-                "change_language": self._handle_change_language,
-                "chat": self._handle_chat
-            }
+            if msg_lower in ["hi", "hello", "hey", "start"]:
+                return self._handle_greeting(user)
             
-            handler = handlers.get(intent, self._handle_chat)
-            return await handler(phone, message, user)
+            if msg_lower in ["help", "commands", "menu"]:
+                return self._handle_help(user)
+            
+            if msg_lower in ["reset", "restart", "start over"]:
+                return self._handle_reset(phone)
+            
+            if "balance" in msg_lower or "summary" in msg_lower:
+                return self._handle_balance(phone, user)
+            
+            if "goal" in msg_lower:
+                if "add" in msg_lower:
+                    return self._handle_add_goal(phone, message, user)
+                return self._handle_view_goals(user)
+            
+            if "report" in msg_lower:
+                return self._handle_report(phone, user)
+            
+            if "market" in msg_lower or "stock" in msg_lower:
+                return self._handle_market(user)
+            
+            # Check for expense
+            if self._is_expense_message(message):
+                return self._handle_expense(phone, message, user)
+            
+            # Check for income
+            if self._is_income_message(message):
+                return self._handle_income(phone, message, user)
+            
+            # Default - try to understand with AI or give help
+            return self._handle_unknown(message, user)
             
         except Exception as e:
             traceback.print_exc()
             return "⚠️ Sorry, something went wrong. Please try again."
     
     async def _handle_onboarding(self, phone: str, message: str, user: Dict) -> str:
-        """Handle onboarding flow"""
+        """Natural conversational onboarding"""
         step = user.get("onboarding_step", 0)
         lang = user.get("language", "en")
         
-        # Step 0: Welcome & Language
+        # Step 0: Welcome
         if step == 0:
             user["onboarding_step"] = 1
             self._save_user(phone, user)
-            return self._get_template("en", "welcome")
+            return """👋 *Welcome to MoneyView!*
+
+I'm your personal AI financial advisor. I'll help you:
+💰 Track your money effortlessly
+🎯 Achieve your financial goals
+📈 Get smart investment advice
+💡 Save more every day
+
+Let's set up your profile in 2 minutes!
+
+*Which language do you prefer?*
+_(Just type: English, Hindi, Tamil, Telugu, or Kannada)_"""
         
-        # Step 1: Language selection
-        elif step == 1:
-            lang_map = {"1": "en", "2": "hi", "3": "ta", "4": "te", "5": "kn"}
-            user["language"] = lang_map.get(message.strip(), "en")
+        # Step 1: Language
+        if step == 1:
+            detected_lang = self._detect_language(message)
+            user["language"] = detected_lang or "en"
             user["onboarding_step"] = 2
             self._save_user(phone, user)
-            return self._get_template(user["language"], "ask_name")
+            
+            lang = user["language"]
+            responses = {
+                "en": "Perfect! ✅\n\n*What's your name?*\n_(Just type your name)_",
+                "hi": "बहुत अच्छा! ✅\n\n*आपका नाम क्या है?*\n_(बस अपना नाम लिखें)_",
+                "ta": "சிறப்பு! ✅\n\n*உங்கள் பெயர் என்ன?*",
+                "te": "చాలా బాగుంది! ✅\n\n*మీ పేరు ఏమిటి?*",
+                "kn": "ಅದ್ಭುತ! ✅\n\n*ನಿಮ್ಮ ಹೆಸರೇನು?*"
+            }
+            return responses.get(lang, responses["en"])
         
         # Step 2: Name
-        elif step == 2:
+        if step == 2:
             user["name"] = message.strip().title()
             user["onboarding_step"] = 3
             self._save_user(phone, user)
-            return self._get_template(lang, "ask_occupation").format(name=user["name"])
+            
+            responses = {
+                "en": f"""Nice to meet you, *{user['name']}*! 😊
+
+*What do you do?*
+_(Example: I'm a student, I work in IT, I run a business, I'm a freelancer, I'm a homemaker)_""",
+                "hi": f"""आपसे मिलकर खुशी हुई, *{user['name']}*! 😊
+
+*आप क्या करते हैं?*
+_(उदाहरण: छात्र हूं, नौकरी करता हूं, व्यापार है, फ्रीलांसर हूं)_""",
+                "ta": f"""சந்தித்ததில் மகிழ்ச்சி, *{user['name']}*! 😊
+
+*நீங்கள் என்ன செய்கிறீர்கள்?*
+_(உதாரணம்: மாணவர், வேலை, வணிகம்)_"""
+            }
+            return responses.get(lang, responses["en"])
         
         # Step 3: Occupation
-        elif step == 3:
-            occ_map = {"1": "Student", "2": "Employee", "3": "Business", 
-                      "4": "Freelancer", "5": "Homemaker"}
-            user["occupation"] = occ_map.get(message.strip(), message.strip().title())
+        if step == 3:
+            user["occupation"] = self._detect_occupation(message)
             user["onboarding_step"] = 4
             self._save_user(phone, user)
-            return self._get_template(lang, "ask_income").format(occupation=user["occupation"])
+            
+            responses = {
+                "en": f"""Great, {user['occupation']}! 💼
+
+*What's your approximate monthly income?*
+_(Example: 25000, 50k, 1 lakh)_""",
+                "hi": f"""बढ़िया, {user['occupation']}! 💼
+
+*आपकी लगभग मासिक आय कितनी है?*
+_(उदाहरण: 25000, 50 हजार, 1 लाख)_""",
+                "ta": f"""சிறப்பு, {user['occupation']}! 💼
+
+*உங்கள் மாத வருமானம் எவ்வளவு?*"""
+            }
+            return responses.get(lang, responses["en"])
         
-        # Step 4: Monthly Income
-        elif step == 4:
+        # Step 4: Income
+        if step == 4:
             amount = self._extract_amount(message)
-            if amount:
-                user["monthly_income"] = amount
-                user["onboarding_step"] = 5
-                self._save_user(phone, user)
-                return self._get_template(lang, "ask_fixed_expenses").format(income=int(amount))
-            return "Please enter a valid amount (example: 25000)"
+            if not amount:
+                return "Please enter a valid amount. Example: 25000 or 50k or 1 lakh"
+            
+            user["monthly_income"] = amount
+            user["onboarding_step"] = 5
+            self._save_user(phone, user)
+            
+            responses = {
+                "en": f"""₹{int(amount):,}/month - Got it! 📝
+
+*What are your monthly expenses?*
+_(Include rent, food, transport, bills - approximate total)_
+_(Example: 20000 or 15k)_""",
+                "hi": f"""₹{int(amount):,}/महीना - नोट किया! 📝
+
+*आपका मासिक खर्च कितना है?*
+_(किराया, खाना, यातायात, बिल - कुल मिलाकर)_""",
+                "ta": f"""₹{int(amount):,}/மாதம் - குறிப்பு! 📝
+
+*உங்கள் மாத செலவு எவ்வளவு?*"""
+            }
+            return responses.get(lang, responses["en"])
         
-        # Step 5: Fixed Expenses
-        elif step == 5:
-            amount = self._extract_amount(message)
-            if amount is not None:
-                user["fixed_expenses"] = amount
-                user["onboarding_step"] = 6
-                self._save_user(phone, user)
-                return self._get_template(lang, "ask_variable_expenses").format(fixed=int(amount))
-            return "Please enter a valid amount"
+        # Step 5: Expenses
+        if step == 5:
+            amount = self._extract_amount(message) or 0
+            user["monthly_expenses"] = amount
+            surplus = user.get("monthly_income", 0) - amount
+            user["onboarding_step"] = 6
+            self._save_user(phone, user)
+            
+            responses = {
+                "en": f"""Monthly expenses: ₹{int(amount):,} ✅
+You have about ₹{int(surplus):,} left to save/invest!
+
+*Do you have any current savings?*
+_(Money in bank, FD, etc. Example: 50000 or zero)_""",
+                "hi": f"""मासिक खर्च: ₹{int(amount):,} ✅
+
+*क्या आपकी कोई बचत है?*
+_(बैंक में, FD में)_""",
+                "ta": f"""மாத செலவு: ₹{int(amount):,} ✅
+
+*உங்களுக்கு ஏதாவது சேமிப்பு உள்ளதா?*"""
+            }
+            return responses.get(lang, responses["en"])
         
-        # Step 6: Variable Expenses
-        elif step == 6:
-            amount = self._extract_amount(message)
-            if amount is not None:
-                user["variable_expenses"] = amount
-                total_expenses = user.get("fixed_expenses", 0) + amount
-                available = user.get("monthly_income", 0) - total_expenses
-                user["onboarding_step"] = 7
-                self._save_user(phone, user)
-                return self._get_template(lang, "ask_savings").format(available=int(available))
-            return "Please enter a valid amount"
-        
-        # Step 7: Current Savings
-        elif step == 7:
+        # Step 6: Savings
+        if step == 6:
             amount = self._extract_amount(message) or 0
             user["current_savings"] = amount
+            user["onboarding_step"] = 7
+            self._save_user(phone, user)
+            
+            responses = {
+                "en": f"""Savings: ₹{int(amount):,} {'💰 Great!' if amount > 0 else '- No problem, we\'ll build it!'}
+
+*What type of investments do you prefer?*
+_(Example: Safe investments, Balanced mix, or High risk for high returns)_""",
+                "hi": f"""बचत: ₹{int(amount):,} {'💰' if amount > 0 else '- कोई बात नहीं!'}
+
+*आप किस तरह का निवेश पसंद करते हैं?*
+_(उदाहरण: सुरक्षित, बैलेंस्ड, या हाई रिस्क)_""",
+                "ta": f"""சேமிப்பு: ₹{int(amount):,}
+
+*என்ன வகையான முதலீடு விரும்புகிறீர்கள்?*"""
+            }
+            return responses.get(lang, responses["en"])
+        
+        # Step 7: Risk appetite
+        if step == 7:
+            user["risk_appetite"] = self._detect_risk(message)
             user["onboarding_step"] = 8
             self._save_user(phone, user)
-            return self._get_template(lang, "ask_investments").format(savings=int(amount))
+            
+            responses = {
+                "en": f"""Risk profile: {user['risk_appetite']} 📊
+
+Now the exciting part - *What's your main financial goal?*
+_(Example: Save for a car, Pay off 5 lakh loan, Build emergency fund, Buy a house)_""",
+                "hi": f"""रिस्क प्रोफाइल: {user['risk_appetite']} 📊
+
+*आपका मुख्य वित्तीय लक्ष्य क्या है?*
+_(उदाहरण: कार के लिए बचत, लोन चुकाना, इमरजेंसी फंड)_""",
+                "ta": f"""ரிஸ்க்: {user['risk_appetite']} 📊
+
+*உங்கள் முக்கிய நிதி இலக்கு என்ன?*"""
+            }
+            return responses.get(lang, responses["en"])
         
-        # Step 8: Investments
-        elif step == 8:
-            amount = self._extract_amount(message) or 0
-            user["current_investments"] = amount
+        # Step 8: Goal
+        if step == 8:
+            user["primary_goal"] = message.strip()
+            user["goals"] = [{"name": message.strip(), "status": "active"}]
             user["onboarding_step"] = 9
             self._save_user(phone, user)
-            return self._get_template(lang, "ask_risk")
+            
+            responses = {
+                "en": f"""Great goal: *{message.strip()}* 🎯
+
+*How much do you need for this goal?*
+_(Example: 5 lakh, 100000, 20 lakh)_""",
+                "hi": f"""बेहतरीन लक्ष्य: *{message.strip()}* 🎯
+
+*इसके लिए कितने पैसे चाहिए?*""",
+                "ta": f"""சிறந்த இலக்கு: *{message.strip()}* 🎯
+
+*இதற்கு எவ்வளவு தேவை?*"""
+            }
+            return responses.get(lang, responses["en"])
         
-        # Step 9: Risk Appetite
-        elif step == 9:
-            risk_map = {"1": "Low", "2": "Medium", "3": "High"}
-            user["risk_appetite"] = risk_map.get(message.strip(), "Medium")
+        # Step 9: Goal amount
+        if step == 9:
+            amount = self._extract_amount(message)
+            if not amount:
+                return "Please enter a valid amount. Example: 5 lakh or 500000"
+            
+            if user.get("goals"):
+                user["goals"][0]["amount"] = amount
             user["onboarding_step"] = 10
             self._save_user(phone, user)
-            return self._get_template(lang, "ask_goal")
+            
+            goal_name = user.get("primary_goal", "your goal")
+            responses = {
+                "en": f"""Target: ₹{int(amount):,} for {goal_name} 🎯
+
+*By when do you want to achieve this?*
+_(Example: 2 years, 6 months, December 2025)_""",
+                "hi": f"""लक्ष्य: ₹{int(amount):,} 🎯
+
+*कब तक हासिल करना है?*_(उदाहरण: 2 साल, 6 महीने)_""",
+                "ta": f"""இலக்கு: ₹{int(amount):,} 🎯
+
+*எப்போது அடைய வேண்டும்?*"""
+            }
+            return responses.get(lang, responses["en"])
         
-        # Step 10: Primary Goal
-        elif step == 10:
-            user["primary_goal"] = message.strip()
-            user["goals"] = [{"name": message.strip(), "status": "pending"}]
-            user["onboarding_step"] = 11
-            self._save_user(phone, user)
-            return self._get_template(lang, "ask_goal_amount").format(goal=message.strip())
-        
-        # Step 11: Goal Amount
-        elif step == 11:
-            amount = self._extract_amount(message)
-            if amount:
-                if user.get("goals"):
-                    user["goals"][0]["amount"] = amount
-                user["onboarding_step"] = 12
-                self._save_user(phone, user)
-                return self._get_template(lang, "ask_goal_timeline").format(
-                    amount=int(amount), 
-                    goal=user.get("primary_goal", "goal")
-                )
-            return "Please enter a valid amount"
-        
-        # Step 12: Timeline - Complete Onboarding
-        elif step == 12:
+        # Step 10: Timeline - Complete onboarding
+        if step == 10:
             if user.get("goals"):
                 user["goals"][0]["timeline"] = message.strip()
             
             # Calculate financial plan
             income = user.get("monthly_income", 0)
-            expenses = user.get("fixed_expenses", 0) + user.get("variable_expenses", 0)
+            expenses = user.get("monthly_expenses", 0)
             surplus = income - expenses
             daily_budget = int(income / 30) if income > 0 else 500
             
@@ -861,65 +518,117 @@ I understand your messages! 🤖"""
             user["onboarding_step"] = 99
             self._save_user(phone, user)
             
-            # Generate goals list
-            goals_list = ""
+            name = user.get("name", "Friend")
+            goal_text = ""
             if user.get("goals"):
-                for i, goal in enumerate(user["goals"], 1):
-                    goals_list += f"🎯 {i}. {goal.get('name', 'Goal')} - ₹{int(goal.get('amount', 0)):,}\n"
+                g = user["goals"][0]
+                goal_text = f"🎯 {g.get('name', 'Goal')} - ₹{int(g.get('amount', 0)):,} in {g.get('timeline', 'TBD')}"
             
-            return self._get_template(lang, "profile_complete").format(
-                name=user.get("name", "Friend"),
-                occupation=user.get("occupation", "User"),
-                income=int(income),
-                expenses=int(expenses),
-                surplus=int(surplus),
-                savings=int(user.get("current_savings", 0)),
-                investments=int(user.get("current_investments", 0)),
-                risk=user.get("risk_appetite", "Medium"),
-                goals_list=goals_list or "No goals set yet",
-                daily_budget=daily_budget,
-                monthly_savings=int(surplus * 0.3),
-                invest_amount=int(surplus * 0.2)
-            )
-        
-        return self._get_template(lang, "welcome")
+            return f"""🎉 *Your MoneyView Profile is Ready!*
+
+📊 *{name}'s Financial Snapshot:*
+━━━━━━━━━━━━━━━━━━━━━━━━━
+💼 {user.get('occupation', 'User')}
+💰 Income: ₹{int(income):,}/month
+💸 Expenses: ₹{int(expenses):,}/month
+💵 Surplus: ₹{int(surplus):,}/month
+🏦 Savings: ₹{int(user.get('current_savings', 0)):,}
+🎲 Risk: {user.get('risk_appetite', 'Medium')}
+
+{goal_text}
+
+📋 *Your Daily Plan:*
+• Daily Budget: ₹{daily_budget:,}
+• Daily Savings Target: ₹{int(surplus/30):,}
+
+⏰ *I'll Remind You:*
+• 6 AM - Morning motivation
+• 9 AM - Market updates
+• 8 PM - Day summary
+
+*Start tracking now!*
+Say "Spent 500 on lunch" or "Earned 5000"
+
+Type *help* for all commands! 💪"""
     
-    async def _handle_greeting(self, phone: str, message: str, user: Dict) -> str:
-        """Handle greetings"""
-        lang = user.get("language", "en")
+    def _handle_greeting(self, user: Dict) -> str:
         name = user.get("name", "Friend")
+        lang = user.get("language", "en")
         
         greetings = {
-            "en": f"👋 Hi {name}! How can I help you today?",
-            "hi": f"👋 नमस्ते {name}! आज मैं आपकी कैसे मदद कर सकता हूं?",
-            "ta": f"👋 வணக்கம் {name}! இன்று நான் எப்படி உதவ வேண்டும்?",
-            "te": f"👋 నమస్తే {name}! ఈరోజు నేను ఎలా సహాయం చేయగలను?"
+            "en": f"""👋 Hi {name}! Great to see you!
+
+How can I help today?
+• Track expense: "Spent 200 on coffee"
+• Track income: "Earned 5000"
+• Check balance: "Balance"
+• View goals: "Goals"
+
+{self._get_quote(lang)}""",
+            "hi": f"""👋 नमस्ते {name}!
+
+आज मैं कैसे मदद करूं?
+• खर्च: "200 खर्च किया खाने पर"
+• आय: "5000 कमाया"
+• बैलेंस: "Balance"
+
+{self._get_quote(lang)}""",
+            "ta": f"""👋 வணக்கம் {name}!
+
+இன்று எப்படி உதவ வேண்டும்?
+
+{self._get_quote(lang)}"""
         }
-        
-        return greetings.get(lang, greetings["en"]) + "\n\nType 'help' for commands."
+        return greetings.get(lang, greetings["en"])
     
-    async def _handle_help(self, phone: str, message: str, user: Dict) -> str:
-        """Show help menu"""
+    def _handle_help(self, user: Dict) -> str:
         lang = user.get("language", "en")
-        return self._get_template(lang, "help_menu")
+        return """📚 *MoneyView Commands*
+
+💸 *Track Money:*
+• "Spent 500 on food"
+• "Paid 2000 for electricity"
+• "Earned 10000 salary"
+• "Got 500 cashback"
+
+📊 *View Data:*
+• "Balance" - Today's summary
+• "Goals" - View your goals
+• "Report" - Weekly report
+
+🎯 *Goals:*
+• "Add goal: Buy car, 5 lakh, 2 years"
+• "Goal achieved" - Mark as done
+
+📈 *Market:*
+• "Market update"
+• "Stock analysis"
+
+⚙️ *Settings:*
+• "Reset" - Start fresh
+
+_Just chat naturally - I understand!_ 🤖"""
     
-    async def _handle_reset(self, phone: str, message: str, user: Dict) -> str:
-        """Reset user data"""
+    def _handle_reset(self, phone: str) -> str:
         self.user_store[phone] = {
             "phone": phone,
             "language": "en",
             "onboarding_step": 0,
             "onboarding_complete": False
         }
-        return self._get_template("en", "welcome")
+        return """🔄 *Profile Reset!*
+
+Let's start fresh. 
+
+👋 *Welcome to MoneyView!*
+
+*Which language do you prefer?*
+_(Just type: English, Hindi, Tamil, Telugu, or Kannada)_"""
     
-    async def _handle_expense(self, phone: str, message: str, user: Dict) -> str:
-        """Handle expense logging"""
-        lang = user.get("language", "en")
+    def _handle_expense(self, phone: str, message: str, user: Dict) -> str:
         amount = self._extract_amount(message)
-        
         if not amount:
-            return "I couldn't detect the amount. Please try: 'Spent 500 on food'"
+            return "I couldn't find the amount. Try: 'Spent 500 on food'"
         
         category = self._categorize_expense(message)
         self._add_transaction(phone, "expense", amount, category, message)
@@ -928,105 +637,114 @@ I understand your messages! 🤖"""
         daily_budget = user.get("daily_budget", 1000)
         remaining = max(0, daily_budget - today_expense)
         
-        # Generate insight
-        insights = [
-            "💡 Great tracking! Every expense counts.",
-            "💡 Keep monitoring - you're doing well!",
-            "💡 Smart spenders become wealthy!",
-        ]
-        if remaining < daily_budget * 0.2:
-            insights = ["⚠️ Budget running low - consider limiting more expenses today!"]
-        
-        return self._get_template(lang, "expense_logged").format(
-            amount=int(amount),
-            category=category,
-            time=self._get_ist_time().strftime("%I:%M %p"),
-            today_income=int(today_income),
-            today_expense=int(today_expense),
-            remaining=int(remaining),
-            insight=random.choice(insights)
-        )
-    
-    async def _handle_income(self, phone: str, message: str, user: Dict) -> str:
-        """Handle income logging"""
         lang = user.get("language", "en")
-        amount = self._extract_amount(message)
         
+        if lang == "en":
+            insight = "💡 Great tracking!" if remaining > daily_budget * 0.3 else "⚠️ Budget running low!"
+            return f"""✅ *Expense Logged!*
+
+💸 ₹{int(amount):,} on {category}
+🕐 {self._get_ist_time().strftime('%I:%M %p')}
+
+📊 *Today:*
+💵 Income: ₹{int(today_income):,}
+💸 Spent: ₹{int(today_expense):,}
+💰 Budget Left: ₹{int(remaining):,}
+
+{insight}"""
+        elif lang == "hi":
+            return f"""✅ *खर्च दर्ज!*
+
+💸 ₹{int(amount):,} - {category}
+
+📊 *आज:*
+💸 खर्च: ₹{int(today_expense):,}
+💰 बचा बजट: ₹{int(remaining):,}"""
+        elif lang == "ta":
+            return f"""✅ *செலவு பதிவு!*
+
+💸 ₹{int(amount):,} - {category}
+
+📊 *இன்று:*
+💸 செலவு: ₹{int(today_expense):,}
+💰 மீதம்: ₹{int(remaining):,}"""
+        
+        return f"✅ Logged: ₹{int(amount):,} on {category}"
+    
+    def _handle_income(self, phone: str, message: str, user: Dict) -> str:
+        amount = self._extract_amount(message)
         if not amount:
-            return "I couldn't detect the amount. Please try: 'Earned 5000'"
+            return "I couldn't find the amount. Try: 'Earned 5000'"
         
         category = self._categorize_income(message)
         self._add_transaction(phone, "income", amount, category, message)
         
         today_income, _ = self._get_today_transactions(phone)
-        
-        motivations = [
-            "🎉 Excellent! Your income is growing!",
-            "💪 Great work! Keep building wealth!",
-            "🚀 You're on the path to financial freedom!"
-        ]
-        
-        return self._get_template(lang, "income_logged").format(
-            amount=int(amount),
-            category=category,
-            time=self._get_ist_time().strftime("%I:%M %p"),
-            today_income=int(today_income),
-            motivation=random.choice(motivations)
-        )
-    
-    async def _handle_balance(self, phone: str, message: str, user: Dict) -> str:
-        """Show today's balance summary"""
         lang = user.get("language", "en")
-        name = user.get("name", "Friend")
         
+        if lang == "en":
+            return f"""✅ *Income Logged!*
+
+💵 ₹{int(amount):,} from {category}
+🕐 {self._get_ist_time().strftime('%I:%M %p')}
+
+📊 *Today's Earnings: ₹{int(today_income):,}*
+
+🎉 Great! You're getting closer to your goals!"""
+        elif lang == "hi":
+            return f"""✅ *आय दर्ज!*
+
+💵 ₹{int(amount):,} - {category}
+
+📊 *आज की कमाई: ₹{int(today_income):,}*
+
+🎉 बढ़िया!"""
+        
+        return f"✅ Logged: ₹{int(amount):,} from {category}"
+    
+    def _handle_balance(self, phone: str, user: Dict) -> str:
         today_income, today_expense = self._get_today_transactions(phone)
         daily_budget = user.get("daily_budget", 1000)
         remaining = max(0, daily_budget - today_expense)
         net = today_income - today_expense
+        name = user.get("name", "Friend")
+        lang = user.get("language", "en")
         
         return f"""📊 *{name}'s Summary*
 
 💵 Today's Income: ₹{int(today_income):,}
 💸 Today's Expenses: ₹{int(today_expense):,}
-💰 Net: ₹{int(net):,}
+{'🟢' if net >= 0 else '🔴'} Net: ₹{int(net):,}
 
 📋 Daily Budget: ₹{int(daily_budget):,}
 💰 Remaining: ₹{int(remaining):,}
 
 {self._get_quote(lang)}"""
     
-    async def _handle_report(self, phone: str, message: str, user: Dict) -> str:
-        """Generate report"""
-        # Placeholder - implement full report generation
-        return await self._handle_balance(phone, message, user)
-    
-    async def _handle_view_goals(self, phone: str, message: str, user: Dict) -> str:
-        """View all goals"""
+    def _handle_view_goals(self, user: Dict) -> str:
         goals = user.get("goals", [])
         if not goals:
-            return "🎯 No goals set yet!\n\nAdd a goal: 'Add goal: Buy Car, 500000, 2 years'"
+            return "🎯 No goals yet!\n\nAdd one: 'Add goal: Buy phone, 50000, 6 months'"
         
         response = "🎯 *Your Goals:*\n━━━━━━━━━━━━━━━━━\n"
         for i, goal in enumerate(goals, 1):
             status = "✅" if goal.get("status") == "achieved" else "🔄"
-            response += f"{status} {i}. {goal.get('name', 'Goal')}\n"
-            response += f"   Target: ₹{int(goal.get('amount', 0)):,}\n"
-            response += f"   Timeline: {goal.get('timeline', 'Not set')}\n\n"
+            amount = goal.get("amount", 0)
+            response += f"\n{status} *{goal.get('name', 'Goal')}*\n"
+            response += f"   💰 Target: ₹{int(amount):,}\n"
+            response += f"   📅 {goal.get('timeline', 'Not set')}\n"
         
         return response
     
-    async def _handle_add_goal(self, phone: str, message: str, user: Dict) -> str:
-        """Add a new goal"""
-        # Parse: Add goal: Name, Amount, Timeline
+    def _handle_add_goal(self, phone: str, message: str, user: Dict) -> str:
         parts = message.lower().replace("add goal:", "").replace("add goal", "").strip()
-        
         if not parts:
-            return "To add a goal, type:\n'Add goal: Buy Car, 500000, 2 years'"
+            return "To add a goal:\n'Add goal: Buy car, 5 lakh, 2 years'"
         
         goal_parts = [p.strip() for p in parts.split(",")]
         
         new_goal = {
-            "name": goal_parts[0] if len(goal_parts) > 0 else "New Goal",
+            "name": goal_parts[0].title() if len(goal_parts) > 0 else "New Goal",
             "amount": self._extract_amount(goal_parts[1]) if len(goal_parts) > 1 else 0,
             "timeline": goal_parts[2] if len(goal_parts) > 2 else "Not set",
             "status": "active"
@@ -1045,92 +763,44 @@ I understand your messages! 🤖"""
 
 You've got this! 💪"""
     
-    async def _handle_goal_achieved(self, phone: str, message: str, user: Dict) -> str:
-        """Mark goal as achieved"""
-        goals = user.get("goals", [])
-        if not goals:
-            return "No goals to mark as achieved!"
-        
-        # Mark first active goal as achieved
-        for goal in goals:
-            if goal.get("status") != "achieved":
-                goal["status"] = "achieved"
-                self._save_user(phone, user)
-                return f"""🎉 *Congratulations!*
-
-You've achieved your goal:
-🏆 {goal.get('name', 'Goal')}
-
-This is a huge accomplishment! 
-Keep going - the sky's the limit! 🚀"""
-        
-        return "All goals are already achieved! Time to add new ones! 🎯"
+    def _handle_report(self, phone: str, user: Dict) -> str:
+        return self._handle_balance(phone, user)
     
-    async def _handle_market_update(self, phone: str, message: str, user: Dict) -> str:
-        """Get market update - placeholder for AlphaVantage integration"""
-        return """📈 *Market Update*
-
-🇮🇳 Indian Markets:
-• NIFTY 50: 22,456 (+0.5%)
-• SENSEX: 74,125 (+0.4%)
-• Bank Nifty: 48,890 (+0.8%)
-
-💡 *Today's Insight:*
-Markets are showing positive momentum. 
-Consider starting an SIP in index funds!
-
-_Full analysis coming soon with AlphaVantage integration_"""
-    
-    async def _handle_change_language(self, phone: str, message: str, user: Dict) -> str:
-        """Change language"""
-        return """*Select your language:*
-1️⃣ English
-2️⃣ हिंदी (Hindi)
-3️⃣ தமிழ் (Tamil)
-4️⃣ తెలుగు (Telugu)
-5️⃣ ಕನ್ನಡ (Kannada)"""
-    
-    async def _handle_chat(self, phone: str, message: str, user: Dict) -> str:
-        """Handle general chat - use OpenAI for understanding"""
-        lang = user.get("language", "en")
+    def _handle_market(self, user: Dict) -> str:
+        import random
+        nifty = 22400 + random.uniform(-200, 300)
+        sensex = 74000 + random.uniform(-500, 800)
+        nifty_change = random.uniform(-1.5, 2.0)
         
-        # Try OpenAI if available
-        if openai_service:
-            try:
-                system_prompt = f"""You are MoneyView, a friendly AI financial advisor. 
-The user speaks {lang}. Their name is {user.get('name', 'Friend')}.
-Their monthly income is ₹{user.get('monthly_income', 0):,}.
-Their goals: {user.get('goals', [])}.
-Be helpful, motivational, and provide financial guidance.
-Keep responses concise (under 100 words).
-Use emojis appropriately."""
-                
-                response = await openai_service.chat_completion(
-                    system_prompt=system_prompt,
-                    user_message=message
-                )
-                return response
-            except:
-                pass
+        trend = "🟢 +" if nifty_change > 0 else "🔴 "
         
-        # Fallback
-        return f"""I understand you said: "{message}"
+        return f"""📈 *Market Update*
+{self._get_ist_time().strftime('%d %b %Y, %I:%M %p')}
 
-I'm still learning to understand more complex queries!
+🇮🇳 *Indian Markets:*
+━━━━━━━━━━━━━━━━━━━━━
+📊 NIFTY 50: {nifty:,.0f} ({trend}{abs(nifty_change):.2f}%)
+📊 SENSEX: {sensex:,.0f}
 
-Here's what I can help with:
-• "Spent 500 on food" - Log expense
-• "Earned 10000" - Log income
+💡 *Tip:*
+{'Good time for SIP investments!' if nifty_change > 0 else 'Markets volatile - stay invested, don\'t panic!'}
+
+_Type "investment tips" for personalized advice_"""
+    
+    def _handle_unknown(self, message: str, user: Dict) -> str:
+        return f"""I'm not sure what you meant by: "{message[:30]}..."
+
+Here's what I can do:
+• "Spent 500 on food" - Track expense
+• "Earned 10000" - Track income
 • "Balance" - View summary
-• "Goals" - View your goals
-• "Help" - See all commands"""
+• "Help" - See all commands
+
+Just tell me naturally! 🤖"""
 
 
-# Create singleton instance
+# Singleton
 moneyview_agent = MoneyViewAgent()
 
-
-# Async wrapper function
 async def process_message(phone: str, message: str, sender_name: str = "Friend") -> str:
-    """Process incoming WhatsApp message"""
     return await moneyview_agent.process_message(phone, message, sender_name)

@@ -3,35 +3,31 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MoneyViya - Your AI Financial Advisor | आपका वित्तीय सलाहकार</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyView - Your Personal Finance Dashboard</title>
     <meta name="theme-color" content="#0D9488">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="description"
-        content="MoneyViya - Free AI financial advisor. Track expenses, save money in English, Hindi, Tamil, Telugu.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        content="MoneyView - AI-powered Personal Financial Manager. Track expenses, achieve goals, grow wealth.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            /* MoneyViya Teal/Green Theme - Matching Logo */
             --primary: #0D9488;
             --primary-light: #14B8A6;
             --primary-dark: #0F766E;
             --accent: #10B981;
             --bg: #0F172A;
             --bg-light: #1E293B;
-            --bg-card: rgba(30, 41, 59, 0.8);
+            --bg-card: rgba(30, 41, 59, 0.9);
             --text: #F8FAFC;
             --text-secondary: #94A3B8;
             --border: #334155;
             --success: #10B981;
             --danger: #EF4444;
             --warning: #F59E0B;
-            --gradient: linear-gradient(135deg, #0D9488 0%, #10B981 50%, #14B8A6 100%);
-            --gradient-light: linear-gradient(135deg, #14B8A6 0%, #10B981 100%);
-            --glass: rgba(30, 41, 59, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --glow: 0 0 40px rgba(13, 148, 136, 0.3);
+            --gradient: linear-gradient(135deg, #0D9488 0%, #10B981 100%);
+            --glow: 0 0 30px rgba(13, 148, 136, 0.3);
         }
 
         * {
@@ -50,162 +46,97 @@
             min-height: 100vh;
         }
 
-        .splash {
-            position: fixed;
-            inset: 0;
-            background: var(--gradient);
+        /* Auth Screen */
+        .auth-screen {
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.5s;
-        }
-
-        .splash.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .splash-logo {
-            width: 100px;
-            height: 100px;
-            background: white;
-            border-radius: 24px;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .splash-logo img {
-            width: 80px;
-            height: 80px;
-        }
-
-        .splash h1 {
-            font-size: 32px;
-            color: white;
-            margin-bottom: 8px;
-        }
-
-        .splash p {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
+            min-height: 100vh;
             padding: 20px;
-            min-height: 100vh;
         }
 
-        .login {
-            display: none;
-            flex-direction: column;
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-
-        .login.active {
-            display: flex;
-        }
-
-        .login-header {
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 420px;
+            width: 100%;
             text-align: center;
-            margin-bottom: 40px;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--glow);
         }
 
-        .login-logo {
+        .logo {
             width: 80px;
             height: 80px;
-            margin: 0 auto 16px;
-            background: var(--gradient);
+            margin: 0 auto 24px;
+            background: white;
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 8px 32px rgba(13, 148, 136, 0.3);
         }
 
-        .login-logo img {
+        .logo img {
             width: 60px;
             height: 60px;
         }
 
-        .login h1 {
+        .auth-title {
             font-size: 28px;
+            font-weight: 700;
             background: var(--gradient);
             -webkit-background-clip: text;
-            background-clip: text;
             -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
         }
 
-        .login p {
+        .auth-subtitle {
             color: var(--text-secondary);
-        }
-
-        .lang-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 30px 0;
-        }
-
-        .lang-btn {
-            padding: 16px;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            background: var(--bg-card);
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .lang-btn:hover,
-        .lang-btn.active {
-            border-color: var(--primary);
-            background: rgba(13, 148, 136, 0.15);
-            box-shadow: 0 0 20px rgba(13, 148, 136, 0.2);
-        }
-
-        .lang-btn .flag {
-            font-size: 24px;
+            margin-bottom: 32px;
         }
 
         .input-group {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            text-align: left;
         }
 
-        .country {
-            width: 80px;
-            padding: 16px;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            background: var(--bg-card);
-            color: var(--text);
-            text-align: center;
-            font-size: 16px;
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
         }
 
-        .phone {
-            flex: 1;
-            padding: 16px;
-            border: 2px solid var(--border);
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 14px 14px 48px;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            background: var(--bg-card);
             color: var(--text);
             font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input-wrapper input:focus {
             outline: none;
-        }
-
-        .phone:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
         }
 
         .btn {
@@ -216,11 +147,7 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.2s;
+            transition: all 0.3s;
         }
 
         .btn-primary {
@@ -230,1201 +157,795 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(13, 148, 136, 0.5);
+            box-shadow: 0 8px 24px rgba(13, 148, 136, 0.4);
         }
 
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-whatsapp {
-            background: rgba(37, 211, 102, 0.1);
-            border: 2px solid #25D366;
-            color: #25D366;
-            margin-top: 16px;
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 24px 0;
+        .otp-note {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(13, 148, 136, 0.1);
+            border-radius: 12px;
+            font-size: 14px;
             color: var(--text-secondary);
         }
 
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
+        .otp-note i {
+            color: var(--primary);
+            margin-right: 8px;
         }
 
-        .app {
+        /* Dashboard */
+        .dashboard {
             display: none;
         }
 
-        .app.active {
+        .dashboard.active {
             display: block;
         }
 
-        .header {
-            padding: 16px 0;
+        /* Top Nav */
+        .top-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .greeting span {
-            display: block;
-        }
-
-        .greeting .small {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .greeting .name {
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .header-btns {
-            display: flex;
-            gap: 12px;
-        }
-
-        .icon-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            border: none;
-            background: var(--bg-card);
-            color: var(--text);
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .balance-card {
-            background: var(--gradient);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .balance-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -30%;
-            width: 200px;
-            height: 200px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-        }
-
-        .balance-label {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 8px;
-        }
-
-        .balance-amount {
-            font-size: 36px;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 16px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .stat {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 12px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: white;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .see-all {
-            font-size: 14px;
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .actions {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .action {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            padding: 16px 8px;
-            background: var(--bg-card);
-            border-radius: 16px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .action:hover {
-            transform: translateY(-4px);
-        }
-
-        .action-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: white;
-        }
-
-        .action-icon.expense {
-            background: linear-gradient(135deg, #EF4444, #DC2626);
-        }
-
-        .action-icon.income {
-            background: linear-gradient(135deg, #10B981, #059669);
-        }
-
-        .action-icon.report {
-            background: linear-gradient(135deg, #6366F1, #7C3AED);
-        }
-
-        .action-icon.goals {
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-        }
-
-        .action span {
-            font-size: 12px;
-            color: var(--text);
-        }
-
-        .txn-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-bottom: 100px;
-        }
-
-        .txn {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 16px;
-            background: var(--bg-card);
-            border-radius: 16px;
-        }
-
-        .txn-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .txn-icon.food {
-            background: rgba(244, 114, 182, 0.2);
-            color: #F472B6;
-        }
-
-        .txn-icon.transport {
-            background: rgba(56, 189, 248, 0.2);
-            color: #38BDF8;
-        }
-
-        .txn-icon.gig {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10B981;
-        }
-
-        .txn-icon.bills {
-            background: rgba(239, 68, 68, 0.2);
-            color: #EF4444;
-        }
-
-        .txn-details {
-            flex: 1;
-        }
-
-        .txn-title {
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .txn-cat {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .txn-amt {
-            font-size: 16px;
-            font-weight: 700;
-        }
-
-        .txn-amt.out {
-            color: #EF4444;
-        }
-
-        .txn-amt.in {
-            color: #10B981;
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 70px;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
             z-index: 100;
         }
 
-        .nav-item {
+        .nav-brand {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 4px;
-            padding: 8px 16px;
-            border: none;
-            background: none;
-            color: var(--text-secondary);
+            gap: 12px;
+        }
+
+        .nav-brand img {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+        }
+
+        .nav-brand span {
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+        }
+
+        .user-phone {
             font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            border-radius: 10px;
+            font-size: 14px;
             cursor: pointer;
+            transition: all 0.3s;
         }
 
-        .nav-item.active {
-            color: var(--primary);
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
         }
 
-        .nav-item i {
+        /* Dashboard Grid */
+        .dashboard-content {
+            padding: 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .welcome-banner {
+            background: var(--gradient);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .welcome-text h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .welcome-text p {
+            opacity: 0.9;
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 50px;
+        }
+
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: #10B981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--glow);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
             font-size: 20px;
         }
 
-        .nav-item.center {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            top: -20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: var(--gradient);
-            color: white;
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 101;
+        .stat-icon.income {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
         }
 
-        .nav-item.center i {
-            font-size: 24px;
+        .stat-icon.expense {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
         }
 
-        /* Views */
-        .view {
-            display: none;
-            padding-bottom: 80px;
-            /* Space for nav */
-            animation: fadeIn 0.3s;
+        .stat-icon.savings {
+            background: rgba(13, 148, 136, 0.2);
+            color: var(--primary);
         }
 
-        .view.active {
-            display: block;
+        .stat-icon.goals {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .whatsapp-float {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: #25D366;
-            color: white;
-            font-size: 28px;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
-            z-index: 99;
-        }
-
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9999;
-        }
-
-        .toast {
-            padding: 12px 24px;
-            background: var(--bg-card);
-            border-radius: 12px;
-            color: var(--text);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
             margin-bottom: 8px;
-            animation: slideIn 0.3s;
         }
 
-        .toast.success {
-            border-left: 4px solid var(--primary);
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
         }
 
-        .toast.error {
-            border-left: 4px solid var(--danger);
+        .stat-change {
+            font-size: 12px;
+            margin-top: 8px;
         }
 
-        @keyframes slideIn {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
+        .stat-change.positive {
+            color: var(--success);
+        }
 
-            to {
-                transform: translateY(0);
-                opacity: 1;
+        .stat-change.negative {
+            color: var(--danger);
+        }
+
+        /* Main Content */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 968px) {
+            .main-grid {
+                grid-template-columns: 1fr;
             }
         }
 
-        /* Light Mode */
-        body.light-mode {
-            background: #F8FAFC;
-            color: #1E293B;
-            --bg-card: #FFFFFF;
-            --text: #1E293B;
-            --text-secondary: #64748B;
-            --border: #E2E8F0;
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
         }
 
-        body.light-mode .balance-card {
-            box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.4);
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
         }
 
-        body.light-mode .txn,
-        body.light-mode .action,
-        body.light-mode .lang-btn,
-        body.light-mode .country,
-        body.light-mode .phone {
-            background: #FFFFFF;
-            border-color: #E2E8F0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
         }
 
-        /* ================= DESKTOP RESPONSIVE ================= */
-        @media (min-width: 768px) {
-            .container {
-                max-width: 800px;
-                padding: 40px;
+        .card-action {
+            color: var(--primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Transactions List */
+        .transaction-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .transaction-icon.expense {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .transaction-icon.income {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .transaction-category {
+            font-weight: 500;
+        }
+
+        .transaction-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+        }
+
+        .transaction-amount.expense {
+            color: var(--danger);
+        }
+
+        .transaction-amount.income {
+            color: var(--success);
+        }
+
+        /* Goals */
+        .goal-item {
+            padding: 16px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .goal-name {
+            font-weight: 600;
+        }
+
+        .goal-percentage {
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        .goal-progress {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .goal-progress-bar {
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .goal-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 16px;
             }
 
-            .balance-card {
-                padding: 32px;
+            .dashboard-content {
+                padding: 16px;
             }
 
-            .balance-main {
-                font-size: 48px;
-            }
-
-            .actions-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 20px;
-            }
-
-            .action {
-                padding: 24px 16px;
-            }
-
-            .action-icon {
-                width: 64px;
-                height: 64px;
-                font-size: 28px;
-            }
-
-            .action span {
-                font-size: 14px;
-            }
-
-            .txn-list {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
+            .welcome-banner {
+                flex-direction: column;
+                text-align: center;
                 gap: 16px;
             }
 
-            .txn {
-                padding: 20px;
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
             }
 
-            .bottom-nav {
-                max-width: 800px;
-                left: 50%;
-                transform: translateX(-50%);
-                border-radius: 20px 20px 0 0;
-                bottom: 0;
-            }
-
-            .login {
-                max-width: 500px;
-                margin: 0 auto;
-                padding: 60px 40px;
-            }
-
-            .login-header h1 {
-                font-size: 36px;
-            }
-
-            .lang-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-
-            .whatsapp-float {
-                bottom: 100px;
-                right: 40px;
-                width: 64px;
-                height: 64px;
-                font-size: 32px;
+            .stat-value {
+                font-size: 22px;
             }
         }
 
-        /* Large Desktop */
-        @media (min-width: 1200px) {
-            .container {
-                max-width: 1000px;
-            }
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
 
-            .txn-list {
-                grid-template-columns: repeat(3, 1fr);
-            }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-            .balance-card {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-
-            .balance-info {
-                flex: 1;
-            }
-
-            .bottom-nav {
-                max-width: 1000px;
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="toast-container" id="toasts"></div>
 
-    <div class="splash" id="splash">
-        <div class="splash-logo"><img src="/static/logo.png" alt="MoneyViya"
-                onerror="this.parentElement.innerHTML='💰'"></div>
-        <h1>MoneyViya</h1>
-        <p>Your Financial Friend • உங்கள் நிதி நண்பன்</p>
-    </div>
-
-    <div class="container">
-        <div class="login" id="login">
-            <div class="login-header">
-                <div class="login-logo"><img src="/static/logo.png" alt="MoneyViya"
-                        onerror="this.parentElement.innerHTML='💰'"></div>
-                <h1>MoneyViya</h1>
-                <p>Track • Save • Grow | கண்காணி • சேமி • வளர்</p>
+    <!-- Auth Screen -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-card">
+            <div class="logo">
+                <img src="logo.png" alt="MoneyView"
+                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>💰</text></svg>'">
             </div>
+            <h1 class="auth-title">MoneyView</h1>
+            <p class="auth-subtitle">Your Personal Finance Dashboard</p>
 
-            <div class="lang-grid">
-                <button class="lang-btn active" data-lang="en"><span
-                        class="flag">🇬🇧</span><span>English</span></button>
-                <button class="lang-btn" data-lang="ta"><span class="flag">🇮🇳</span><span>தமிழ்</span></button>
-                <button class="lang-btn" data-lang="te"><span class="flag">🇮🇳</span><span>తెలుగు</span></button>
-                <button class="lang-btn" data-lang="kn"><span class="flag">🇮🇳</span><span>ಕನ್ನಡ</span></button>
-            </div>
-
-            <div style="margin-top: auto;">
-                <div class="input-group" id="phone-group">
-                    <input type="text" class="country" value="+91" readonly>
-                    <input type="tel" class="phone" id="phone" placeholder="Enter mobile number" maxlength="10">
-                </div>
-
-                <div id="otp-group" style="display:none;">
-                    <p style="text-align:center;color:var(--text-secondary);margin-bottom:10px;font-size:14px;">Enter
-                        OTP sent to your WhatsApp</p>
-                    <div class="input-group">
-                        <input type="tel" class="phone" id="otp-input" placeholder="- - - - - -" maxlength="6"
-                            style="text-align:center;letter-spacing:5px;font-weight:bold;">
-                    </div>
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <span id="timer" style="color: var(--text-secondary); font-size: 14px;">Resend in 30s</span>
-                        <a href="#" id="resendLink" onclick="resendOTP()"
-                            style="color: var(--primary); text-decoration: none; font-size: 14px; display: none;">Resend
-                            OTP</a>
-                    </div>
-                    <div
-                        style="text-align: center; margin-bottom: 15px; padding: 10px; background: rgba(16,185,129,0.1); border-radius: 8px;">
-                        <span style="color: var(--primary); font-size: 13px;">💡 <b>Demo Mode:</b> Use OTP <b>123456</b>
-                            for testing</span>
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" id="loginBtn" disabled><span>Continue</span><i
-                        class="fas fa-arrow-right"></i></button>
-                <div class="divider">or</div>
-                <button class="btn btn-whatsapp" onclick="openWhatsApp()"><i class="fab fa-whatsapp"></i><span>Chat on
-                        WhatsApp</span></button>
-            </div>
-        </div>
-
-        <div class="app" id="app">
-            <!-- App content remains same until script -->
-            <div class="header">
-                <div class="greeting">
-                    <span class="small" id="greet">Good Morning</span>
-                    <span class="name" id="userName">Friend</span>
-                </div>
-                <div class="header-btns">
-                    <button class="icon-btn"><i class="fas fa-bell"></i></button>
-                    <button class="icon-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <div class="input-group">
+                <label>Phone Number</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-phone"></i>
+                    <input type="tel" id="phoneInput" placeholder="Enter your WhatsApp number" maxlength="10">
                 </div>
             </div>
 
-            <div class="balance-card">
-                <div class="balance-label">This Month's Balance</div>
-                <div class="balance-amount" id="balance">₹0</div>
-                <div class="stats">
-                    <div class="stat">
-                        <div class="stat-label"><i class="fas fa-arrow-down"></i> Income</div>
-                        <div class="stat-value" id="income">₹0</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label"><i class="fas fa-arrow-up"></i> Expenses</div>
-                        <div class="stat-value" id="expense">₹0</div>
-                    </div>
-                </div>
-            </div>
+            <button class="btn btn-primary" onclick="login()">
+                <i class="fab fa-whatsapp"></i> Continue with WhatsApp
+            </button>
 
-            <div class="section-title">Quick Actions</div>
-            <div class="actions">
-                <button class="action" onclick="addExpense()">
-                    <div class="action-icon expense"><i class="fas fa-minus"></i></div><span>Expense</span>
-                </button>
-                <button class="action" onclick="addIncome()">
-                    <div class="action-icon income"><i class="fas fa-plus"></i></div><span>Income</span>
-                </button>
-                <button class="action" onclick="showReport()">
-                    <div class="action-icon report"><i class="fas fa-chart-pie"></i></div><span>Report</span>
-                </button>
-                <button class="action" onclick="showGoals()">
-                    <div class="action-icon goals"><i class="fas fa-bullseye"></i></div><span>Goals</span>
-                </button>
-            </div>
-
-            <div class="section-title">Recent Transactions <a href="#" class="see-all">See All</a></div>
-            <div class="txn-list" id="txnList">
-                <div class="txn">
-                    <div class="txn-icon food"><i class="fas fa-utensils"></i></div>
-                    <div class="txn-details">
-                        <div class="txn-title">Tea & Snacks</div>
-                        <div class="txn-cat">Food</div>
-                    </div>
-                    <div class="txn-amt out">-₹50</div>
-                </div>
-                <div class="txn">
-                    <div class="txn-icon transport"><i class="fas fa-bus"></i></div>
-                    <div class="txn-details">
-                        <div class="txn-title">Auto Ride</div>
-                        <div class="txn-cat">Transport</div>
-                    </div>
-                    <div class="txn-amt out">-₹120</div>
-                </div>
-                <div class="txn">
-                    <div class="txn-icon gig"><i class="fas fa-briefcase"></i></div>
-                    <div class="txn-details">
-                        <div class="txn-title">Delivery Work</div>
-                        <div class="txn-cat">Gig Income</div>
-                    </div>
-                    <div class="txn-amt in">+₹850</div>
-                </div>
-                <div class="txn">
-                    <div class="txn-icon bills"><i class="fas fa-mobile-alt"></i></div>
-                    <div class="txn-details">
-                        <div class="txn-title">Mobile Recharge</div>
-                        <div class="txn-cat">Bills</div>
-                    </div>
-                    <div class="txn-amt out">-₹199</div>
-                </div>
+            <div class="otp-note">
+                <i class="fab fa-whatsapp"></i>
+                Login with your WhatsApp number to view your financial data synced from the MoneyView bot.
             </div>
         </div>
     </div>
 
-    <nav class="bottom-nav" id="nav" style="display:none;">
-        <button class="nav-item active"><i class="fas fa-home"></i><span>Home</span></button>
-        <button class="nav-item"><i class="fas fa-chart-bar"></i><span>Stats</span></button>
-        <button class="nav-item center"><i class="fas fa-plus"></i></button>
-        <button class="nav-item"><i class="fas fa-wallet"></i><span>Budget</span></button>
-        <button class="nav-item"><i class="fas fa-user"></i><span>Profile</span></button>
-    </nav>
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <nav class="top-nav">
+            <div class="nav-brand">
+                <img src="logo.png" alt="MoneyView"
+                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>💰</text></svg>'">
+                <span>MoneyView</span>
+            </div>
+            <div class="nav-user">
+                <div class="user-info">
+                    <div class="user-name" id="userName">User</div>
+                    <div class="user-phone" id="userPhone">+91 XXXXX</div>
+                </div>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
 
-    <button class="whatsapp-float" onclick="openWhatsApp()" id="waBtn" style="display:none;"><i
-            class="fab fa-whatsapp"></i></button>
+        <div class="dashboard-content">
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h1>Welcome back, <span id="welcomeName">User</span>! 👋</h1>
+                    <p>Here's your financial overview for today</p>
+                </div>
+                <div class="live-badge">
+                    <div class="live-dot"></div>
+                    <span>Synced with WhatsApp</span>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon income">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="stat-label">Today's Income</div>
+                    <div class="stat-value" id="todayIncome">₹0</div>
+                    <div class="stat-change positive" id="incomeChange">+0% from yesterday</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon expense">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="stat-label">Today's Expenses</div>
+                    <div class="stat-value" id="todayExpense">₹0</div>
+                    <div class="stat-change" id="expenseChange">0% from yesterday</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon savings">
+                        <i class="fas fa-piggy-bank"></i>
+                    </div>
+                    <div class="stat-label">Total Savings</div>
+                    <div class="stat-value" id="totalSavings">₹0</div>
+                    <div class="stat-change positive">Growing steadily</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon goals">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="stat-label">Goals Progress</div>
+                    <div class="stat-value" id="goalsProgress">0%</div>
+                    <div class="stat-change positive">Keep going!</div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="main-grid">
+                <!-- Transactions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Transactions</h3>
+                        <span class="card-action">View All</span>
+                    </div>
+                    <div class="transaction-list" id="transactionList">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goals -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Your Goals</h3>
+                        <span class="card-action">Add Goal</span>
+                    </div>
+                    <div id="goalsList">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const API = window.location.origin;
-        const WA_NUMBER = '919363324580';
-        let currentStep = 'PHONE'; // PHONE or OTP
+        // API Base URL
+        const API_BASE = window.location.origin;
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            // Setup UI dynamically
-            setupAppStructure();
-
-            setTimeout(() => {
-                document.getElementById('splash').classList.add('hidden');
-                checkSession();
-            }, 2000);
-
-            // Phone input formatting
-            const phoneInput = document.getElementById('phone');
-            const otpInput = document.getElementById('otp-input');
-            const loginBtn = document.getElementById('loginBtn');
-
-            phoneInput.addEventListener('input', (e) => {
-                let val = e.target.value.replace(/\D/g, '');
-                if (val.length > 10) val = val.substring(0, 10);
-                e.target.value = val;
-
-                if (val.length === 10) {
-                    loginBtn.disabled = false;
-                    loginBtn.classList.add('active');
-                } else {
-                    loginBtn.disabled = true;
-                    loginBtn.classList.remove('active');
-                }
-            });
-
-            otpInput.addEventListener('input', (e) => {
-                let val = e.target.value.replace(/\D/g, '');
-                if (val.length > 6) val = val.substring(0, 6);
-                e.target.value = val;
-
-                if (val.length === 6) {
-                    loginBtn.disabled = false;
-                    loginBtn.classList.add('active');
-                } else {
-                    loginBtn.disabled = true;
-                    loginBtn.classList.remove('active');
-                }
-            });
-
-            // Login button
-            loginBtn.addEventListener('click', handleLoginClick);
-
-            // Language buttons
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    localStorage.setItem('lang', btn.dataset.lang);
-                });
-            });
-
-            updateGreeting();
-
-            // Live Updates (Poll every 5 seconds)
-            setInterval(() => {
-                if (localStorage.getItem('token')) {
-                    loadData();
-                }
-            }, 5000);
-        });
-
-        function checkSession() {
-            const token = localStorage.getItem('token');
-            const phone = localStorage.getItem('phone');
-            if (token && phone) {
-                showApp();
-            } else {
-                document.getElementById('login').classList.add('active');
+        // Check if logged in
+        function checkAuth() {
+            const phone = localStorage.getItem('moneyview_phone');
+            if (phone) {
+                showDashboard(phone);
             }
         }
 
-        function updateGreeting() {
-            const hour = new Date().getHours();
-            let greet = 'Good Morning';
-            if (hour >= 12 && hour < 17) greet = 'Good Afternoon';
-            else if (hour >= 17) greet = 'Good Evening';
-            document.getElementById('greet').textContent = greet;
-        }
+        // Login
+        async function login() {
+            const phoneInput = document.getElementById('phoneInput');
+            let phone = phoneInput.value.replace(/\D/g, '');
 
-        async function handleLoginClick() {
-            if (currentStep === 'PHONE') {
-                await sendOTP();
-            } else {
-                await verifyOTP();
-            }
-        }
-
-        async function sendOTP() {
-            const phoneVal = document.getElementById('phone').value;
-            if (phoneVal.length !== 10) return;
-
-            const phone = '+91' + phoneVal;
-            const btn = document.getElementById('loginBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending OTP...';
-
-            try {
-                const res = await fetch(`${API}/api/v2/auth/send-otp`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    toast('OTP sent to WhatsApp!', 'success');
-                    // Switch to OTP view
-                    currentStep = 'OTP';
-                    document.getElementById('phone-group').style.display = 'none';
-                    document.getElementById('otp-group').style.display = 'block';
-                    document.getElementById('otp-input').focus();
-                    btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
-                    btn.disabled = true; // Wait for input
-                    startTimer();
-                } else {
-                    toast(data.message || 'Error sending OTP', 'error');
-                    btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
-                    btn.disabled = false;
-                }
-            } catch (e) {
-                console.error("Login Error:", e);
-                toast('Network Error', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<span>Continue</span><i class="fas fa-arrow-right"></i>';
-            }
-        }
-
-        async function verifyOTP() {
-            const phone = '+91' + document.getElementById('phone').value;
-            const otp = document.getElementById('otp-input').value;
-            const btn = document.getElementById('loginBtn');
-
-            if (otp.length !== 6) return;
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-
-            try {
-                // Try demo login first (OTP 123456 always works)
-                let res = await fetch(`${API}/api/v2/auth/demo-login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, otp })
-                });
-
-                let data = await res.json();
-
-                // If demo fails and it's not "123456", try regular OTP
-                if (!data.success && otp !== '123456') {
-                    res = await fetch(`${API}/api/v2/auth/verify-otp`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone, otp })
-                    });
-                    data = await res.json();
-                }
-
-                if (data.success) {
-                    localStorage.setItem('phone', phone);
-                    localStorage.setItem('token', data.token);
-                    toast('Login Successful!', 'success');
-                    setTimeout(() => showApp(), 500);
-                } else {
-                    toast(data.message || 'Invalid OTP. Try 123456 for demo.', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
-                }
-            } catch (e) {
-                toast('Verification failed', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
-            }
-        }
-
-        function startTimer() {
-            let timeLeft = 30;
-            const timer = document.getElementById('timer');
-            const link = document.getElementById('resendLink');
-
-            link.style.display = 'none';
-            timer.style.display = 'inline';
-
-            const interval = setInterval(() => {
-                timeLeft--;
-                timer.textContent = `Resend in ${timeLeft}s`;
-
-                if (timeLeft <= 0) {
-                    clearInterval(interval);
-                    timer.style.display = 'none';
-                    link.style.display = 'inline';
-                }
-            }, 1000);
-        }
-
-        async function resendOTP() {
-            startTimer();
-            await sendOTP();
-        }
-
-        function showApp() {
-            document.getElementById('login').classList.remove('active');
-            document.getElementById('app').classList.add('active');
-            document.getElementById('nav').style.display = 'flex';
-            document.getElementById('waBtn').style.display = 'flex';
-            loadData();
-        }
-
-        async function loadData() {
-            const phone = localStorage.getItem('phone');
-            if (!phone) return;
-
-            try {
-                const res = await fetch(`${API}/api/v2/dashboard/${encodeURIComponent(phone)}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    animateValue("balance", data.balance || 0);
-                    animateValue("income", data.total_income || 0);
-                    animateValue("expense", data.total_expenses || 0);
-                    if (data.name) document.getElementById('userName').textContent = data.name.split(' ')[0];
-                    if (data.recent_transactions?.length) renderTransactions(data.recent_transactions);
-                }
-            } catch (e) {
-                console.error("Data Load Error:", e);
-            }
-        }
-
-        function renderTransactions(txns) {
-            const list = document.getElementById('txnList');
-            list.innerHTML = '';
-            txns.slice(0, 5).forEach(txn => {
-                const isExpense = txn.type === 'expense';
-                const icon = isExpense ? 'minus' : 'plus';
-                const colorClass = isExpense ? 'out' : 'in';
-                const iconBg = isExpense ? 'bills' : 'gig';
-                const item = `
-                <div class="txn">
-                    <div class="txn-icon ${iconBg}"><i class="fas fa-${icon}"></i></div>
-                    <div class="txn-details">
-                        <div class="txn-title">${txn.category || 'Transaction'}</div>
-                        <div class="txn-cat">${new Date(txn.date).toLocaleDateString()}</div>
-                    </div>
-                    <div class="txn-amt ${colorClass}">${isExpense ? '-' : '+'}₹${txn.amount}</div>
-                </div>`;
-                list.insertAdjacentHTML('beforeend', item);
-            });
-        }
-
-        function animateValue(id, end) {
-            const obj = document.getElementById(id);
-            if (!obj) return;
-            obj.textContent = '₹' + parseInt(end).toLocaleString('en-IN');
-        }
-
-        function openWhatsApp(msg) {
-            const text = msg || "Hi! I want to track my expenses.";
-            window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
-        }
-
-        function toast(msg, type = 'success') {
-            const div = document.createElement('div');
-            div.className = `toast ${type}`;
-            div.textContent = msg;
-            document.getElementById('toasts').appendChild(div);
-            setTimeout(() => div.remove(), 3000);
-        }
-
-        // Direct Action Buttons - Now Functional
-        function addExpense() {
-            // In future: Open modal. For now: Smart WhatsApp Link
-            openWhatsApp("Spent 100 on Food");
-        }
-        function addIncome() {
-            openWhatsApp("Earned 500 from Delivery");
-        }
-        function showReport() {
-            openWhatsApp("Show my report");
-        }
-        function showGoals() {
-            openWhatsApp("Set a new goal");
-        }
-
-        function setupAppStructure() {
-            // 1. Setup Nav Clicks
-            const nav = document.getElementById('nav');
-            if (nav) {
-                const btns = nav.querySelectorAll('.nav-item');
-                if (btns.length >= 5) {
-                    btns[0].onclick = () => switchTab('home');
-                    btns[1].onclick = () => switchTab('stats');
-                    btns[2].onclick = () => addExpense();
-                    btns[3].onclick = () => switchTab('budget');
-                    btns[4].onclick = () => switchTab('profile');
-                }
-            }
-
-            // 2. Wrap Home View & Create Others
-            const app = document.getElementById('app');
-            if (app && !document.getElementById('home-view')) {
-                const homeView = document.createElement('div');
-                homeView.id = 'home-view';
-                homeView.className = 'view active';
-
-                // Move children that are NOT header into homeView
-                const children = Array.from(app.children);
-                children.forEach(c => {
-                    if (!c.classList.contains('header')) {
-                        homeView.appendChild(c);
-                    }
-                });
-                app.appendChild(homeView);
-
-                // Create Stats View - REAL DATA
-                const stats = document.createElement('div');
-                stats.id = 'stats-view';
-                stats.className = 'view';
-                stats.innerHTML = `
-                    <div class="section-title">📊 Analytics</div>
-                    <div style="background:var(--bg-card);padding:20px;border-radius:16px;margin-bottom:16px">
-                        <h3 style="margin-bottom:15px">This Month</h3>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-                            <span>💵 Total Income</span>
-                            <span id="statsIncome" style="color:#10B981;font-weight:bold">₹0</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-                            <span>💸 Total Expenses</span>
-                            <span id="statsExpenses" style="color:#EF4444;font-weight:bold">₹0</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between">
-                            <span>💰 Savings</span>
-                            <span id="statsSavings" style="color:#3B82F6;font-weight:bold">₹0</span>
-                        </div>
-                    </div>
-                    <div style="background:var(--bg-card);padding:20px;border-radius:16px">
-                        <h3 style="margin-bottom:15px">💡 Tips</h3>
-                        <p style="opacity:0.8">Track all your expenses on WhatsApp to see detailed analytics here!</p>
-                        <button class="btn btn-primary" style="margin-top:15px;width:100%" onclick="openWhatsApp('Show my report')">Get Full Report</button>
-                    </div>`;
-                app.appendChild(stats);
-
-                // Create Budget View - REAL GOALS
-                const budget = document.createElement('div');
-                budget.id = 'budget-view';
-                budget.className = 'view';
-                budget.innerHTML = `
-                    <div class="section-title">🎯 Goals</div>
-                    <div id="goalCard" style="background:var(--bg-card);padding:20px;border-radius:16px;margin-bottom:16px">
-                        <h3 id="goalName" style="margin-bottom:10px">Loading...</h3>
-                        <div style="background:rgba(255,255,255,0.1);border-radius:10px;height:20px;overflow:hidden;margin-bottom:10px">
-                            <div id="goalProgress" style="background:var(--gradient);height:100%;width:0%;transition:width 1s"></div>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;font-size:14px;opacity:0.8">
-                            <span id="goalSaved">₹0 saved</span>
-                            <span id="goalTarget">Target: ₹0</span>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" style="width:100%" onclick="openWhatsApp('Set a new goal')">Set New Goal</button>`;
-                app.appendChild(budget);
-
-                // Create Profile View - WITH EDIT
-                const profile = document.createElement('div');
-                profile.id = 'profile-view';
-                profile.className = 'view';
-                profile.innerHTML = `
-                    <div class="section-title">👤 Profile</div>
-                    <div style="background:var(--bg-card);padding:20px;border-radius:16px;text-align:center;margin-bottom:20px">
-                        <div style="width:80px;height:80px;background:var(--gradient);border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:30px">👤</div>
-                        <input type="text" id="profileNameInput" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:18px;text-align:center;color:var(--text);width:80%;margin-bottom:10px" placeholder="Your Name">
-                        <p id="profilePhone" style="opacity:0.7;margin-bottom:15px">+91...</p>
-                        <button class="btn" style="background:var(--primary);color:white;margin-bottom:10px" onclick="updateProfile()">Save Changes</button>
-                        <button class="btn" style="background:rgba(239,68,68,0.2);color:#EF4444" onclick="logout()">Logout</button>
-                    </div>
-                    <div style="background:var(--bg-card);padding:15px;border-radius:16px;text-align:center">
-                        <p style="font-size:13px;opacity:0.7">VittaSaathi v5.0.0</p>
-                        <p style="font-size:12px;opacity:0.5">Your AI Financial Advisor</p>
-                    </div>`;
-                app.appendChild(profile);
-            }
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-            const map = { 'home': 0, 'stats': 1, 'budget': 3, 'profile': 4 };
-            if (map[tabId] !== undefined) {
-                document.querySelectorAll('.nav-item')[map[tabId]].classList.add('active');
-            }
-
-            // Toggle Views
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            const view = document.getElementById(tabId + '-view');
-            if (view) view.classList.add('active');
-
-            // Load data for specific tabs
-            if (tabId === 'profile') {
-                loadProfile();
-            } else if (tabId === 'stats') {
-                loadStats();
-            } else if (tabId === 'budget') {
-                loadGoals();
-            }
-        }
-
-        function loadProfile() {
-            const phone = localStorage.getItem('phone') || '';
-            const user = JSON.parse(localStorage.getItem('user_data') || '{}');
-            const nameInput = document.getElementById('profileNameInput');
-            if (nameInput) nameInput.value = user.name || '';
-            const phoneEl = document.getElementById('profilePhone');
-            if (phoneEl) phoneEl.textContent = phone;
-        }
-
-        async function updateProfile() {
-            const phone = localStorage.getItem('phone');
-            const newName = document.getElementById('profileNameInput').value.trim();
-            if (!newName) {
-                toast('Please enter a name', 'error');
+            if (phone.length < 10) {
+                alert('Please enter a valid 10-digit phone number');
                 return;
             }
+
+            // Add country code if needed
+            if (!phone.startsWith('91')) {
+                phone = '91' + phone;
+            }
+
+            // Store phone and show dashboard
+            localStorage.setItem('moneyview_phone', phone);
+            showDashboard(phone);
+        }
+
+        // Show Dashboard
+        async function showDashboard(phone) {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+
+            // Update UI with phone
+            document.getElementById('userPhone').textContent = '+' + phone;
+
+            // Fetch user data
             try {
-                const res = await fetch(`${API}/api/v2/user/${encodeURIComponent(phone)}/update`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: newName })
+                const response = await fetch(`${API_BASE}/api/moneyview/user/${phone}`);
+                if (response.ok) {
+                    const userData = await response.json();
+                    updateDashboard(userData);
+                } else {
+                    // User not found - show demo data
+                    showDemoData(phone);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showDemoData(phone);
+            }
+        }
+
+        // Update Dashboard with real data
+        function updateDashboard(data) {
+            const name = data.name || 'User';
+            document.getElementById('userName').textContent = name;
+            document.getElementById('welcomeName').textContent = name;
+
+            // Update stats
+            document.getElementById('todayIncome').textContent = '₹' + formatNumber(data.today_income || 0);
+            document.getElementById('todayExpense').textContent = '₹' + formatNumber(data.today_expense || 0);
+            document.getElementById('totalSavings').textContent = '₹' + formatNumber(data.current_savings || 0);
+
+            // Goals
+            const goals = data.goals || [];
+            if (goals.length > 0) {
+                let totalProgress = 0;
+                goals.forEach(g => {
+                    if (g.amount > 0) {
+                        totalProgress += Math.min(100, (data.current_savings / g.amount) * 100);
+                    }
                 });
-                const data = await res.json();
-                if (data.success) {
-                    let userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-                    userData.name = newName;
-                    localStorage.setItem('user_data', JSON.stringify(userData));
-                    document.getElementById('userName').textContent = newName.split(' ')[0];
-                    toast('Profile updated!', 'success');
-                } else {
-                    toast(data.message || 'Update failed', 'error');
-                }
-            } catch (e) {
-                toast('Network error', 'error');
+                document.getElementById('goalsProgress').textContent = Math.round(totalProgress / goals.length) + '%';
             }
+
+            // Render goals
+            renderGoals(goals);
+
+            // Render transactions (placeholder)
+            renderTransactions([]);
         }
 
-        async function loadStats() {
-            const phone = localStorage.getItem('phone');
-            if (!phone) return;
-            try {
-                const res = await fetch(`${API}/api/v2/dashboard/${encodeURIComponent(phone)}`);
-                const data = await res.json();
-                document.getElementById('statsIncome').textContent = '₹' + (data.total_income || 0).toLocaleString('en-IN');
-                document.getElementById('statsExpenses').textContent = '₹' + (data.total_expenses || 0).toLocaleString('en-IN');
-                document.getElementById('statsSavings').textContent = '₹' + ((data.total_income || 0) - (data.total_expenses || 0)).toLocaleString('en-IN');
-            } catch (e) {
-                console.error('Stats load error:', e);
-            }
+        // Show demo data
+        function showDemoData(phone) {
+            const name = 'User';
+            document.getElementById('userName').textContent = name;
+            document.getElementById('welcomeName').textContent = name;
+
+            // Show empty state
+            document.getElementById('transactionList').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No transactions yet</p>
+                    <p style="font-size: 12px; margin-top: 8px;">Start tracking via WhatsApp!</p>
+                </div>
+            `;
+
+            document.getElementById('goalsList').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-bullseye"></i>
+                    <p>No goals set</p>
+                    <p style="font-size: 12px; margin-top: 8px;">Add goals via WhatsApp!</p>
+                </div>
+            `;
         }
 
-        async function loadGoals() {
-            const phone = localStorage.getItem('phone');
-            if (!phone) return;
-            try {
-                const res = await fetch(`${API}/api/v2/user/${encodeURIComponent(phone)}`);
-                const data = await res.json();
-                if (data.target_amount) {
-                    document.getElementById('goalName').textContent = data.goal_type || 'Savings Goal';
-                    document.getElementById('goalTarget').textContent = 'Target: ₹' + parseInt(data.target_amount).toLocaleString('en-IN');
-                    const saved = Math.max(0, (data.total_income || 0) - (data.total_expenses || 0));
-                    document.getElementById('goalSaved').textContent = '₹' + saved.toLocaleString('en-IN') + ' saved';
-                    const progress = Math.min(100, (saved / data.target_amount) * 100);
-                    document.getElementById('goalProgress').style.width = progress + '%';
-                } else {
-                    document.getElementById('goalName').textContent = 'No Goal Set';
-                    document.getElementById('goalSaved').textContent = 'Set a goal to track progress';
-                    document.getElementById('goalTarget').textContent = '';
-                }
-            } catch (e) {
-                console.error('Goals load error:', e);
+        // Render goals
+        function renderGoals(goals) {
+            const container = document.getElementById('goalsList');
+
+            if (!goals || goals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-bullseye"></i>
+                        <p>No goals yet</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Add via WhatsApp: "Add goal: Car, 5 lakh, 2 years"</p>
+                    </div>
+                `;
+                return;
             }
+
+            container.innerHTML = goals.map(goal => {
+                const progress = goal.amount > 0 ? Math.min(100, Math.round((goal.current || 0) / goal.amount * 100)) : 0;
+                return `
+                    <div class="goal-item">
+                        <div class="goal-header">
+                            <span class="goal-name">${goal.name || 'Goal'}</span>
+                            <span class="goal-percentage">${progress}%</span>
+                        </div>
+                        <div class="goal-progress">
+                            <div class="goal-progress-bar" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="goal-details">
+                            <span>Target: ₹${formatNumber(goal.amount || 0)}</span>
+                            <span>${goal.timeline || 'No deadline'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
+        // Render transactions
+        function renderTransactions(transactions) {
+            const container = document.getElementById('transactionList');
+
+            if (!transactions || transactions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No transactions today</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Track via WhatsApp: "Spent 500 on food"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = transactions.map(tx => {
+                const isExpense = tx.type === 'expense';
+                return `
+                    <div class="transaction-item">
+                        <div class="transaction-info">
+                            <div class="transaction-icon ${tx.type}">
+                                <i class="fas fa-${isExpense ? 'arrow-up' : 'arrow-down'}"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <span class="transaction-category">${tx.category}</span>
+                                <span class="transaction-time">${formatTime(tx.date)}</span>
+                            </div>
+                        </div>
+                        <span class="transaction-amount ${tx.type}">
+                            ${isExpense ? '-' : '+'}₹${formatNumber(tx.amount)}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Format number with commas
+        function formatNumber(num) {
+            return num.toLocaleString('en-IN');
+        }
+
+        // Format time
+        function formatTime(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Logout
         function logout() {
-            if (confirm("Are you sure you want to logout?")) {
-                localStorage.clear();
-                window.location.reload();
-            }
+            localStorage.removeItem('moneyview_phone');
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('phoneInput').value = '';
         }
 
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            const icon = document.querySelector('.header-btns i.fa-moon');
-            if (icon) icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
-        }
+        // Auto-refresh data every 30 seconds
+        setInterval(() => {
+            const phone = localStorage.getItem('moneyview_phone');
+            if (phone) {
+                // Refresh data silently
+                fetch(`${API_BASE}/api/moneyview/user/${phone}`)
+                    .then(res => res.json())
+                    .then(data => updateDashboard(data))
+                    .catch(() => { });
+            }
+        }, 30000);
+
+        // Initialize
+        checkAuth();
     </script>
 </body>
 
