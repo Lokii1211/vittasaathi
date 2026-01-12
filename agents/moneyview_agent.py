@@ -419,11 +419,11 @@ _(बैंक में, FD में)_""",
             self._save_user(phone, user)
             
             responses = {
-                "en": f"""Savings: ₹{int(amount):,} {'💰 Great!' if amount > 0 else '- No problem, we\'ll build it!'}
+                "en": f"""Savings: ₹{int(amount):,} {"💰 Great!" if amount > 0 else "- No problem, we will build it!"}
 
 *What type of investments do you prefer?*
 _(Example: Safe investments, Balanced mix, or High risk for high returns)_""",
-                "hi": f"""बचत: ₹{int(amount):,} {'💰' if amount > 0 else '- कोई बात नहीं!'}
+                "hi": f"""बचत: ₹{int(amount):,} {"💰" if amount > 0 else "- कोई बात नहीं!"}
 
 *आप किस तरह का निवेश पसंद करते हैं?*
 _(उदाहरण: सुरक्षित, बैलेंस्ड, या हाई रिस्क)_""",
