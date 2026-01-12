@@ -1,5 +1,5 @@
 {
-    "name": "MoneyViya - Complete Financial Assistant (Baileys Bot)",
+    "name": "MoneyViya Scheduled Messages",
     "nodes": [
         {
             "parameters": {
@@ -12,23 +12,22 @@
                     ]
                 }
             },
-            "id": "morning_trigger",
-            "name": "Morning 6 AM IST",
+            "id": "b9e2f1a0-1234-4567-890a-bcdef1234567",
+            "name": "Morning 6 AM",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
             "position": [
                 240,
                 300
-            ],
-            "notes": "Trigger morning motivation messages"
+            ]
         },
         {
             "parameters": {
                 "url": "https://moneyviya.up.railway.app/api/v2/users/active",
                 "options": {}
             },
-            "id": "get_morning_users",
-            "name": "Get Active Users",
+            "id": "c8d3e2b1-2345-5678-901b-cdef23456789",
+            "name": "Get Active Users Morning",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
@@ -38,10 +37,10 @@
         },
         {
             "parameters": {
-                "jsCode": "// Generate morning motivation message based on user language\nconst users = $input.all();\nconst results = [];\n\nfor (const item of users) {\n  const data = item.json;\n  // If it's an array response, iterate through it\n  const userList = Array.isArray(data) ? data : [data];\n  \n  for (const user of userList) {\n    const lang = user.language || 'en';\n    const name = user.name || 'Friend';\n    const dailyTarget = user.daily_target || 500;\n    const dailyBudget = user.daily_budget || 1000;\n    \n    let message = '';\n    \n    if (lang === 'ta') {\n      message = `☀️ *காலை வணக்கம், ${name}!*\\n\\n📊 இன்றைய திட்டம்:\\n💰 தினசரி பட்ஜெட்: ₹${dailyBudget}\\n🎯 சேமிப்பு இலக்கு: ₹${dailyTarget}\\n\\n💪 இன்று ஒரு நல்ல நாளாக இருக்கும்!\\n\\n_செலவை டிராக் செய்ய: \"50 டீக்கு\" என டைப் செய்யுங்கள்_`;\n    } else if (lang === 'hi') {\n      message = `☀️ *सुप्रभात, ${name}!*\\n\\n📊 आज की योजना:\\n💰 दैनिक बजट: ₹${dailyBudget}\\n🎯 बचत लक्ष्य: ₹${dailyTarget}\\n\\n💪 आज एक अच्छा दिन होगा!\\n\\n_खर्च ट्रैक करने के लिए: \"चाय पर 50\" टाइप करें_`;\n    } else if (lang === 'te') {\n      message = `☀️ *శుభోదయం, ${name}!*\\n\\n📊 ఈరోజు ప్లాన్:\\n💰 రోజువారీ బడ్జెట్: ₹${dailyBudget}\\n🎯 సేవింగ్స్ లక్ష్యం: ₹${dailyTarget}\\n\\n💪 ఈరోజు మంచి రోజు అవుతుంది!\\n\\n_ఖర్చు ట్రాక్ చేయడానికి: \"టీకి 50\" టైప్ చేయండి_`;\n    } else {\n      message = `☀️ *Good Morning, ${name}!*\\n\\n📊 Today's Plan:\\n💰 Daily Budget: ₹${dailyBudget}\\n🎯 Savings Target: ₹${dailyTarget}\\n\\n💪 Today is going to be a great day!\\n\\n_Track expenses by typing: \"Spent 50 on tea\"_`;\n    }\n    \n    results.push({\n      phone: user.phone,\n      message: message\n    });\n  }\n}\n\nreturn results;"
+                "jsCode": "const users = $input.first().json;\nconst results = [];\n\nconst userList = Array.isArray(users) ? users : [];\n\nfor (const user of userList) {\n  const lang = user.language || 'en';\n  const name = user.name || 'Friend';\n  const dailyBudget = user.daily_budget || 1000;\n  const dailyTarget = user.daily_target || 500;\n  \n  let message = '';\n  \n  if (lang === 'ta') {\n    message = `☀️ காலை வணக்கம், ${name}!\\n\\n📊 இன்றைய திட்டம்:\\n💰 தினசரி பட்ஜெட்: ₹${dailyBudget}\\n🎯 சேமிப்பு இலக்கு: ₹${dailyTarget}\\n\\n💪 இன்று ஒரு நல்ல நாளாக இருக்கும்!`;\n  } else if (lang === 'hi') {\n    message = `☀️ सुप्रभात, ${name}!\\n\\n📊 आज की योजना:\\n💰 दैनिक बजट: ₹${dailyBudget}\\n🎯 बचत लक्ष्य: ₹${dailyTarget}\\n\\n💪 आज एक अच्छा दिन होगा!`;\n  } else {\n    message = `☀️ Good Morning, ${name}!\\n\\n📊 Today's Plan:\\n💰 Daily Budget: ₹${dailyBudget}\\n🎯 Savings Target: ₹${dailyTarget}\\n\\n💪 Have a great day!`;\n  }\n  \n  results.push({ phone: user.phone, message: message });\n}\n\nreturn results;"
             },
-            "id": "generate_morning_msg",
-            "name": "Generate Morning Message",
+            "id": "d7c4b3a2-3456-6789-012c-def345678901",
+            "name": "Generate Morning Messages",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
             "position": [
@@ -54,8 +53,8 @@
                 "batchSize": 1,
                 "options": {}
             },
-            "id": "loop_morning",
-            "name": "Loop Users Morning",
+            "id": "e6b5c4a3-4567-7890-123d-ef4567890123",
+            "name": "Loop Morning",
             "type": "n8n-nodes-base.splitInBatches",
             "typeVersion": 3,
             "position": [
@@ -65,7 +64,8 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/baileys/send",
+                "method": "POST",
+                "url": "http://localhost:3001/send",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
@@ -77,18 +77,17 @@
                 },
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "={\n  \"phone\": \"{{ $json.phone }}\",\n  \"message\": \"{{ $json.message }}\"\n}",
+                "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.message }) }}",
                 "options": {}
             },
-            "id": "send_morning_baileys",
-            "name": "Send via Baileys API",
+            "id": "f5a6d5b4-5678-8901-234e-f56789012345",
+            "name": "Send Morning Baileys",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 1120,
                 300
-            ],
-            "notes": "Calls local Baileys bot API to send message"
+            ]
         },
         {
             "parameters": {
@@ -101,22 +100,21 @@
                     ]
                 }
             },
-            "id": "evening_trigger",
-            "name": "Evening 8 PM IST",
+            "id": "a1b2c3d4-6789-0123-345f-678901234567",
+            "name": "Evening 8 PM",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
             "position": [
                 240,
                 520
-            ],
-            "notes": "Trigger evening summary messages"
+            ]
         },
         {
             "parameters": {
                 "url": "https://moneyviya.up.railway.app/api/v2/users/active",
                 "options": {}
             },
-            "id": "get_evening_users",
+            "id": "b2c3d4e5-7890-1234-456a-789012345678",
             "name": "Get Active Users Evening",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
@@ -127,10 +125,10 @@
         },
         {
             "parameters": {
-                "jsCode": "// Generate evening summary based on user language\nconst users = $input.all();\nconst results = [];\n\nfor (const item of users) {\n  const data = item.json;\n  const userList = Array.isArray(data) ? data : [data];\n  \n  for (const user of userList) {\n    const lang = user.language || 'en';\n    const name = user.name || 'Friend';\n    const todayIncome = user.today_income || 0;\n    const todayExpenses = user.today_expenses || 0;\n    const savings = todayIncome - todayExpenses;\n    \n    let message = '';\n    let emoji = savings > 0 ? '🎉' : '📊';\n    \n    if (lang === 'ta') {\n      message = `🌙 *${name}, இன்றைய சுருக்கம்*\\n\\n💵 வருமானம்: ₹${todayIncome}\\n💸 செலவுகள்: ₹${todayExpenses}\\n${emoji} நிகரம்: ₹${savings}\\n\\n${savings > 0 ? '👏 நல்ல வேலை! நீங்கள் சேமித்தீர்கள்!' : '💪 நாளை சிறப்பாக இருக்கும்!'}\\n\\n_நாளை பார்க்கலாம்! 😊_`;\n    } else if (lang === 'hi') {\n      message = `🌙 *${name}, आज का सारांश*\\n\\n💵 आय: ₹${todayIncome}\\n💸 खर्च: ₹${todayExpenses}\\n${emoji} शुद्ध: ₹${savings}\\n\\n${savings > 0 ? '👏 बढ़िया काम! आपने बचाया!' : '💪 कल बेहतर होगा!'}\\n\\n_कल मिलते हैं! 😊_`;\n    } else if (lang === 'te') {\n      message = `🌙 *${name}, ఈరోజు సారాంశం*\\n\\n💵 ఆదాయం: ₹${todayIncome}\\n💸 ఖర్చులు: ₹${todayExpenses}\\n${emoji} నికరం: ₹${savings}\\n\\n${savings > 0 ? '👏 గొప్ప పని! మీరు ఆదా చేశారు!' : '💪 రేపు మెరుగ్గా ఉంటుంది!'}\\n\\n_రేపు కలుద్దాం! 😊_`;\n    } else {\n      message = `🌙 *${name}, Today's Summary*\\n\\n💵 Income: ₹${todayIncome}\\n💸 Expenses: ₹${todayExpenses}\\n${emoji} Net: ₹${savings}\\n\\n${savings > 0 ? '👏 Great job! You saved money!' : '💪 Tomorrow will be better!'}\\n\\n_See you tomorrow! 😊_`;\n    }\n    \n    results.push({\n      phone: user.phone,\n      message: message\n    });\n  }\n}\n\nreturn results;"
+                "jsCode": "const users = $input.first().json;\nconst results = [];\n\nconst userList = Array.isArray(users) ? users : [];\n\nfor (const user of userList) {\n  const lang = user.language || 'en';\n  const name = user.name || 'Friend';\n  const todayIncome = user.today_income || 0;\n  const todayExpenses = user.today_expenses || 0;\n  const savings = todayIncome - todayExpenses;\n  const emoji = savings > 0 ? '🎉' : '📊';\n  \n  let message = '';\n  \n  if (lang === 'ta') {\n    message = `🌙 ${name}, இன்றைய சுருக்கம்\\n\\n💵 வருமானம்: ₹${todayIncome}\\n💸 செலவுகள்: ₹${todayExpenses}\\n${emoji} நிகரம்: ₹${savings}\\n\\n${savings > 0 ? '👏 நல்ல வேலை!' : '💪 நாளை சிறப்பாக இருக்கும்!'}`;\n  } else if (lang === 'hi') {\n    message = `🌙 ${name}, आज का सारांश\\n\\n💵 आय: ₹${todayIncome}\\n💸 खर्च: ₹${todayExpenses}\\n${emoji} शुद्ध: ₹${savings}\\n\\n${savings > 0 ? '👏 बढ़िया काम!' : '💪 कल बेहतर होगा!'}`;\n  } else {\n    message = `🌙 ${name}, Today's Summary\\n\\n💵 Income: ₹${todayIncome}\\n💸 Expenses: ₹${todayExpenses}\\n${emoji} Net: ₹${savings}\\n\\n${savings > 0 ? '👏 Great job!' : '💪 Tomorrow will be better!'}`;\n  }\n  \n  results.push({ phone: user.phone, message: message });\n}\n\nreturn results;"
             },
-            "id": "generate_evening_msg",
-            "name": "Generate Evening Summary",
+            "id": "c3d4e5f6-8901-2345-567b-890123456789",
+            "name": "Generate Evening Messages",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
             "position": [
@@ -143,8 +141,8 @@
                 "batchSize": 1,
                 "options": {}
             },
-            "id": "loop_evening",
-            "name": "Loop Users Evening",
+            "id": "d4e5f6a7-9012-3456-678c-901234567890",
+            "name": "Loop Evening",
             "type": "n8n-nodes-base.splitInBatches",
             "typeVersion": 3,
             "position": [
@@ -154,7 +152,8 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/baileys/send",
+                "method": "POST",
+                "url": "http://localhost:3001/send",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
@@ -166,11 +165,11 @@
                 },
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "={\n  \"phone\": \"{{ $json.phone }}\",\n  \"message\": \"{{ $json.message }}\"\n}",
+                "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.message }) }}",
                 "options": {}
             },
-            "id": "send_evening_baileys",
-            "name": "Send Evening via Baileys",
+            "id": "e5f6a7b8-0123-4567-789d-012345678901",
+            "name": "Send Evening Baileys",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
@@ -189,23 +188,22 @@
                     ]
                 }
             },
-            "id": "weekly_trigger",
-            "name": "Sunday 10 AM - Weekly",
+            "id": "f6a7b8c9-1234-5678-890e-123456789012",
+            "name": "Sunday 10 AM Weekly",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
             "position": [
                 240,
                 740
-            ],
-            "notes": "Trigger weekly report on Sundays"
+            ]
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/v2/reports/weekly/generate",
                 "method": "POST",
+                "url": "https://moneyviya.up.railway.app/api/v2/reports/weekly/generate",
                 "options": {}
             },
-            "id": "generate_weekly_reports",
+            "id": "a7b8c9d0-2345-6789-901f-234567890123",
             "name": "Generate Weekly Reports",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
@@ -219,8 +217,8 @@
                 "batchSize": 1,
                 "options": {}
             },
-            "id": "loop_weekly",
-            "name": "Loop Weekly Reports",
+            "id": "b8c9d0e1-3456-7890-012a-345678901234",
+            "name": "Loop Weekly",
             "type": "n8n-nodes-base.splitInBatches",
             "typeVersion": 3,
             "position": [
@@ -230,7 +228,8 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/baileys/send",
+                "method": "POST",
+                "url": "http://localhost:3001/send",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
@@ -242,140 +241,65 @@
                 },
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "={\n  \"phone\": \"{{ $json.phone }}\",\n  \"message\": \"{{ $json.report }}\"\n}",
+                "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.report }) }}",
                 "options": {}
             },
-            "id": "send_weekly_baileys",
-            "name": "Send Weekly via Baileys",
+            "id": "c9d0e1f2-4567-8901-123b-456789012345",
+            "name": "Send Weekly Baileys",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 900,
                 740
-            ]
-        },
-        {
-            "parameters": {
-                "rule": {
-                    "interval": [
-                        {
-                            "field": "hours",
-                            "hoursInterval": 1
-                        }
-                    ]
-                }
-            },
-            "id": "hourly_reminder_check",
-            "name": "Hourly Reminder Check",
-            "type": "n8n-nodes-base.scheduleTrigger",
-            "typeVersion": 1.1,
-            "position": [
-                240,
-                960
-            ],
-            "notes": "Check for bill reminders every hour"
-        },
-        {
-            "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/v2/reminders/pending",
-                "options": {}
-            },
-            "id": "get_reminders",
-            "name": "Get Pending Reminders",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                460,
-                960
-            ]
-        },
-        {
-            "parameters": {
-                "batchSize": 1,
-                "options": {}
-            },
-            "id": "loop_reminders",
-            "name": "Loop Reminders",
-            "type": "n8n-nodes-base.splitInBatches",
-            "typeVersion": 3,
-            "position": [
-                680,
-                960
-            ]
-        },
-        {
-            "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/baileys/send",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "Content-Type",
-                            "value": "application/json"
-                        }
-                    ]
-                },
-                "sendBody": true,
-                "specifyBody": "json",
-                "jsonBody": "={\n  \"phone\": \"{{ $json.phone }}\",\n  \"message\": \"{{ $json.message }}\"\n}",
-                "options": {}
-            },
-            "id": "send_reminder_baileys",
-            "name": "Send Reminder via Baileys",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                900,
-                960
             ]
         }
     ],
     "connections": {
-        "Morning 6 AM IST": {
+        "Morning 6 AM": {
             "main": [
                 [
                     {
-                        "node": "Get Active Users",
+                        "node": "Get Active Users Morning",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Get Active Users": {
+        "Get Active Users Morning": {
             "main": [
                 [
                     {
-                        "node": "Generate Morning Message",
+                        "node": "Generate Morning Messages",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Generate Morning Message": {
+        "Generate Morning Messages": {
             "main": [
                 [
                     {
-                        "node": "Loop Users Morning",
+                        "node": "Loop Morning",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Loop Users Morning": {
+        "Loop Morning": {
             "main": [
                 [
                     {
-                        "node": "Send via Baileys API",
+                        "node": "Send Morning Baileys",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Evening 8 PM IST": {
+        "Evening 8 PM": {
             "main": [
                 [
                     {
@@ -390,36 +314,36 @@
             "main": [
                 [
                     {
-                        "node": "Generate Evening Summary",
+                        "node": "Generate Evening Messages",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Generate Evening Summary": {
+        "Generate Evening Messages": {
             "main": [
                 [
                     {
-                        "node": "Loop Users Evening",
+                        "node": "Loop Evening",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Loop Users Evening": {
+        "Loop Evening": {
             "main": [
                 [
                     {
-                        "node": "Send Evening via Baileys",
+                        "node": "Send Evening Baileys",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Sunday 10 AM - Weekly": {
+        "Sunday 10 AM Weekly": {
             "main": [
                 [
                     {
@@ -434,51 +358,18 @@
             "main": [
                 [
                     {
-                        "node": "Loop Weekly Reports",
+                        "node": "Loop Weekly",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Loop Weekly Reports": {
+        "Loop Weekly": {
             "main": [
                 [
                     {
-                        "node": "Send Weekly via Baileys",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Hourly Reminder Check": {
-            "main": [
-                [
-                    {
-                        "node": "Get Pending Reminders",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Get Pending Reminders": {
-            "main": [
-                [
-                    {
-                        "node": "Loop Reminders",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Loop Reminders": {
-            "main": [
-                [
-                    {
-                        "node": "Send Reminder via Baileys",
+                        "node": "Send Weekly Baileys",
                         "type": "main",
                         "index": 0
                     }
@@ -486,16 +377,13 @@
             ]
         }
     },
+    "pinData": {},
     "settings": {
         "executionOrder": "v1"
     },
-    "tags": [
-        "MoneyViya",
-        "Baileys",
-        "Financial Assistant",
-        "Multilingual"
-    ],
-    "triggerCount": 4,
-    "updatedAt": "2026-01-12T10:45:00.000Z",
-    "versionId": "v1.0.0"
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 3,
+    "updatedAt": "2026-01-12T11:00:00.000Z",
+    "versionId": "1"
 }
