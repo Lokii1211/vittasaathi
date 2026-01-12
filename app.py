@@ -142,10 +142,65 @@ def health_check():
     """Health check endpoint"""
     return {
         "status": "ok",
-        "version": "3.0.0",
+        "version": AGENT_VERSION,
         "whatsapp_cloud_configured": whatsapp_cloud_service.is_available(),
         "openai_configured": openai_service.is_available()
     }
+
+
+# ============== BAILEYS BOT API ENDPOINT ==============
+@app.post("/api/v2/whatsapp/process")
+async def process_baileys_message(request: Request):
+    """
+    Process WhatsApp messages from local Baileys bot.
+    This forwards messages to the advanced agent and returns the reply.
+    """
+    try:
+        data = await request.json()
+        phone = data.get("phone", "")
+        message = data.get("message", "")
+        sender_name = data.get("sender_name", "Friend")
+        
+        if not phone or not message:
+            return {"success": False, "error": "Phone and message required"}
+        
+        # Normalize phone number
+        phone_clean = phone.replace("+", "").replace(" ", "").replace("-", "")
+        if not phone_clean.startswith("91"):
+            phone_clean = "91" + phone_clean
+        full_phone = "+" + phone_clean
+        
+        print(f"[Baileys API] Processing message from {full_phone}: {message[:50]}...")
+        
+        # Get or create user
+        user = user_repo.get_user(full_phone)
+        if not user:
+            user_repo.ensure_user(full_phone)
+            user = user_repo.get_user(full_phone) or {"phone": full_phone}
+        
+        # Update sender name if available
+        if sender_name and sender_name != "Friend" and not user.get("name"):
+            user["name"] = sender_name
+            user_repo.update_user(full_phone, {"name": sender_name})
+        
+        # Process with Advanced Agent
+        try:
+            reply = await advanced_agent.process_message(full_phone, message, user)
+            user_repo.update_user(full_phone, user)
+            print(f"[Baileys API] Reply generated successfully")
+        except Exception as agent_error:
+            print(f"[Baileys API] Agent error: {agent_error}")
+            import traceback
+            traceback.print_exc()
+            reply = "⚠️ Sorry, I encountered an error. Please try again."
+        
+        return {"success": True, "reply": reply}
+        
+    except Exception as e:
+        print(f"[Baileys API] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e), "reply": "⚠️ Server error. Please try again."}
 
 
 @app.get("/api/whatsapp-status")

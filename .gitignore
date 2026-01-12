@@ -62,5 +62,7 @@ htmlcov/
 *.tmp
 *.temp
 
-# Node.js (WhatsApp Bot - deprecated, using Cloud API now)
-whatsapp-bot/
+# Node.js (WhatsApp Bot)
+whatsapp-bot/node_modules/
+whatsapp-bot/auth_info/
+whatsapp-bot/package-lock.json
