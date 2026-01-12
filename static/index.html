@@ -4,29 +4,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MoneyViya - Your Financial Friend | பண நண்பன்</title>
-    <meta name="theme-color" content="#10B981">
+    <title>VittaSaathi - Your AI Financial Advisor | आपका वित्तीय सलाहकार</title>
+    <meta name="theme-color" content="#1E40AF">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="description"
-        content="MoneyViya - Free financial advisor for gig workers. Track expenses, save money in English, Tamil, Telugu.">
+        content="VittaSaathi - Free AI financial advisor. Track expenses, save money in English, Hindi, Tamil, Telugu.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #059669;
-            /* Slightly darker/richer green */
-            --primary-dark: #047857;
-            --bg: #020617;
-            /* Deep slate */
-            --bg-card: #1e293b80;
-            /* Glass effect base */
+            /* Premium White & Blue Theme */
+            --primary: #1E40AF;
+            --primary-light: #3B82F6;
+            --primary-dark: #1E3A8A;
+            --accent: #0EA5E9;
+            --bg: #0F172A;
+            --bg-light: #1E293B;
+            --bg-card: rgba(30, 41, 59, 0.8);
             --text: #F8FAFC;
             --text-secondary: #94A3B8;
             --border: #334155;
+            --success: #10B981;
             --danger: #EF4444;
-            --gradient: linear-gradient(135deg, #059669 0%, #0891b2 100%);
-            --glass: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --warning: #F59E0B;
+            --gradient: linear-gradient(135deg, #1E40AF 0%, #0EA5E9 50%, #06B6D4 100%);
+            --gradient-light: linear-gradient(135deg, #3B82F6 0%, #0EA5E9 100%);
+            --glass: rgba(30, 41, 59, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glow: 0 0 40px rgba(30, 64, 175, 0.3);
         }
 
         * {
@@ -38,6 +43,9 @@
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg);
+            background-image:
+                radial-gradient(ellipse at 20% 0%, rgba(30, 64, 175, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
             color: var(--text);
             min-height: 100vh;
         }
@@ -160,7 +168,8 @@
         .lang-btn:hover,
         .lang-btn.active {
             border-color: var(--primary);
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(30, 64, 175, 0.15);
+            box-shadow: 0 0 20px rgba(30, 64, 175, 0.2);
         }
 
         .lang-btn .flag {
@@ -221,7 +230,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 8px 24px rgba(30, 64, 175, 0.5);
         }
 
         .btn-primary:disabled {
