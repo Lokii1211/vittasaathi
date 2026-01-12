@@ -56,12 +56,9 @@ from agents.advanced_fraud_agent import advanced_fraud_check
 from agents.moneyviya_agent import moneyviya_agent
 
 # Advanced WhatsApp Agent (v4.0 - Primary Agent)
-try:
-    from agents.advanced_whatsapp_agent import advanced_agent
-    ADVANCED_AGENT_AVAILABLE = True
-except ImportError as e:
-    print(f"Note: Advanced agent not loaded: {e}")
-    ADVANCED_AGENT_AVAILABLE = False
+# Advanced WhatsApp Agent (v4.0 - Primary Agent)
+from agents.advanced_whatsapp_agent import advanced_agent
+ADVANCED_AGENT_AVAILABLE = True
 
 # Config
 from config import SUPPORTED_LANGUAGES, VOICES_DIR
@@ -280,24 +277,16 @@ async def handle_whatsapp_cloud_webhook(request: Request):
                 user_repo.update_user(phone, {"name": sender_name})
                 user["name"] = sender_name
             
-            # Process with AI Agent (Use Advanced Agent if available)
+            # Process with AI Agent (Use Advanced Agent)
             try:
-                if ADVANCED_AGENT_AVAILABLE:
-                    # Advanced Agent with NLP and context awareness
-                    reply_text = await advanced_agent.process_message(phone, message_text, user)
-                else:
-                    # Fallback to original agent
-                    reply_text = moneyviya_agent.process_message(phone, message_text, user)
+                # Advanced Agent with NLP and context awareness
+                reply_text = await advanced_agent.process_message(phone, message_text, user)
                 user_repo.update_user(phone, user)
             except Exception as agent_error:
                 print(f"[Agent Error] {agent_error}")
                 import traceback
                 traceback.print_exc()
-                # Fallback to original agent on any error
-                try:
-                    reply_text = moneyviya_agent.process_message(phone, message_text, user)
-                except:
-                    reply_text = "I'm having trouble. Try:\n• 'spent 50 on tea'\n• 'earned 500 delivery'\n• 'help'"
+                reply_text = "⚠️ System Error: I'm having trouble processing that. Please try again."
             
             # Send reply
             if reply_text and whatsapp_cloud_service.is_available():
