@@ -805,11 +805,16 @@
                         <input type="tel" class="phone" id="otp-input" placeholder="- - - - - -" maxlength="6"
                             style="text-align:center;letter-spacing:5px;font-weight:bold;">
                     </div>
-                    <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="text-align: center; margin-bottom: 10px;">
                         <span id="timer" style="color: var(--text-secondary); font-size: 14px;">Resend in 30s</span>
                         <a href="#" id="resendLink" onclick="resendOTP()"
                             style="color: var(--primary); text-decoration: none; font-size: 14px; display: none;">Resend
                             OTP</a>
+                    </div>
+                    <div
+                        style="text-align: center; margin-bottom: 15px; padding: 10px; background: rgba(16,185,129,0.1); border-radius: 8px;">
+                        <span style="color: var(--primary); font-size: 13px;">💡 <b>Demo Mode:</b> Use OTP <b>123456</b>
+                            for testing</span>
                     </div>
                 </div>
 
@@ -1062,13 +1067,24 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
 
             try {
-                const res = await fetch(`${API}/api/v2/auth/verify-otp`, {
+                // Try demo login first (OTP 123456 always works)
+                let res = await fetch(`${API}/api/v2/auth/demo-login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone, otp })
                 });
 
-                const data = await res.json();
+                let data = await res.json();
+
+                // If demo fails and it's not "123456", try regular OTP
+                if (!data.success && otp !== '123456') {
+                    res = await fetch(`${API}/api/v2/auth/verify-otp`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone, otp })
+                    });
+                    data = await res.json();
+                }
 
                 if (data.success) {
                     localStorage.setItem('phone', phone);
@@ -1076,7 +1092,7 @@
                     toast('Login Successful!', 'success');
                     setTimeout(() => showApp(), 500);
                 } else {
-                    toast(data.message || 'Invalid OTP', 'error');
+                    toast(data.message || 'Invalid OTP. Try 123456 for demo.', 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<span>Verify OTP</span><i class="fas fa-check"></i>';
                 }

@@ -65,10 +65,14 @@ from config import SUPPORTED_LANGUAGES, VOICES_DIR
 
 
 # ================= APP SETUP =================
+# BUILD VERSION: 2026-01-12-v5 - Advanced Agent with IST Timezone
+AGENT_VERSION = "5.0.0-advanced"
+print(f"[STARTUP] VittaSaathi API starting with agent version: {AGENT_VERSION}")
+
 app = FastAPI(
-    title="MoneyViya API",
+    title="VittaSaathi API",
     description="WhatsApp Financial Advisor for Gig Workers & Daily Earners - Track, Save, Grow",
-    version="3.0.0"
+    version=AGENT_VERSION
 )
 
 app.add_middleware(
@@ -90,6 +94,38 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 async def root():
     return RedirectResponse(url="/static/index.html")
+
+# Health check and debug endpoint
+@app.get("/health")
+async def health_check():
+    import pytz
+    from datetime import datetime
+    ist = pytz.timezone('Asia/Kolkata')
+    return {
+        "status": "healthy",
+        "version": AGENT_VERSION,
+        "agent": "AdvancedWhatsAppAgent",
+        "server_time_ist": datetime.now(ist).strftime("%Y-%m-%d %I:%M:%S %p IST"),
+        "features": ["language_selection", "ist_timezone", "accumulated_earnings", "otp_auth", "password_auth"]
+    }
+
+# Debug reset endpoint (for testing)
+@app.get("/debug/reset-user/{phone}")
+async def debug_reset_user(phone: str):
+    """Reset a user's language to force language selection"""
+    clean_phone = phone.replace("+", "").replace(" ", "")
+    if not clean_phone.startswith("91"):
+        clean_phone = "91" + clean_phone
+    full_phone = "+" + clean_phone
+    
+    user = user_repo.get_user(full_phone)
+    if user:
+        user["language"] = None
+        user["onboarding_complete"] = False
+        user["onboarding_step"] = 0
+        user_repo.update_user(full_phone, user)
+        return {"status": "reset", "phone": full_phone, "message": "User reset. Next message will show language selection."}
+    return {"status": "not_found", "phone": full_phone}
 
 
 # Include extended API routes
@@ -2932,6 +2968,101 @@ async def api_verify_otp(request: Request):
         
     except Exception as e:
         print(f"[OTP] Error: {e}")
+        return {"success": False, "message": str(e)}
+
+
+# Demo OTP - Always works with code "123456" for testing
+DEMO_OTP = "123456"
+
+@app.post("/api/v2/auth/login-password")
+async def api_login_password(request: Request):
+    """Alternative login with phone + password (no OTP required)"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "")
+        password = data.get("password", "")
+        
+        if not phone or not password:
+            return {"success": False, "message": "Phone and password required"}
+        
+        import time
+        import hashlib
+        
+        # Normalize phone
+        phone_clean = phone.replace("+", "").replace(" ", "").replace("-", "")
+        if not phone_clean.startswith("91"):
+            phone_clean = "91" + phone_clean
+        full_phone = "+" + phone_clean
+        
+        # Get or create user
+        user = user_repo.get_user(full_phone)
+        if not user:
+            user_repo.ensure_user(full_phone)
+            user = user_repo.get_user(full_phone) or {"phone": full_phone}
+        
+        # Check if password exists
+        stored_hash = user.get("password_hash")
+        
+        if stored_hash:
+            # Verify password
+            input_hash = hashlib.sha256(password.encode()).hexdigest()
+            if input_hash != stored_hash:
+                return {"success": False, "message": "Incorrect password"}
+        else:
+            # First time - set password
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            user["password_hash"] = password_hash
+            user_repo.update_user(full_phone, user)
+        
+        # Success!
+        token = f"session_{full_phone}_{int(time.time())}"
+        return {
+            "success": True,
+            "token": token,
+            "phone": full_phone,
+            "name": user.get("name"),
+            "message": "Logged in successfully!"
+        }
+        
+    except Exception as e:
+        print(f"[Password Auth] Error: {e}")
+        return {"success": False, "message": str(e)}
+
+
+@app.post("/api/v2/auth/demo-login")
+async def api_demo_login(request: Request):
+    """Demo login - always works with OTP 123456"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "")
+        otp = data.get("otp", "")
+        
+        if not phone:
+            return {"success": False, "message": "Phone required"}
+        
+        # Demo OTP check
+        if otp == DEMO_OTP:
+            import time
+            phone_clean = phone.replace("+", "").replace(" ", "")
+            if not phone_clean.startswith("91"):
+                phone_clean = "91" + phone_clean
+            full_phone = "+" + phone_clean
+            
+            user_repo.ensure_user(full_phone)
+            user = user_repo.get_user(full_phone)
+            
+            token = f"demo_session_{full_phone}_{int(time.time())}"
+            return {
+                "success": True,
+                "token": token,
+                "phone": full_phone,
+                "name": user.get("name") if user else None,
+                "demo": True
+            }
+        
+        return {"success": False, "message": "Invalid demo OTP. Use 123456"}
+        
+    except Exception as e:
         return {"success": False, "message": str(e)}
 
 
