@@ -284,13 +284,7 @@ async def handle_whatsapp_cloud_webhook(request: Request):
             try:
                 if ADVANCED_AGENT_AVAILABLE:
                     # Advanced Agent with NLP and context awareness
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    reply_text = loop.run_until_complete(
-                        advanced_agent.process_message(phone, message_text, user)
-                    )
-                    loop.close()
+                    reply_text = await advanced_agent.process_message(phone, message_text, user)
                 else:
                     # Fallback to original agent
                     reply_text = moneyviya_agent.process_message(phone, message_text, user)
@@ -299,7 +293,11 @@ async def handle_whatsapp_cloud_webhook(request: Request):
                 print(f"[Agent Error] {agent_error}")
                 import traceback
                 traceback.print_exc()
-                reply_text = "I'm having trouble. Try:\n• 'spent 50 on tea'\n• 'earned 500 delivery'\n• 'help'"
+                # Fallback to original agent on any error
+                try:
+                    reply_text = moneyviya_agent.process_message(phone, message_text, user)
+                except:
+                    reply_text = "I'm having trouble. Try:\n• 'spent 50 on tea'\n• 'earned 500 delivery'\n• 'help'"
             
             # Send reply
             if reply_text and whatsapp_cloud_service.is_available():

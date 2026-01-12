@@ -62,7 +62,7 @@ class AdvancedWhatsAppAgent:
             "log_income": self._handle_income,
             "check_balance": self._handle_balance,
             "view_report": self._handle_report,
-            "set_goal": self._handle_goal,
+            "set_goal": self._handle_budget,  # Uses same handler as budget_query
             "investment_advice": self._handle_investment,
             "budget_query": self._handle_budget,
             "help": self._handle_help,
