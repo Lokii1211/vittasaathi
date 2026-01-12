@@ -752,8 +752,8 @@ _(Reply with 1, 2, 3, or 4)_"""
             "💡 Review subscriptions to find savings.",
         ]
         
-        lang = user_data.get("detected_language", "en")
-        template = self.templates.get(lang, self.templates["en"])["balance_summary"]
+        lang = user_data.get("language", "en")
+        template = self.templates.get(lang, self.templates["en"]).get("balance_summary", self.templates["en"]["balance_summary"])
         
         return template.format(
             balance=balance,
@@ -770,6 +770,7 @@ _(Reply with 1, 2, 3, or 4)_"""
         """Handle report generation request"""
         phone = user_data.get("phone")
         name = user_data.get("name", "Friend")
+        lang = user_data.get("language", "en")
         
         # Determine report type
         report_type = "weekly"  # default
@@ -779,32 +780,76 @@ _(Reply with 1, 2, 3, or 4)_"""
         # Get data
         income = self._get_month_income(phone)
         expenses = self._get_month_expenses(phone)
+        savings = income - expenses
         
         # Category breakdown (simplified)
         categories = self._get_category_breakdown(phone)
         
-        report = f"""📊 *{report_type.title()} Report for {name}*
+        # Report titles by language
+        titles = {
+            "en": f"📊 *Weekly Report for {name}*",
+            "ta": f"📊 *{name} வாராந்திர அறிக்கை*",
+            "hi": f"📊 *{name} साप्ताहिक रिपोर्ट*",
+            "te": f"📊 *{name} వారపు నివేదిక*"
+        }
+        
+        # Labels by language
+        labels = {
+            "en": {"income": "Total Income", "expenses": "Total Expenses", "savings": "Net Savings", 
+                   "categories": "Category Breakdown", "insight": "AI Insight", "pdf": "Get PDF"},
+            "ta": {"income": "மொத்த வருமானம்", "expenses": "மொத்த செலவுகள்", "savings": "நிகர சேமிப்பு",
+                   "categories": "வகை பிரிப்பு", "insight": "AI நுண்ணறிவு", "pdf": "PDF பெறுங்கள்"},
+            "hi": {"income": "कुल आय", "expenses": "कुल खर्च", "savings": "शुद्ध बचत",
+                   "categories": "श्रेणी विवरण", "insight": "AI अंतर्दृष्टि", "pdf": "PDF प्राप्त करें"},
+            "te": {"income": "మొత్తం ఆదాయం", "expenses": "మొత్తం ఖర్చులు", "savings": "నికర పొదుపు",
+                   "categories": "వర్గాల వివరణ", "insight": "AI అంతర్దృష్టి", "pdf": "PDF పొందండి"}
+        }
+        
+        l = labels.get(lang, labels["en"])
+        
+        report = f"""{titles.get(lang, titles["en"])}
 ━━━━━━━━━━━━━━━━━━━━
 
-💵 *Total Income:* ₹{income:,}
-💸 *Total Expenses:* ₹{expenses:,}
-💰 *Net Savings:* ₹{income - expenses:,}
+💵 *{l['income']}:* ₹{income:,}
+💸 *{l['expenses']}:* ₹{expenses:,}
+💰 *{l['savings']}:* ₹{savings:,}
 
-📈 *Category Breakdown:*
+📈 *{l['categories']}:*
 """
         if not categories:
-            report += "No expenses recorded this period.\n"
+            no_expense = {
+                "en": "No expenses recorded this period.",
+                "ta": "இந்த காலகட்டத்தில் செலவுகள் பதிவு செய்யப்படவில்லை.",
+                "hi": "इस अवधि में कोई खर्च दर्ज नहीं।",
+                "te": "ఈ కాలంలో ఖర్చులు నమోదు కాలేదు."
+            }
+            report += no_expense.get(lang, no_expense["en"]) + "\n"
         else:
             for cat, amount in categories.items():
                 emoji = {"food": "🍽️", "transport": "🚗", "bills": "📱", "shopping": "🛍️", "other": "📦"}.get(cat, "📦")
                 report += f"{emoji} {cat.title()}: ₹{amount:,}\n"
         
-        report += """
-💡 *AI Insight:* Focus on reducing food expenses to hit your savings goal faster!
+        insights = {
+            "en": "Focus on reducing food expenses to hit your savings goal faster!",
+            "ta": "உங்கள் சேமிப்பு இலக்கை விரைவாக அடைய உணவு செலவுகளை குறைக்க கவனம் செலுத்துங்கள்!",
+            "hi": "अपने बचत लक्ष्य को तेजी से हासिल करने के लिए खाने के खर्च कम करें!",
+            "te": "మీ సేవింగ్స్ లక్ష్యాన్ని త్వరగా సాధించడానికి ఆహార ఖర్చులను తగ్గించండి!"
+        }
+        
+        pdf_msg = {
+            "en": 'Type "PDF report" for detailed analysis.',
+            "ta": '"PDF அறிக்கை" என டைப் செய்யுங்கள் விரிவான பகுப்பாய்விற்கு.',
+            "hi": 'विस्तृत विश्लेषण के लिए "PDF रिपोर्ट" टाइप करें।',
+            "te": 'వివరమైన విశ్లేషణ కోసం "PDF నివేదిక" టైప్ చేయండి.'
+        }
+        
+        report += f"""
+💡 *{l['insight']}:* {insights.get(lang, insights["en"])}
 
-📄 *Get PDF:* Type "PDF report" for detailed analysis."""
+📄 *{l['pdf']}:* {pdf_msg.get(lang, pdf_msg["en"])}"""
         
         return report
+
 
     def _get_ist_time(self):
         """Get current time in IST"""
@@ -1256,7 +1301,17 @@ What would you like to achieve?
         elif step == 7:  # Got timeline
             months = self._parse_timeline(message)
             days = months * 30
-            timeline_str = f"{months} Months" if months < 24 else f"{months/12:.1f} Years"
+            lang = user_data.get("language", "en")
+            
+            # Timeline string based on language
+            if lang == "ta":
+                timeline_str = f"{months} மாதங்கள்" if months < 24 else f"{months/12:.1f} வருடங்கள்"
+            elif lang == "hi":
+                timeline_str = f"{months} महीने" if months < 24 else f"{months/12:.1f} साल"
+            elif lang == "te":
+                timeline_str = f"{months} నెలలు" if months < 24 else f"{months/12:.1f} సంవత్సరాలు"
+            else:
+                timeline_str = f"{months} Months" if months < 24 else f"{months/12:.1f} Years"
             
             user_data["timeline"] = timeline_str
             user_data["timeline_days"] = days
@@ -1266,28 +1321,40 @@ What would you like to achieve?
             
             # Calculate targets
             target = user_data.get("target_amount", 100000)
+            monthly_income = user_data.get("monthly_income", 30000)
             daily_target = round(target / max(1, days))
             monthly_target = round(target / max(1, months))
             
+            # Daily budget = (monthly income / 30) - daily savings target
+            # But ensure minimum budget of ₹200
+            daily_budget = max(500, (monthly_income // 30) - daily_target)
+            
             user_data["daily_target"] = daily_target
-            user_data["daily_budget"] = max(200, user_data.get("monthly_income", 30000) // 30 - daily_target)
+            user_data["daily_budget"] = daily_budget
+            user_data["monthly_target"] = monthly_target
             
             user_repo.update_user(phone, user_data)
             
-            return f"""🎉 *Your profile is ready!*
+            name = user_data.get('name', 'Friend')
+            work = user_data.get('occupation', 'User')
+            goal = user_data.get('goal_type', 'Savings')
+            
+            responses = {
+                "en": f"""🎉 *Your profile is ready!*
 
 📊 *Your Financial Plan:*
 ━━━━━━━━━━━━━━━━━
-👤 Name: {user_data.get('name', 'Friend')}
-💼 Work: {user_data.get('occupation', 'User')}
-💰 Income: ₹{user_data.get('monthly_income', 0):,}/month
-🎯 Goal: {user_data.get('goal_type', 'Savings')}
+👤 Name: {name}
+💼 Work: {work}
+💰 Income: ₹{monthly_income:,}/month
+🎯 Goal: {goal}
 💵 Target: ₹{target:,}
 📅 Timeline: {timeline_str}
 ━━━━━━━━━━━━━━━━━
 
 📈 *Daily Target:* ₹{daily_target:,}
 📅 *Monthly Target:* ₹{monthly_target:,}
+💸 *Daily Budget:* ₹{daily_budget:,}
 
 I'll send you:
 ⏰ Morning reminder at 6 AM
@@ -1295,7 +1362,82 @@ I'll send you:
 📈 Weekly progress report
 
 *Type "help" anytime for assistance!*
-*Start tracking: "Spent 50 on tea"*"""
+*Start tracking: "Spent 50 on tea"*""",
+
+                "ta": f"""🎉 *உங்கள் சுயவிவரம் தயார்!*
+
+📊 *உங்கள் நிதி திட்டம்:*
+━━━━━━━━━━━━━━━━━
+👤 பெயர்: {name}
+💼 வேலை: {work}
+💰 வருமானம்: ₹{monthly_income:,}/மாதம்
+🎯 இலக்கு: {goal}
+💵 இலக்கு தொகை: ₹{target:,}
+📅 காலம்: {timeline_str}
+━━━━━━━━━━━━━━━━━
+
+📈 *தினசரி இலக்கு:* ₹{daily_target:,}
+📅 *மாதாந்திர இலக்கு:* ₹{monthly_target:,}
+💸 *தினசரி பட்ஜெட்:* ₹{daily_budget:,}
+
+நான் அனுப்புவேன்:
+⏰ காலை நினைவூட்டல் 6 AM
+📊 தினசரி சுருக்கம் 8 PM
+📈 வாராந்திர முன்னேற்ற அறிக்கை
+
+*எப்போது வேண்டுமானாலும் "help" என டைப் செய்யுங்கள்!*
+*தொடங்குங்கள்: "டீக்கு 50 செலவழித்தேன்"*""",
+
+                "hi": f"""🎉 *आपकी प्रोफ़ाइल तैयार है!*
+
+📊 *आपकी वित्तीय योजना:*
+━━━━━━━━━━━━━━━━━
+👤 नाम: {name}
+💼 काम: {work}
+💰 आय: ₹{monthly_income:,}/महीना
+🎯 लक्ष्य: {goal}
+💵 लक्ष्य राशि: ₹{target:,}
+📅 समय: {timeline_str}
+━━━━━━━━━━━━━━━━━
+
+📈 *दैनिक लक्ष्य:* ₹{daily_target:,}
+📅 *मासिक लक्ष्य:* ₹{monthly_target:,}
+💸 *दैनिक बजट:* ₹{daily_budget:,}
+
+मैं भेजूंगा:
+⏰ सुबह 6 बजे याद दिलाना
+📊 रात 8 बजे दैनिक सारांश
+📈 साप्ताहिक प्रगति रिपोर्ट
+
+*कभी भी मदद के लिए "help" टाइप करें!*
+*शुरू करें: "चाय पर 50 खर्च किए"*""",
+
+                "te": f"""🎉 *మీ ప్రొఫైల్ సిద్ధంగా ఉంది!*
+
+📊 *మీ ఆర్థిక ప్రణాళిక:*
+━━━━━━━━━━━━━━━━━
+👤 పేరు: {name}
+💼 పని: {work}
+💰 ఆదాయం: ₹{monthly_income:,}/నెల
+🎯 లక్ష్యం: {goal}
+💵 లక్ష్య మొత్తం: ₹{target:,}
+📅 సమయం: {timeline_str}
+━━━━━━━━━━━━━━━━━
+
+📈 *రోజువారీ లక్ష్యం:* ₹{daily_target:,}
+📅 *నెలవారీ లక్ష్యం:* ₹{monthly_target:,}
+💸 *రోజువారీ బడ్జెట్:* ₹{daily_budget:,}
+
+నేను పంపుతాను:
+⏰ ఉదయం 6 గంటలకు రిమైండర్
+📊 రాత్రి 8 గంటలకు సారాంశం
+📈 వారపు ప్రగతి నివేదిక
+
+*సహాయం కోసం ఎప్పుడైనా "help" టైప్ చేయండి!*
+*ప్రారంభించండి: "టీకి 50 ఖర్చు"*"""
+            }
+            
+            return responses.get(lang, responses["en"])
         
         return self._handle_help(message, user_data, {}, context)
     
