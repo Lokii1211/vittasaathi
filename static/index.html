@@ -662,6 +662,106 @@
             border-color: #E2E8F0;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
+
+        /* ================= DESKTOP RESPONSIVE ================= */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 800px;
+                padding: 40px;
+            }
+
+            .balance-card {
+                padding: 32px;
+            }
+
+            .balance-main {
+                font-size: 48px;
+            }
+
+            .actions-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 20px;
+            }
+
+            .action {
+                padding: 24px 16px;
+            }
+
+            .action-icon {
+                width: 64px;
+                height: 64px;
+                font-size: 28px;
+            }
+
+            .action span {
+                font-size: 14px;
+            }
+
+            .txn-list {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .txn {
+                padding: 20px;
+            }
+
+            .bottom-nav {
+                max-width: 800px;
+                left: 50%;
+                transform: translateX(-50%);
+                border-radius: 20px 20px 0 0;
+                bottom: 0;
+            }
+
+            .login {
+                max-width: 500px;
+                margin: 0 auto;
+                padding: 60px 40px;
+            }
+
+            .login-header h1 {
+                font-size: 36px;
+            }
+
+            .lang-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .whatsapp-float {
+                bottom: 100px;
+                right: 40px;
+                width: 64px;
+                height: 64px;
+                font-size: 32px;
+            }
+        }
+
+        /* Large Desktop */
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1000px;
+            }
+
+            .txn-list {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .balance-card {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .balance-info {
+                flex: 1;
+            }
+
+            .bottom-nav {
+                max-width: 1000px;
+            }
+        }
     </style>
 </head>
 
