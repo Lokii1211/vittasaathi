@@ -521,26 +521,30 @@ _(Reply with 1, 2, 3, or 4)_"""
     
     def _handle_expense(self, message: str, user_data: Dict, entities: Dict, context: Dict) -> str:
         """Handle expense logging"""
+        import pytz
+        ist = pytz.timezone('Asia/Kolkata')
+        
         amount = entities.get("amount", 0)
         category = entities.get("category", "other")
         
         if not amount:
             return "💸 I couldn't find the amount. Please say like: 'Spent 200 on food'"
         
-        # Log the expense
+        # Log the expense with IST time
         phone = user_data.get("phone")
+        ist_now = datetime.now(ist)
         try:
             transaction_repo.add_transaction(phone, {
                 "type": "expense",
                 "amount": amount,
                 "category": category,
-                "date": datetime.now().isoformat(),
+                "date": ist_now.isoformat(),
                 "description": message
             })
         except Exception as e:
             print(f"Error logging expense: {e}")
         
-        # Get today's total
+        # Get today's total (accumulated)
         today_total = self._get_today_expenses(phone)
         daily_budget = user_data.get("daily_budget", 500)
         remaining = max(0, daily_budget - today_total)
@@ -553,13 +557,13 @@ _(Reply with 1, 2, 3, or 4)_"""
             "💡 Track every expense for better insights!",
         ]
         
-        lang = user_data.get("detected_language", "en")
+        lang = user_data.get("language", "en")
         template = self.templates.get(lang, self.templates["en"])["expense_logged"]
         
         return template.format(
             amount=amount,
             category=category.title(),
-            date=datetime.now().strftime("%d %b, %I:%M %p"),
+            date=ist_now.strftime("%d %b, %I:%M %p"),
             today_total=today_total,
             remaining=remaining,
             tip=random.choice(tips)
