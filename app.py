@@ -73,12 +73,17 @@ except Exception as e:
     ADVANCED_AGENT_AVAILABLE = False
 
 # MoneyViya Agent (v2.0 - Primary Agent for new users)
+MONEYVIEW_ERROR = None
 try:
     from agents.moneyview_agent import moneyview_agent, process_message as moneyview_process
     from moneyview_api import moneyview_router
     MONEYVIEW_AVAILABLE = True
+    print("[STARTUP] MoneyViya loaded successfully!")
 except Exception as e:
+    import traceback
+    MONEYVIEW_ERROR = traceback.format_exc()
     print(f"[STARTUP] MoneyViya not available: {e}")
+    print(f"[STARTUP] Error details: {MONEYVIEW_ERROR}")
     moneyview_agent = None
     MONEYVIEW_AVAILABLE = False
 
@@ -174,7 +179,8 @@ def health_check():
         "version": AGENT_VERSION,
         "whatsapp_cloud_configured": whatsapp_cloud_service.is_available(),
         "openai_configured": openai_service.is_available(),
-        "moneyview_available": MONEYVIEW_AVAILABLE
+        "moneyview_available": MONEYVIEW_AVAILABLE,
+        "moneyview_error": MONEYVIEW_ERROR[:500] if MONEYVIEW_ERROR else None
     }
 
 
