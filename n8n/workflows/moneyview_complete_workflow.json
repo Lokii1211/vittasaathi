@@ -1,14 +1,14 @@
 {
-    "name": "MoneyViya Complete Bot",
+    "name": "MoneyView Complete Workflow",
     "nodes": [
         {
             "parameters": {
                 "httpMethod": "POST",
-                "path": "whatsapp-message",
+                "path": "moneyview-webhook",
                 "responseMode": "responseNode",
                 "options": {}
             },
-            "id": "webhook-receiver",
+            "id": "webhook-main",
             "name": "Receive WhatsApp Message",
             "type": "n8n-nodes-base.webhook",
             "typeVersion": 1.1,
@@ -16,14 +16,14 @@
                 240,
                 300
             ],
-            "webhookId": "moneyviya-webhook"
+            "webhookId": "moneyview-main"
         },
         {
             "parameters": {
-                "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nreturn {\n  phone: body.phone || '',\n  message: body.message || '',\n  sender_name: body.sender_name || 'Friend'\n};"
+                "jsCode": "const body = $input.first().json.body || $input.first().json;\nreturn {\n  phone: body.phone || '',\n  message: body.message || '',\n  sender_name: body.sender_name || 'Friend'\n};"
             },
-            "id": "extract-data",
-            "name": "Extract Message Data",
+            "id": "extract-msg",
+            "name": "Extract Data",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
             "position": [
@@ -34,7 +34,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://moneyviya.up.railway.app/api/v2/whatsapp/process",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/process",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
@@ -51,8 +51,8 @@
                     "timeout": 30000
                 }
             },
-            "id": "process-railway",
-            "name": "Process via Railway API",
+            "id": "process-msg",
+            "name": "Process via MoneyView API",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
@@ -62,9 +62,9 @@
         },
         {
             "parameters": {
-                "jsCode": "const response = $input.first().json;\nconst prevData = $('Extract Message Data').first().json;\n\nreturn {\n  phone: prevData.phone,\n  reply: response.reply || 'Sorry, something went wrong. Please try again.'\n};"
+                "jsCode": "const response = $input.first().json;\nconst prev = $('Extract Data').first().json;\nreturn {\n  phone: prev.phone,\n  reply: response.reply || 'Sorry, please try again.'\n};"
             },
-            "id": "prepare-reply",
+            "id": "prep-reply",
             "name": "Prepare Reply",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
@@ -79,8 +79,8 @@
                 "responseBody": "={{ JSON.stringify({ success: true, phone: $json.phone, reply: $json.reply }) }}",
                 "options": {}
             },
-            "id": "respond-webhook",
-            "name": "Send Response to Baileys",
+            "id": "respond",
+            "name": "Send to Baileys",
             "type": "n8n-nodes-base.respondToWebhook",
             "typeVersion": 1,
             "position": [
@@ -99,7 +99,7 @@
                     ]
                 }
             },
-            "id": "morning-trigger",
+            "id": "morning-6am",
             "name": "Morning 6 AM",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
@@ -110,28 +110,15 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/v2/users/active",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/morning-briefing",
                 "options": {}
             },
-            "id": "get-users-morning",
-            "name": "Get Users Morning",
+            "id": "get-morning",
+            "name": "Generate Morning Briefings",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 460,
-                540
-            ]
-        },
-        {
-            "parameters": {
-                "jsCode": "const data = $input.first().json;\nconst users = Array.isArray(data) ? data : [];\nconst results = [];\n\nfor (const user of users) {\n  const lang = user.language || 'en';\n  const name = user.name || 'Friend';\n  const budget = user.daily_budget || 1000;\n  const target = user.daily_target || 500;\n  \n  let msg = '';\n  if (lang === 'ta') {\n    msg = `☀️ காலை வணக்கம், ${name}!\\n\\n📊 இன்றைய திட்டம்:\\n💰 பட்ஜெட்: ₹${budget}\\n🎯 இலக்கு: ₹${target}\\n\\n💪 நல்ல நாளாக இருக்கும்!`;\n  } else if (lang === 'hi') {\n    msg = `☀️ सुप्रभात, ${name}!\\n\\n📊 आज की योजना:\\n💰 बजट: ₹${budget}\\n🎯 लक्ष्य: ₹${target}\\n\\n💪 अच्छा दिन होगा!`;\n  } else {\n    msg = `☀️ Good Morning, ${name}!\\n\\n📊 Today's Plan:\\n💰 Budget: ₹${budget}\\n🎯 Target: ₹${target}\\n\\n💪 Have a great day!`;\n  }\n  results.push({ phone: user.phone, message: msg });\n}\n\nreturn results;"
-            },
-            "id": "gen-morning",
-            "name": "Generate Morning Msgs",
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
-            "position": [
-                680,
                 540
             ]
         },
@@ -145,7 +132,7 @@
             "type": "n8n-nodes-base.splitInBatches",
             "typeVersion": 3,
             "position": [
-                900,
+                680,
                 540
             ]
         },
@@ -159,12 +146,78 @@
                 "options": {}
             },
             "id": "send-morning",
-            "name": "Send Morning",
+            "name": "Send Morning MSG",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
-                1120,
+                900,
                 540
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 9 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "market-9am",
+            "name": "Market 9 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                760
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://moneyviya.up.railway.app/api/moneyview/market-analysis",
+                "options": {}
+            },
+            "id": "get-market",
+            "name": "Get Market Analysis",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                760
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop-market",
+            "name": "Loop Market",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                680,
+                760
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://localhost:3001/send",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.message }) }}",
+                "options": {}
+            },
+            "id": "send-market",
+            "name": "Send Market MSG",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                900,
+                760
             ]
         },
         {
@@ -178,40 +231,27 @@
                     ]
                 }
             },
-            "id": "evening-trigger",
+            "id": "evening-8pm",
             "name": "Evening 8 PM",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
             "position": [
                 240,
-                760
+                980
             ]
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/v2/users/active",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/evening-checkin",
                 "options": {}
             },
-            "id": "get-users-evening",
-            "name": "Get Users Evening",
+            "id": "get-evening",
+            "name": "Get Evening Check-ins",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 460,
-                760
-            ]
-        },
-        {
-            "parameters": {
-                "jsCode": "const data = $input.first().json;\nconst users = Array.isArray(data) ? data : [];\nconst results = [];\n\nfor (const user of users) {\n  const lang = user.language || 'en';\n  const name = user.name || 'Friend';\n  const inc = user.today_income || 0;\n  const exp = user.today_expenses || 0;\n  const net = inc - exp;\n  const emoji = net > 0 ? '🎉' : '📊';\n  \n  let msg = '';\n  if (lang === 'ta') {\n    msg = `🌙 ${name}, இன்றைய சுருக்கம்\\n\\n💵 வருமானம்: ₹${inc}\\n💸 செலவு: ₹${exp}\\n${emoji} நிகரம்: ₹${net}\\n\\n${net > 0 ? '👏 நல்ல வேலை!' : '💪 நாளை சிறப்பாக!'}`;\n  } else if (lang === 'hi') {\n    msg = `🌙 ${name}, आज का सारांश\\n\\n💵 आय: ₹${inc}\\n💸 खर्च: ₹${exp}\\n${emoji} शुद्ध: ₹${net}\\n\\n${net > 0 ? '👏 बढ़िया!' : '💪 कल बेहतर!'}`;\n  } else {\n    msg = `🌙 ${name}, Today's Summary\\n\\n💵 Income: ₹${inc}\\n💸 Expenses: ₹${exp}\\n${emoji} Net: ₹${net}\\n\\n${net > 0 ? '👏 Great job!' : '💪 Tomorrow!'}`;\n  }\n  results.push({ phone: user.phone, message: msg });\n}\n\nreturn results;"
-            },
-            "id": "gen-evening",
-            "name": "Generate Evening Msgs",
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
-            "position": [
-                680,
-                760
+                980
             ]
         },
         {
@@ -224,8 +264,8 @@
             "type": "n8n-nodes-base.splitInBatches",
             "typeVersion": 3,
             "position": [
-                900,
-                760
+                680,
+                980
             ]
         },
         {
@@ -238,12 +278,12 @@
                 "options": {}
             },
             "id": "send-evening",
-            "name": "Send Evening",
+            "name": "Send Evening MSG",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
-                1120,
-                760
+                900,
+                980
             ]
         },
         {
@@ -257,28 +297,28 @@
                     ]
                 }
             },
-            "id": "weekly-trigger",
+            "id": "weekly-sun",
             "name": "Sunday 10 AM",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
             "position": [
                 240,
-                980
+                1200
             ]
         },
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://moneyviya.up.railway.app/api/v2/reports/weekly/generate",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/weekly-reports",
                 "options": {}
             },
-            "id": "gen-weekly",
+            "id": "get-weekly",
             "name": "Generate Weekly Reports",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 460,
-                980
+                1200
             ]
         },
         {
@@ -292,7 +332,7 @@
             "typeVersion": 3,
             "position": [
                 680,
-                980
+                1200
             ]
         },
         {
@@ -305,12 +345,79 @@
                 "options": {}
             },
             "id": "send-weekly",
-            "name": "Send Weekly",
+            "name": "Send Weekly Report",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 900,
-                980
+                1200
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 10 1 * *"
+                        }
+                    ]
+                }
+            },
+            "id": "monthly-1st",
+            "name": "1st of Month 10 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                1420
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://moneyviya.up.railway.app/api/moneyview/monthly-reports",
+                "options": {}
+            },
+            "id": "get-monthly",
+            "name": "Generate Monthly Reports",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                1420
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop-monthly",
+            "name": "Loop Monthly",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                680,
+                1420
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://localhost:3001/send",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.report }) }}",
+                "options": {}
+            },
+            "id": "send-monthly",
+            "name": "Send Monthly Report",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                900,
+                1420
             ]
         }
     ],
@@ -319,25 +426,25 @@
             "main": [
                 [
                     {
-                        "node": "Extract Message Data",
+                        "node": "Extract Data",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Extract Message Data": {
+        "Extract Data": {
             "main": [
                 [
                     {
-                        "node": "Process via Railway API",
+                        "node": "Process via MoneyView API",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Process via Railway API": {
+        "Process via MoneyView API": {
             "main": [
                 [
                     {
@@ -352,7 +459,7 @@
             "main": [
                 [
                     {
-                        "node": "Send Response to Baileys",
+                        "node": "Send to Baileys",
                         "type": "main",
                         "index": 0
                     }
@@ -363,25 +470,14 @@
             "main": [
                 [
                     {
-                        "node": "Get Users Morning",
+                        "node": "Generate Morning Briefings",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Get Users Morning": {
-            "main": [
-                [
-                    {
-                        "node": "Generate Morning Msgs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Generate Morning Msgs": {
+        "Generate Morning Briefings": {
             "main": [
                 [
                     {
@@ -396,7 +492,40 @@
             "main": [
                 [
                     {
-                        "node": "Send Morning",
+                        "node": "Send Morning MSG",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Market 9 AM": {
+            "main": [
+                [
+                    {
+                        "node": "Get Market Analysis",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Market Analysis": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Market",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Market": {
+            "main": [
+                [
+                    {
+                        "node": "Send Market MSG",
                         "type": "main",
                         "index": 0
                     }
@@ -407,25 +536,14 @@
             "main": [
                 [
                     {
-                        "node": "Get Users Evening",
+                        "node": "Get Evening Check-ins",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Get Users Evening": {
-            "main": [
-                [
-                    {
-                        "node": "Generate Evening Msgs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Generate Evening Msgs": {
+        "Get Evening Check-ins": {
             "main": [
                 [
                     {
@@ -440,7 +558,7 @@
             "main": [
                 [
                     {
-                        "node": "Send Evening",
+                        "node": "Send Evening MSG",
                         "type": "main",
                         "index": 0
                     }
@@ -473,7 +591,40 @@
             "main": [
                 [
                     {
-                        "node": "Send Weekly",
+                        "node": "Send Weekly Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "1st of Month 10 AM": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Monthly Reports",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Monthly Reports": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Monthly",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Monthly": {
+            "main": [
+                [
+                    {
+                        "node": "Send Monthly Report",
                         "type": "main",
                         "index": 0
                     }
@@ -487,7 +638,7 @@
     },
     "staticData": null,
     "tags": [],
-    "triggerCount": 4,
-    "updatedAt": "2026-01-12T11:18:00.000Z",
-    "versionId": "2"
+    "triggerCount": 6,
+    "updatedAt": "2026-01-12T13:50:00.000Z",
+    "versionId": "3"
 }

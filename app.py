@@ -60,6 +60,15 @@ from agents.moneyviya_agent import moneyviya_agent
 from agents.advanced_whatsapp_agent import advanced_agent
 ADVANCED_AGENT_AVAILABLE = True
 
+# MoneyView Agent (v2.0 - Personal Financial Manager)
+try:
+    from agents.moneyview_agent import moneyview_agent, process_message as moneyview_process
+    from moneyview_api import moneyview_router
+    MONEYVIEW_AVAILABLE = True
+except Exception as e:
+    print(f"[STARTUP] MoneyView not available: {e}")
+    MONEYVIEW_AVAILABLE = False
+
 # Config
 from config import SUPPORTED_LANGUAGES, VOICES_DIR
 
@@ -88,6 +97,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Include MoneyView API Router
+if MONEYVIEW_AVAILABLE:
+    app.include_router(moneyview_router)
+    print("[STARTUP] MoneyView API router included")
 
 
 # Root redirect to new dashboard
