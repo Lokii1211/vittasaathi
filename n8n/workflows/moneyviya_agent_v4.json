@@ -1,0 +1,328 @@
+{
+    "name": "MoneyViya Financial Agent Automation",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "triggerAtHour": 6
+                        }
+                    ]
+                }
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000001",
+            "name": "6 AM Morning Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                260,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "triggerAtHour": 20
+                        }
+                    ]
+                }
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000002",
+            "name": "8 PM Evening Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                260,
+                500
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "weeks",
+                            "triggerAtDay": [
+                                0
+                            ],
+                            "triggerAtHour": 10
+                        }
+                    ]
+                }
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000003",
+            "name": "Sunday Weekly Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                260,
+                700
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "https://moneyviya.up.railway.app/api/users/active",
+                "options": {}
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000004",
+            "name": "Get Active Users",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                500,
+                500
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000005",
+            "name": "Process Each User",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                720,
+                500
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "condition-1",
+                            "leftValue": "={{ $json.onboarding_complete }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000006",
+            "name": "Filter Active Users",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                940,
+                500
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const user = $input.first().json;\nconst name = user.name || 'Friend';\nconst dailyBudget = user.daily_budget || 500;\nconst dailyTarget = user.daily_target || 200;\n\nconst motivations = [\n  '💪 \"Every rupee saved is a step closer to your dream!\"',\n  '🌟 \"Small daily savings create big future wealth!\"',\n  '🔥 \"Consistency beats intensity. You got this!\"'\n];\n\nconst tips = [\n  'Pack lunch today to save ₹100!',\n  'Compare prices before buying.',\n  'Avoid impulse purchases.'\n];\n\nconst motivation = motivations[Math.floor(Math.random() * motivations.length)];\nconst tip = tips[Math.floor(Math.random() * tips.length)];\n\nconst message = `☀️ *Good Morning, ${name}!*\n\n📅 *Today's Plan:*\n━━━━━━━━━━━━━━\n💰 Budget: ₹${dailyBudget}\n🎯 Target: ₹${dailyTarget}\n━━━━━━━━━━━━━━\n\n${motivation}\n\n💡 *Tip:* ${tip}\n\n*Track:* \"spent 50 on tea\"`;\n\nreturn { phone: user.phone, message: message };"
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000007",
+            "name": "Generate Morning Message",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1200,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const user = $input.first().json;\nconst name = user.name || 'Friend';\nconst todayIncome = user.today_income || 0;\nconst todayExpenses = user.today_expenses || 0;\nconst net = todayIncome - todayExpenses;\n\nlet comparison = '';\nif (net > 0) comparison = `✅ Saved ₹${net} today!`;\nelse if (net === 0) comparison = '➖ Break-even day.';\nelse comparison = `⚠️ Overspent ₹${Math.abs(net)}`;\n\nconst today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });\n\nconst message = `🌙 *Daily Closing - ${today}*\n\n📊 *Summary:*\n━━━━━━━━━━━━━━\n💵 Income: ₹${todayIncome}\n💸 Expenses: ₹${todayExpenses}\n💰 Net: ₹${net}\n━━━━━━━━━━━━━━\n\n${comparison}\n\n*Complete?* Reply Yes/No`;\n\nreturn { phone: user.phone, message: message };"
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000008",
+            "name": "Generate Evening Message",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1200,
+                500
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const user = $input.first().json;\nconst name = user.name || 'Friend';\n\nconst message = `📊 *Weekly Report - ${name}*\n━━━━━━━━━━━━━━━━━━\n\n🏥 Financial Health: Good\n\n💡 *This Week:*\n• Track all expenses\n• Review subscriptions\n• Stay consistent\n\n💪 Keep going!`;\n\nreturn { phone: user.phone, message: message };"
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000009",
+            "name": "Generate Weekly Report",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1200,
+                700
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://moneyviya.up.railway.app/api/send-message",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ { \"phone\": $json.phone, \"message\": $json.message } }}",
+                "options": {}
+            },
+            "id": "1a2b3c4d-0001-0001-0001-000000000010",
+            "name": "Send WhatsApp Message",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1460,
+                500
+            ]
+        },
+        {
+            "parameters": {},
+            "id": "1a2b3c4d-0001-0001-0001-000000000011",
+            "name": "No Operation",
+            "type": "n8n-nodes-base.noOp",
+            "typeVersion": 1,
+            "position": [
+                1200,
+                900
+            ]
+        }
+    ],
+    "connections": {
+        "6 AM Morning Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "8 PM Evening Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Sunday Weekly Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Active Users": {
+            "main": [
+                [
+                    {
+                        "node": "Process Each User",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process Each User": {
+            "main": [
+                [
+                    {
+                        "node": "Filter Active Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Process Each User",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filter Active Users": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Morning Message",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Generate Evening Message",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Generate Weekly Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "No Operation",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Morning Message": {
+            "main": [
+                [
+                    {
+                        "node": "Send WhatsApp Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Evening Message": {
+            "main": [
+                [
+                    {
+                        "node": "Send WhatsApp Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Weekly Report": {
+            "main": [
+                [
+                    {
+                        "node": "Send WhatsApp Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": []
+}
