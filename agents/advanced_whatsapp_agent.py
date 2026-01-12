@@ -111,8 +111,8 @@ Example: "Spent 500 on groceries" or "How much did I spend this week?"
 📁 Source: {category}
 📅 {date}
 
-📈 This Month's Income: ₹{month_income}
-🎯 Goal Progress: {goal_progress}%
+💰 *Today's Earnings:* ₹{today_income}
+🎯 *Goal Progress:* +₹{amount} closer!
 
 {motivation}""",
                 "balance_summary": """📊 *Your Financial Summary*
@@ -276,6 +276,9 @@ Enter this code on the website to access your dashboard.""",
         Main entry point for processing WhatsApp messages
         """
         import pytz
+        ist = pytz.timezone('Asia/Kolkata')
+        
+        print(f"[AdvancedAgent] Processing message from {phone}: {message[:50]}...")
         
         # Load user data if not provided
         if user_data is None:
@@ -288,28 +291,62 @@ Enter this code on the website to access your dashboard.""",
             user_data["onboarding_step"] = 0
             user_repo.update_user(phone, user_data)
         
-        # FORCE LANGUAGE SELECTION if missing or invalid
+        # Store phone in user_data for handlers
+        user_data["phone"] = phone
+        
+        # FORCE LANGUAGE SELECTION for ALL users without valid language
         current_lang = user_data.get("language")
-        if not current_lang or current_lang not in ["en", "hi", "ta", "te"]:
-            if not user_data.get("onboarding_complete"):
-                user_data["onboarding_step"] = 0
+        valid_langs = ["en", "hi", "ta", "te"]
+        
+        # Check for language command
+        msg_lower = message.strip().lower()
+        if msg_lower in ["language", "change language", "lang", "भाषा"]:
+            user_data["onboarding_step"] = 0
+            user_data["language"] = None
+            user_repo.update_user(phone, user_data)
+            return self._handle_onboarding(phone, message, user_data, {})
+        
+        # Force language selection if not set or invalid
+        if not current_lang or current_lang not in valid_langs:
+            # Check if user is selecting language (1, 2, 3, 4)
+            if msg_lower in ["1", "2", "3", "4", "english", "hindi", "tamil", "telugu"]:
+                lang_map = {"1": "en", "2": "hi", "3": "ta", "4": "te",
+                           "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te"}
+                user_data["language"] = lang_map.get(msg_lower, "en")
+                user_data["onboarding_step"] = 2  # Move to name step
                 user_repo.update_user(phone, user_data)
-                return self._handle_onboarding(phone, message, user_data, {})
+                greetings = {"en": "Great!", "hi": "बहुत अच्छा!", "ta": "நல்லது!", "te": "చాలా బాగుంది!"}
+                return f"""{greetings.get(user_data["language"], "Great!")} ✅
+
+*What should I call you?*
+_(Just type your name)_"""
+            else:
+                # Show language selection
+                return """👋 *Welcome to VittaSaathi!*
+Your Personal AI Financial Advisor 💰
+
+🌐 *Please select your language:*
+
+1️⃣ English
+2️⃣ हिंदी (Hindi)
+3️⃣ தமிழ் (Tamil)
+4️⃣ తెలుగు (Telugu)
+
+_(Reply with 1, 2, 3, or 4)_"""
         
         # Get conversation context
         context = self._get_context(phone)
         context["language"] = user_data.get("language", "en")
+        context["timestamp"] = datetime.now(ist).isoformat()
         
         # Check if onboarding is needed
         if not user_data.get("onboarding_complete"):
             return self._handle_onboarding(phone, message, user_data, context)
         
-        # Get IST timestamp
-        ist = pytz.timezone('Asia/Kolkata')
-        context["timestamp"] = datetime.now(ist).isoformat()
-        
         # Detect intent using smart NLP
         intent, entities = self._detect_intent(message, context)
+        
+        print(f"[AdvancedAgent] Intent: {intent}, Entities: {entities}")
         
         # Update context
         context["last_message"] = message
@@ -549,26 +586,29 @@ Enter this code on the website to access your dashboard.""",
         except Exception as e:
             print(f"Error logging income: {e}")
         
-        # Get month's total income
-        month_income = self._get_month_income(phone)
-        goal_progress = self._get_goal_progress(phone)
+        # Get today's total income (accumulated)
+        today_income = self._get_today_income(phone)
         
         motivations = [
-            "🔥 Great job! Keep the momentum going!",
+            "🔥 Great work! Keep earning!",
             "💪 Every rupee counts towards your goal!",
             "🌟 You're making progress!",
             "🎯 Stay focused on your target!",
         ]
         
-        lang = user_data.get("detected_language", "en")
+        # Use IST for date display
+        import pytz
+        ist = pytz.timezone('Asia/Kolkata')
+        ist_now = datetime.now(ist)
+        
+        lang = user_data.get("language", "en")
         template = self.templates.get(lang, self.templates["en"])["income_logged"]
         
         return template.format(
             amount=amount,
             category=category.title(),
-            date=datetime.now().strftime("%d %b, %I:%M %p"),
-            month_income=month_income,
-            goal_progress=goal_progress,
+            date=ist_now.strftime("%d %b, %I:%M %p"),
+            today_income=today_income,
             motivation=random.choice(motivations)
         )
     
@@ -1263,6 +1303,80 @@ I'll send you:
             }
         except:
             return None
+    
+    def _get_today_income(self, phone: str) -> int:
+        """Get today's total income"""
+        try:
+            import pytz
+            ist = pytz.timezone('Asia/Kolkata')
+            today = datetime.now(ist).date()
+            
+            transactions = transaction_repo.get_transactions(phone)
+            total = 0
+            for tx in transactions:
+                if tx.get("type") == "income":
+                    tx_date = datetime.fromisoformat(tx.get("date", "")).date()
+                    if tx_date == today:
+                        total += tx.get("amount", 0)
+            return total
+        except Exception as e:
+            print(f"Error getting today income: {e}")
+            return 0
+    
+    def _get_today_expenses(self, phone: str) -> int:
+        """Get today's total expenses"""
+        try:
+            import pytz
+            ist = pytz.timezone('Asia/Kolkata')
+            today = datetime.now(ist).date()
+            
+            transactions = transaction_repo.get_transactions(phone)
+            total = 0
+            for tx in transactions:
+                if tx.get("type") == "expense":
+                    tx_date = datetime.fromisoformat(tx.get("date", "")).date()
+                    if tx_date == today:
+                        total += tx.get("amount", 0)
+            return total
+        except Exception as e:
+            print(f"Error getting today expenses: {e}")
+            return 0
+    
+    def _get_month_income(self, phone: str) -> int:
+        """Get this month's total income"""
+        try:
+            import pytz
+            ist = pytz.timezone('Asia/Kolkata')
+            now = datetime.now(ist)
+            
+            transactions = transaction_repo.get_transactions(phone)
+            total = 0
+            for tx in transactions:
+                if tx.get("type") == "income":
+                    tx_date = datetime.fromisoformat(tx.get("date", ""))
+                    if tx_date.year == now.year and tx_date.month == now.month:
+                        total += tx.get("amount", 0)
+            return total
+        except:
+            return 0
+    
+    def _get_month_expenses(self, phone: str) -> int:
+        """Get this month's total expenses"""
+        try:
+            import pytz
+            ist = pytz.timezone('Asia/Kolkata')
+            now = datetime.now(ist)
+            
+            transactions = transaction_repo.get_transactions(phone)
+            total = 0
+            for tx in transactions:
+                if tx.get("type") == "expense":
+                    tx_date = datetime.fromisoformat(tx.get("date", ""))
+                    if tx_date.year == now.year and tx_date.month == now.month:
+                        total += tx.get("amount", 0)
+            return total
+        except:
+            return 0
     
     def _get_category_breakdown(self, phone: str) -> Dict[str, int]:
         """Get expense breakdown by category"""
