@@ -1,10 +1,10 @@
 {
-    "name": "MoneyView Complete Workflow",
+    "name": "MoneyViya Complete Workflow",
     "nodes": [
         {
             "parameters": {
                 "httpMethod": "POST",
-                "path": "moneyview-webhook",
+                "path": "MoneyViya-webhook",
                 "responseMode": "responseNode",
                 "options": {}
             },
@@ -16,7 +16,7 @@
                 240,
                 300
             ],
-            "webhookId": "moneyview-main"
+            "webhookId": "MoneyViya-main"
         },
         {
             "parameters": {
@@ -34,7 +34,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://moneyviya.up.railway.app/api/moneyview/process",
+                "url": "https://moneyviya.up.railway.app/api/MoneyViya/process",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
@@ -52,7 +52,7 @@
                 }
             },
             "id": "process-msg",
-            "name": "Process via MoneyView API",
+            "name": "Process via MoneyViya API",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
@@ -110,7 +110,7 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/moneyview/morning-briefing",
+                "url": "https://moneyviya.up.railway.app/api/MoneyViya/morning-briefing",
                 "options": {}
             },
             "id": "get-morning",
@@ -176,7 +176,7 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/moneyview/market-analysis",
+                "url": "https://moneyviya.up.railway.app/api/MoneyViya/market-analysis",
                 "options": {}
             },
             "id": "get-market",
@@ -242,7 +242,7 @@
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/moneyview/evening-checkin",
+                "url": "https://moneyviya.up.railway.app/api/MoneyViya/evening-checkin",
                 "options": {}
             },
             "id": "get-evening",
@@ -309,7 +309,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://moneyviya.up.railway.app/api/moneyview/weekly-reports",
+                "url": "https://moneyviya.up.railway.app/api/MoneyViya/weekly-reports",
                 "options": {}
             },
             "id": "get-weekly",
@@ -376,7 +376,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://moneyviya.up.railway.app/api/moneyview/monthly-reports",
+                "url": "https://moneyviya.up.railway.app/api/MoneyViya/monthly-reports",
                 "options": {}
             },
             "id": "get-monthly",
@@ -437,14 +437,14 @@
             "main": [
                 [
                     {
-                        "node": "Process via MoneyView API",
+                        "node": "Process via MoneyViya API",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Process via MoneyView API": {
+        "Process via MoneyViya API": {
             "main": [
                 [
                     {

@@ -1,4 +1,4 @@
-# MoneyView v1.0 - Personal Financial Manager & Advisor
+# MoneyViya v1.0 - Personal Financial Manager & Advisor
 # Core Dependencies
 
 # Web Framework

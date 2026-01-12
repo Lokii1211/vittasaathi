@@ -1,7 +1,7 @@
 /**
- * MoneyView WhatsApp Bot v3.1
+ * MoneyViya WhatsApp Bot v3.2
  * ===========================
- * - Handles both @s.whatsapp.net and @lid formats
+ * - Uses JID/LID directly as user ID (no phone extraction needed)
  * - Sends all messages to n8n for processing
  * - Fallback to Railway API
  * - HTTP endpoint for n8n scheduled messages
@@ -32,7 +32,7 @@ app.get('/health', (req, res) => {
     res.json({
         status: 'ok',
         connected: isConnected,
-        bot: 'MoneyView WhatsApp Bot v3.1',
+        bot: 'MoneyViya WhatsApp Bot v3.2',
         n8n_webhook: N8N_WEBHOOK_URL,
         railway_api: RAILWAY_API_URL
     });
@@ -51,18 +51,23 @@ app.post('/send', async (req, res) => {
             return res.status(503).json({ error: 'Bot not connected to WhatsApp' });
         }
 
-        // Format phone number
-        let cleanPhone = phone.toString().replace(/[^0-9]/g, '');
-        if (!cleanPhone.startsWith('91') && cleanPhone.length === 10) {
-            cleanPhone = '91' + cleanPhone;
+        // Format JID - handle both phone numbers and LIDs
+        let jid;
+        if (phone.includes('@')) {
+            jid = phone; // Already a JID
+        } else {
+            // It's a phone number, format it
+            let cleanPhone = phone.toString().replace(/[^0-9]/g, '');
+            if (!cleanPhone.startsWith('91') && cleanPhone.length === 10) {
+                cleanPhone = '91' + cleanPhone;
+            }
+            jid = cleanPhone + '@s.whatsapp.net';
         }
 
-        const jid = cleanPhone + '@s.whatsapp.net';
-
         await sock.sendMessage(jid, { text: message });
-        console.log(`[n8n → WhatsApp] Sent to ${cleanPhone}`);
+        console.log(`[n8n → WhatsApp] Sent to ${jid}`);
 
-        res.json({ success: true, sent_to: cleanPhone });
+        res.json({ success: true, sent_to: jid });
     } catch (error) {
         console.error('[Send Error]', error.message);
         res.status(500).json({ error: error.message });
@@ -77,47 +82,32 @@ app.listen(HTTP_PORT, () => {
 });
 
 /**
- * Extract clean phone number from JID
- * Handles both @s.whatsapp.net and @lid formats
+ * Get user ID from JID
+ * For LID format, we use the LID directly
+ * For phone format, we extract the phone number
  */
-function extractPhone(jid) {
+function getUserId(jid) {
     if (!jid) return null;
 
-    // Remove @s.whatsapp.net or @lid suffix
-    let phone = jid.replace(/@s\.whatsapp\.net$/, '').replace(/@lid$/, '');
-
-    // Remove any non-digit characters
-    phone = phone.replace(/[^0-9]/g, '');
-
-    // If it's a LID (long ID), try to extract the actual phone
-    // LIDs are internal WhatsApp IDs, we need to use the device's linked phone
-    if (phone.length > 15) {
-        console.log(`[Note] LID detected: ${jid}. Using stored phone if available.`);
-        // For LIDs, we'll use the phone as-is for now
-        // The actual phone should be extracted from the message context
-    }
-
-    // Ensure it starts with country code
-    if (phone.length === 10) {
-        phone = '91' + phone;
-    }
-
-    return phone;
+    // Remove suffix to get the core ID
+    const userId = jid.replace(/@s\.whatsapp\.net$/, '').replace(/@lid$/, '');
+    return userId;
 }
 
 /**
  * Process message through n8n or directly to Railway
  */
-async function processMessage(phone, message, senderName) {
+async function processMessage(userId, message, senderName, originalJid) {
     try {
-        console.log(`[Processing] ${phone}: "${message.substring(0, 50)}..."`);
+        console.log(`[Processing] ${userId}: "${message.substring(0, 50)}..."`);
 
         // Try n8n webhook first
         try {
             const response = await axios.post(N8N_WEBHOOK_URL, {
-                phone: phone,
+                phone: userId,
                 message: message,
-                sender_name: senderName
+                sender_name: senderName,
+                jid: originalJid
             }, {
                 headers: { 'Content-Type': 'application/json' },
                 timeout: 30000
@@ -128,13 +118,13 @@ async function processMessage(phone, message, senderName) {
                 return response.data.reply;
             }
         } catch (n8nError) {
-            console.log(`[n8n] Not available (${n8nError.message}), using Railway...`);
+            console.log(`[n8n] Not available (${n8nError.message}), trying Railway...`);
         }
 
-        // Fallback: Direct to MoneyView API
+        // Fallback: Direct to MoneyViya API
         try {
             const response = await axios.post(MONEYVIEW_ENDPOINT, {
-                phone: phone,
+                phone: userId,
                 message: message,
                 sender_name: senderName
             }, {
@@ -147,7 +137,12 @@ async function processMessage(phone, message, senderName) {
                 return response.data.reply;
             }
         } catch (railwayError) {
-            console.error(`[Railway Error]`, railwayError.message);
+            console.error(`[Railway Error]`, railwayError.response?.status, railwayError.message);
+
+            // Return a helpful error message
+            if (railwayError.response?.status === 404) {
+                return "⚠️ Sorry, there's a connection issue. The team is fixing it. Please try again soon!";
+            }
         }
 
         return null;
@@ -178,7 +173,7 @@ async function startBot() {
 
     console.log(`
 ╔═══════════════════════════════════════════════════════╗
-║     💰 MoneyView WhatsApp Bot v3.1                    ║
+║     💰 MoneyViya WhatsApp Bot v3.2                    ║
 ║     Personal Financial Manager & Advisor              ║
 ╠═══════════════════════════════════════════════════════╣
 ║  n8n:     ${N8N_WEBHOOK_URL.substring(0, 43).padEnd(43)}║
@@ -191,7 +186,7 @@ async function startBot() {
         auth: state,
         printQRInTerminal: false,
         logger: pino({ level: 'silent' }),
-        browser: ['MoneyView', 'Chrome', '120.0.0'],
+        browser: ['MoneyViya', 'Chrome', '120.0.0'],
     });
 
     // Connection events
@@ -214,7 +209,7 @@ async function startBot() {
         } else if (connection === 'open') {
             isConnected = true;
             console.log('\n✅ Connected to WhatsApp!\n');
-            console.log('📤 User → Baileys → n8n → MoneyView API → Reply');
+            console.log('📤 User → Baileys → n8n → MoneyViya API → Reply');
             console.log('📥 n8n Scheduled → Baileys → User');
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         }
@@ -248,26 +243,13 @@ async function startBot() {
             const jid = msg.key.remoteJid;
             const senderName = msg.pushName || 'Friend';
 
-            // Extract phone - handle both formats
-            let phone = extractPhone(jid);
-
-            // For LID format, try to get the actual sender's phone
-            if (jid.endsWith('@lid')) {
-                // Use participant if available (for business accounts)
-                const participant = msg.key.participant;
-                if (participant) {
-                    phone = extractPhone(participant);
-                } else {
-                    // Try to use the pushName as fallback context
-                    console.log(`[LID] Using extracted phone: ${phone} for ${senderName}`);
-                }
-            }
+            // Get user ID (either phone number or LID)
+            const userId = getUserId(jid);
 
             console.log(`\n[User → Bot] ${senderName} (${jid}): ${messageContent}`);
-            console.log(`[Phone] Extracted: ${phone}`);
 
             // Process message
-            const reply = await processMessage(phone, messageContent, senderName);
+            const reply = await processMessage(userId, messageContent, senderName, jid);
 
             // Send reply
             if (reply) {
@@ -278,5 +260,5 @@ async function startBot() {
 }
 
 // Start
-console.log('\n🚀 Starting MoneyView WhatsApp Bot...\n');
+console.log('\n🚀 Starting MoneyViya WhatsApp Bot...\n');
 startBot().catch(err => console.error('Startup error:', err));

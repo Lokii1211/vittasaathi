@@ -1,8 +1,8 @@
-# MoneyView 💰
+# MoneyViya 💰
 
 **Your Personal AI Financial Manager & Advisor**
 
-MoneyView is an AI-powered WhatsApp bot that helps you manage your finances, track expenses, achieve goals, and grow wealth.
+MoneyViya is an AI-powered WhatsApp bot that helps you manage your finances, track expenses, achieve goals, and grow wealth.
 
 ---
 
@@ -53,13 +53,13 @@ npm start
 Scan QR code with WhatsApp.
 
 ### 2. Import n8n Workflow
-Import `n8n/workflows/moneyview_complete_workflow.json`
+Import `n8n/workflows/MoneyViya_complete_workflow.json`
 
 ### 3. Deploy API (Railway)
 ```bash
 git push
 ```
-Railway auto-deploys the MoneyView API.
+Railway auto-deploys the MoneyViya API.
 
 ### 4. Start Chatting!
 Send "Hi" to the WhatsApp bot.
@@ -69,16 +69,16 @@ Send "Hi" to the WhatsApp bot.
 ## 📁 Project Structure
 
 ```
-moneyview/
+MoneyViya/
 ├── agents/
-│   └── moneyview_agent.py    # AI Financial Agent
+│   └── MoneyViya_agent.py    # AI Financial Agent
 ├── services/
 │   └── stock_market_service.py # Market Analysis
-├── moneyview_api.py          # API Endpoints
+├── MoneyViya_api.py          # API Endpoints
 ├── app.py                     # FastAPI Main
 ├── n8n/
 │   └── workflows/
-│       └── moneyview_complete_workflow.json
+│       └── MoneyViya_complete_workflow.json
 ├── whatsapp-bot/
 │   ├── index.js              # Baileys Bot
 │   └── package.json
@@ -93,28 +93,28 @@ moneyview/
 
 ```
 User: Hi
-MoneyView: 👋 Welcome to MoneyView!
+MoneyViya: 👋 Welcome to MoneyViya!
            Which language do you prefer?
            (Just type: English, Hindi, Tamil...)
 
 User: English
-MoneyView: Perfect! What's your name?
+MoneyViya: Perfect! What's your name?
 
 User: Lokesh
-MoneyView: Nice to meet you, Lokesh! What do you do?
+MoneyViya: Nice to meet you, Lokesh! What do you do?
 
 User: I'm a freelancer
-MoneyView: Great! What's your monthly income?
+MoneyViya: Great! What's your monthly income?
 
 ... [Complete onboarding] ...
 
 User: Spent 500 on lunch
-MoneyView: ✅ Expense Logged!
+MoneyViya: ✅ Expense Logged!
            💸 ₹500 on Food
            💰 Budget Left: ₹833
            
 User: Balance
-MoneyView: 📊 Lokesh's Summary
+MoneyViya: 📊 Lokesh's Summary
            💵 Income: ₹0
            💸 Spent: ₹500
            💰 Remaining: ₹833
@@ -133,7 +133,7 @@ ALPHA_VANTAGE_API_KEY=xxx      # For market data
 ### Baileys Bot
 ```javascript
 // whatsapp-bot/index.js
-const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/moneyview-webhook';
+const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/MoneyViya-webhook';
 const RAILWAY_API_URL = 'https://your-app.up.railway.app';
 ```
 
@@ -145,4 +145,4 @@ Built with ❤️ for the n8n AI Agents Hackathon 2025
 
 ---
 
-*MoneyView - Your Personal Finance Partner* 💰
+*MoneyViya - Your Personal Finance Partner* 💰

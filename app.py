@@ -72,24 +72,25 @@ except Exception as e:
     advanced_agent = None
     ADVANCED_AGENT_AVAILABLE = False
 
-# MoneyView Agent (v2.0 - Primary Agent for new users)
+# MoneyViya Agent (v2.0 - Primary Agent for new users)
 try:
     from agents.moneyview_agent import moneyview_agent, process_message as moneyview_process
     from moneyview_api import moneyview_router
     MONEYVIEW_AVAILABLE = True
 except Exception as e:
-    print(f"[STARTUP] MoneyView not available: {e}")
+    print(f"[STARTUP] MoneyViya not available: {e}")
     moneyview_agent = None
     MONEYVIEW_AVAILABLE = False
+
 
 # Config
 from config import SUPPORTED_LANGUAGES, VOICES_DIR
 
 
 # ================= APP SETUP =================
-# BUILD VERSION: 2026-01-12-v6 - MoneyView Personal Finance Manager
-AGENT_VERSION = "6.0.0-moneyview"
-print(f"[STARTUP] MoneyView API starting with agent version: {AGENT_VERSION}")
+# BUILD VERSION: 2026-01-12-v6 - MoneyViya Personal Finance Manager
+AGENT_VERSION = "6.0.0-MoneyViya"
+print(f"[STARTUP] MoneyViya API starting with agent version: {AGENT_VERSION}")
 
 
 app = FastAPI(
@@ -112,10 +113,10 @@ from fastapi.responses import RedirectResponse
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Include MoneyView API Router
+# Include MoneyViya API Router
 if MONEYVIEW_AVAILABLE:
     app.include_router(moneyview_router)
-    print("[STARTUP] MoneyView API router included")
+    print("[STARTUP] MoneyViya API router included")
 
 
 # Root redirect to new dashboard
@@ -293,7 +294,7 @@ async def send_reminder(request: Request):
             import json
             user_data = json.loads(user_data)
         
-        # Generate reminder message using MoneyView agent
+        # Generate reminder message using MoneyViya agent
         if moneyview_agent:
             reminder_text = f"☀️ Good morning! Time to start your financial day."
         else:
@@ -1473,14 +1474,14 @@ async def handle_baileys_webhook(request: Request):
         user_repo.update_activity(phone)
         user = user_repo.ensure_user(phone)
         
-        # Process via MoneyView Agent
+        # Process via MoneyViya Agent
         if MONEYVIEW_AVAILABLE and moneyview_agent:
             import asyncio
             reply_text = asyncio.get_event_loop().run_until_complete(
                 moneyview_agent.process_message(phone, message, user.get('name', 'Friend'))
             )
         else:
-            reply_text = "Welcome! MoneyView is setting up. Please try again."
+            reply_text = "Welcome! MoneyViya is setting up. Please try again."
         
         # Save updates
         user_repo.update_user(phone, user)
@@ -1952,7 +1953,7 @@ async def handle_whatsapp_cloud_webhook(request: Request):
                         moneyview_agent.process_message(phone, message_text, user.get('name', sender_name))
                     )
                 else:
-                    reply_text = "Welcome to MoneyView! The system is starting up."
+                    reply_text = "Welcome to MoneyViya! The system is starting up."
                 
                 # Save any updates to user data
                 user_repo.update_user(phone, user)

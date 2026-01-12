@@ -1,5 +1,5 @@
 """
-MoneyView Agent v2.0 - Personal Financial Manager & Advisor
+MoneyViya Agent v2.0 - Personal Financial Manager & Advisor
 =============================================================
 Natural conversational AI agent with:
 - No numbered options - natural language input
@@ -28,9 +28,9 @@ except:
     IST = None
 
 
-class MoneyViewAgent:
+class MoneyViyaAgent:
     """
-    MoneyView - Your Personal Finance Partner
+    MoneyViya - Your Personal Finance Partner
     ==========================================
     Natural conversational AI financial advisor
     """
@@ -288,7 +288,7 @@ class MoneyViewAgent:
         if step == 0:
             user["onboarding_step"] = 1
             self._save_user(phone, user)
-            return """👋 *Welcome to MoneyView!*
+            return """👋 *Welcome to MoneyViya!*
 
 I'm your personal AI financial advisor. I'll help you:
 💰 Track your money effortlessly
@@ -524,7 +524,7 @@ _(Example: 2 years, 6 months, December 2025)_""",
                 g = user["goals"][0]
                 goal_text = f"🎯 {g.get('name', 'Goal')} - ₹{int(g.get('amount', 0)):,} in {g.get('timeline', 'TBD')}"
             
-            return f"""🎉 *Your MoneyView Profile is Ready!*
+            return f"""🎉 *Your MoneyViya Profile is Ready!*
 
 📊 *{name}'s Financial Snapshot:*
 ━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -583,7 +583,7 @@ How can I help today?
     
     def _handle_help(self, user: Dict) -> str:
         lang = user.get("language", "en")
-        return """📚 *MoneyView Commands*
+        return """📚 *MoneyViya Commands*
 
 💸 *Track Money:*
 • "Spent 500 on food"
@@ -620,7 +620,7 @@ _Just chat naturally - I understand!_ 🤖"""
 
 Let's start fresh. 
 
-👋 *Welcome to MoneyView!*
+👋 *Welcome to MoneyViya!*
 
 *Which language do you prefer?*
 _(Just type: English, Hindi, Tamil, Telugu, or Kannada)_"""
@@ -799,8 +799,8 @@ Here's what I can do:
 Just tell me naturally! 🤖"""
 
 
-# Singleton
-moneyview_agent = MoneyViewAgent()
+# Singleton - keep lowercase for import compatibility
+moneyview_agent = MoneyViyaAgent()
 
 async def process_message(phone: str, message: str, sender_name: str = "Friend") -> str:
     return await moneyview_agent.process_message(phone, message, sender_name)

@@ -1,7 +1,7 @@
 """
-MoneyView API - FastAPI Endpoints
+MoneyViya API - FastAPI Endpoints
 ===================================
-API endpoints for MoneyView Personal Financial Agent
+API endpoints for MoneyViya Personal Financial Agent
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
@@ -10,7 +10,7 @@ from typing import Optional, List, Dict
 from datetime import datetime, timedelta
 import asyncio
 
-# Import MoneyView Agent
+# Import MoneyViya Agent
 from agents.moneyview_agent import moneyview_agent, process_message
 from services.stock_market_service import get_market_update, get_investment_advice
 
@@ -20,8 +20,8 @@ try:
 except:
     IST = None
 
-# Create router
-moneyview_router = APIRouter(prefix="/api/moneyview", tags=["MoneyView"])
+# Create router - keep lowercase for import compatibility
+moneyview_router = APIRouter(prefix="/api/moneyview", tags=["MoneyViya"])
 
 
 # Request/Response Models
@@ -49,7 +49,7 @@ class UserSummary(BaseModel):
 @moneyview_router.post("/process", response_model=MessageResponse)
 async def process_whatsapp_message(request: MessageRequest):
     """
-    Process incoming WhatsApp message through MoneyView Agent
+    Process incoming WhatsApp message through MoneyViya Agent
     This handles: onboarding, expense tracking, income, goals, etc.
     """
     try:
@@ -476,7 +476,7 @@ Month: {month_name}
 
 {savings_msg}
 
-_MoneyView - Your Financial Partner_ 💰"""
+_MoneyViya - Your Financial Partner_ 💰"""
         
         results.append({
             "phone": phone,
@@ -636,10 +636,10 @@ async def update_user_profile(phone: str, updates: UserUpdate):
 
 @moneyview_router.get("/health")
 async def health_check():
-    """MoneyView API health check"""
+    """MoneyViya API health check"""
     return {
         "status": "healthy",
-        "service": "MoneyView API",
+        "service": "MoneyViya API",
         "version": "2.0.0",
         "features": [
             "onboarding",

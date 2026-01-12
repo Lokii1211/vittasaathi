@@ -1,8 +1,8 @@
-# MoneyView - n8n Workflow Guide
+# MoneyViya - n8n Workflow Guide
 
 ## Overview
 
-MoneyView uses n8n to automate:
+MoneyViya uses n8n to automate:
 - Message processing from WhatsApp
 - Scheduled morning briefings (6 AM)
 - Market analysis (9 AM)
@@ -12,24 +12,24 @@ MoneyView uses n8n to automate:
 
 ## Workflow File
 
-📁 `n8n/workflows/moneyview_complete_workflow.json`
+📁 `n8n/workflows/MoneyViya_complete_workflow.json`
 
 ## Setup Steps
 
 ### 1. Import Workflow
 1. Open n8n dashboard
 2. Go to **Workflows** → **Import from File**
-3. Select `moneyview_complete_workflow.json`
+3. Select `MoneyViya_complete_workflow.json`
 4. Click **Import**
 
 ### 2. Get Webhook URL
 After import, click on "Receive WhatsApp Message" node.
-Copy the webhook URL (e.g., `http://localhost:5678/webhook/moneyview-webhook`)
+Copy the webhook URL (e.g., `http://localhost:5678/webhook/MoneyViya-webhook`)
 
 ### 3. Update Baileys Bot
 Edit `whatsapp-bot/index.js`:
 ```javascript
-const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/moneyview-webhook';
+const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/MoneyViya-webhook';
 ```
 
 ### 4. Start Services
@@ -41,7 +41,7 @@ npm install
 npm start
 ```
 
-**Ensure Railway is deployed with MoneyView API**
+**Ensure Railway is deployed with MoneyViya API**
 
 ### 5. Activate Workflow
 Toggle the workflow to **Active** in n8n.
@@ -78,12 +78,12 @@ Toggle the workflow to **Active** in n8n.
 
 | Endpoint | Description |
 |----------|-------------|
-| `POST /api/moneyview/process` | Process WhatsApp message |
-| `GET /api/moneyview/morning-briefing` | Get morning messages |
-| `GET /api/moneyview/market-analysis` | Get market updates |
-| `GET /api/moneyview/evening-checkin` | Get evening messages |
-| `POST /api/moneyview/weekly-reports` | Generate weekly reports |
-| `POST /api/moneyview/monthly-reports` | Generate monthly reports |
+| `POST /api/MoneyViya/process` | Process WhatsApp message |
+| `GET /api/MoneyViya/morning-briefing` | Get morning messages |
+| `GET /api/MoneyViya/market-analysis` | Get market updates |
+| `GET /api/MoneyViya/evening-checkin` | Get evening messages |
+| `POST /api/MoneyViya/weekly-reports` | Generate weekly reports |
+| `POST /api/MoneyViya/monthly-reports` | Generate monthly reports |
 
 ## Troubleshooting
 
@@ -99,4 +99,4 @@ Toggle the workflow to **Active** in n8n.
 
 ---
 
-*MoneyView - Your Personal Finance Partner* 💰
+*MoneyViya - Your Personal Finance Partner* 💰

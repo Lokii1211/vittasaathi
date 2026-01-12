@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoneyView - Your Personal Finance Dashboard</title>
+    <title>MoneyViya - Your Personal Finance Dashboard</title>
     <meta name="theme-color" content="#0D9488">
     <meta name="description"
-        content="MoneyView - AI-powered Personal Financial Manager. Track expenses, achieve goals, grow wealth.">
+        content="MoneyViya - AI-powered Personal Financial Manager. Track expenses, achieve goals, grow wealth.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -921,9 +921,9 @@
     <div class="auth-screen" id="authScreen">
         <div class="auth-card">
             <div class="logo-container">
-                <img src="logo.png" alt="MoneyView" onerror="this.innerHTML='💰';this.style.fontSize='40px'">
+                <img src="logo.png" alt="MoneyViya" onerror="this.innerHTML='💰';this.style.fontSize='40px'">
             </div>
-            <h1 class="auth-title">MoneyView</h1>
+            <h1 class="auth-title">MoneyViya</h1>
             <p class="auth-subtitle">Your Personal AI Financial Manager</p>
 
             <!-- Phone Input -->
@@ -973,8 +973,8 @@
     <div class="dashboard" id="dashboard">
         <nav class="top-nav">
             <div class="nav-brand">
-                <img src="logo.png" alt="MoneyView" onerror="this.innerHTML='💰';this.style.fontSize='24px'">
-                <span>MoneyView</span>
+                <img src="logo.png" alt="MoneyViya" onerror="this.innerHTML='💰';this.style.fontSize='24px'">
+                <span>MoneyViya</span>
             </div>
             <div class="nav-actions">
                 <button class="btn-icon" onclick="openEditModal()" title="Edit Profile">
@@ -1212,7 +1212,7 @@
     <script>
         // Config
         const API_BASE = window.location.origin;
-        const WHATSAPP_NUMBER = '919363324580'; // MoneyView Bot
+        const WHATSAPP_NUMBER = '919363324580'; // MoneyViya Bot
 
         let currentUser = null;
 
@@ -1255,7 +1255,7 @@
 
             if (otp === '1234') {
                 const phone = document.getElementById('phoneInput').value.replace(/\D/g, '');
-                localStorage.setItem('moneyview_phone', '91' + phone);
+                localStorage.setItem('MoneyViya_phone', '91' + phone);
                 showDashboard('91' + phone);
             } else {
                 alert('Invalid OTP. Demo OTP is 1234');
@@ -1264,15 +1264,15 @@
 
         function demoLogin() {
             const demoPhone = '919363324580';
-            localStorage.setItem('moneyview_phone', demoPhone);
-            localStorage.setItem('moneyview_demo', 'true');
+            localStorage.setItem('MoneyViya_phone', demoPhone);
+            localStorage.setItem('MoneyViya_demo', 'true');
             // Clear any saved user data for fresh demo
-            localStorage.removeItem('moneyview_user_data');
+            localStorage.removeItem('MoneyViya_user_data');
             showDashboard(demoPhone);
         }
 
         function checkAuth() {
-            const phone = localStorage.getItem('moneyview_phone');
+            const phone = localStorage.getItem('MoneyViya_phone');
             if (phone) {
                 showDashboard(phone);
             }
@@ -1283,7 +1283,7 @@
             document.getElementById('dashboard').classList.add('active');
 
             // Check for locally saved data first
-            const savedData = localStorage.getItem('moneyview_user_data');
+            const savedData = localStorage.getItem('MoneyViya_user_data');
             if (savedData) {
                 try {
                     currentUser = JSON.parse(savedData);
@@ -1296,7 +1296,7 @@
                 }
             }
 
-            const isDemo = localStorage.getItem('moneyview_demo') === 'true';
+            const isDemo = localStorage.getItem('MoneyViya_demo') === 'true';
 
             if (isDemo) {
                 loadDemoData();
@@ -1307,11 +1307,11 @@
 
         async function fetchUserData(phone, showDemoOnFail = true) {
             try {
-                const response = await fetch(`${API_BASE}/api/moneyview/user/${phone}`);
+                const response = await fetch(`${API_BASE}/api/MoneyViya/user/${phone}`);
                 if (response.ok) {
                     const data = await response.json();
                     currentUser = data;
-                    localStorage.setItem('moneyview_user_data', JSON.stringify(data));
+                    localStorage.setItem('MoneyViya_user_data', JSON.stringify(data));
                     updateDashboard(data);
                 } else if (showDemoOnFail) {
                     loadDemoData();
@@ -1346,7 +1346,7 @@
                     { type: 'income', amount: 5000, category: 'Freelance', date: new Date().toISOString() }
                 ]
             };
-            localStorage.setItem('moneyview_user_data', JSON.stringify(currentUser));
+            localStorage.setItem('MoneyViya_user_data', JSON.stringify(currentUser));
             updateDashboard(currentUser);
         }
 
@@ -1442,7 +1442,7 @@
         }
 
         function openWhatsApp() {
-            const message = encodeURIComponent('Hi MoneyView!');
+            const message = encodeURIComponent('Hi MoneyViya!');
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
         }
 
@@ -1462,7 +1462,7 @@
         }
 
         async function saveProfile() {
-            const phone = localStorage.getItem('moneyview_phone');
+            const phone = localStorage.getItem('MoneyViya_phone');
             const updates = {
                 name: document.getElementById('editName').value,
                 occupation: document.getElementById('editOccupation').value,
@@ -1476,13 +1476,13 @@
 
             // Update locally first
             currentUser = { ...currentUser, ...updates };
-            localStorage.setItem('moneyview_user_data', JSON.stringify(currentUser));
+            localStorage.setItem('MoneyViya_user_data', JSON.stringify(currentUser));
             updateDashboard(currentUser);
             closeEditModal();
 
             // Then try to sync with server
             try {
-                const response = await fetch(`${API_BASE}/api/moneyview/user/${phone}/update`, {
+                const response = await fetch(`${API_BASE}/api/MoneyViya/user/${phone}/update`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updates)
@@ -1537,7 +1537,7 @@
         }
 
         async function refreshData() {
-            const phone = localStorage.getItem('moneyview_phone');
+            const phone = localStorage.getItem('MoneyViya_phone');
             if (phone) {
                 await fetchUserData(phone, false);
             }
@@ -1546,9 +1546,9 @@
 
         function logout() {
             // Clear all stored data
-            localStorage.removeItem('moneyview_phone');
-            localStorage.removeItem('moneyview_demo');
-            localStorage.removeItem('moneyview_user_data');
+            localStorage.removeItem('MoneyViya_phone');
+            localStorage.removeItem('MoneyViya_demo');
+            localStorage.removeItem('MoneyViya_user_data');
             currentUser = null;
 
             document.getElementById('dashboard').classList.remove('active');
@@ -1561,8 +1561,8 @@
 
         // Auto-refresh every 60 seconds (not 30 to reduce API calls)
         setInterval(() => {
-            const phone = localStorage.getItem('moneyview_phone');
-            if (phone && localStorage.getItem('moneyview_demo') !== 'true') {
+            const phone = localStorage.getItem('MoneyViya_phone');
+            if (phone && localStorage.getItem('MoneyViya_demo') !== 'true') {
                 fetchUserData(phone, false);
             }
         }, 60000);
