@@ -1212,7 +1212,7 @@
     <script>
         // Config
         const API_BASE = window.location.origin;
-        const WHATSAPP_NUMBER = '919876543210'; // Replace with actual bot number
+        const WHATSAPP_NUMBER = '919363324580'; // MoneyView Bot
 
         let currentUser = null;
 
@@ -1263,9 +1263,11 @@
         }
 
         function demoLogin() {
-            const demoPhone = '919876543210';
+            const demoPhone = '919363324580';
             localStorage.setItem('moneyview_phone', demoPhone);
             localStorage.setItem('moneyview_demo', 'true');
+            // Clear any saved user data for fresh demo
+            localStorage.removeItem('moneyview_user_data');
             showDashboard(demoPhone);
         }
 
@@ -1280,35 +1282,52 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboard').classList.add('active');
 
+            // Check for locally saved data first
+            const savedData = localStorage.getItem('moneyview_user_data');
+            if (savedData) {
+                try {
+                    currentUser = JSON.parse(savedData);
+                    updateDashboard(currentUser);
+                    // Still try to fetch from server in background
+                    fetchUserData(phone, false);
+                    return;
+                } catch (e) {
+                    console.log('Failed to parse saved data');
+                }
+            }
+
             const isDemo = localStorage.getItem('moneyview_demo') === 'true';
 
             if (isDemo) {
-                showDemoData();
+                loadDemoData();
             } else {
-                await fetchUserData(phone);
+                await fetchUserData(phone, true);
             }
         }
 
-        async function fetchUserData(phone) {
+        async function fetchUserData(phone, showDemoOnFail = true) {
             try {
                 const response = await fetch(`${API_BASE}/api/moneyview/user/${phone}`);
                 if (response.ok) {
                     const data = await response.json();
                     currentUser = data;
+                    localStorage.setItem('moneyview_user_data', JSON.stringify(data));
                     updateDashboard(data);
-                } else {
-                    showDemoData();
+                } else if (showDemoOnFail) {
+                    loadDemoData();
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showDemoData();
+                if (showDemoOnFail) {
+                    loadDemoData();
+                }
             }
         }
 
-        function showDemoData() {
+        function loadDemoData() {
             currentUser = {
                 name: 'Demo User',
-                phone: '9876543210',
+                phone: '9363324580',
                 occupation: 'Freelancer',
                 monthly_income: 50000,
                 monthly_expenses: 30000,
@@ -1327,6 +1346,7 @@
                     { type: 'income', amount: 5000, category: 'Freelance', date: new Date().toISOString() }
                 ]
             };
+            localStorage.setItem('moneyview_user_data', JSON.stringify(currentUser));
             updateDashboard(currentUser);
         }
 
@@ -1451,6 +1471,16 @@
                 current_savings: parseFloat(document.getElementById('editSavings').value) || 0
             };
 
+            // Calculate daily budget from income
+            updates.daily_budget = Math.round(updates.monthly_income / 30);
+
+            // Update locally first
+            currentUser = { ...currentUser, ...updates };
+            localStorage.setItem('moneyview_user_data', JSON.stringify(currentUser));
+            updateDashboard(currentUser);
+            closeEditModal();
+
+            // Then try to sync with server
             try {
                 const response = await fetch(`${API_BASE}/api/moneyview/user/${phone}/update`, {
                     method: 'POST',
@@ -1459,24 +1489,44 @@
                 });
 
                 if (response.ok) {
-                    currentUser = { ...currentUser, ...updates };
-                    updateDashboard(currentUser);
-                    closeEditModal();
-                    alert('Profile updated!');
+                    showNotification('Profile saved & synced!', 'success');
                 } else {
-                    // For demo, update locally
-                    currentUser = { ...currentUser, ...updates };
-                    updateDashboard(currentUser);
-                    closeEditModal();
-                    alert('Profile updated locally!');
+                    showNotification('Saved locally. Will sync later.', 'warning');
                 }
             } catch (error) {
-                // For demo, update locally
-                currentUser = { ...currentUser, ...updates };
-                updateDashboard(currentUser);
-                closeEditModal();
-                alert('Profile updated!');
+                showNotification('Saved locally!', 'info');
             }
+        }
+
+        function showNotification(message, type) {
+            // Simple notification
+            const colors = {
+                success: '#10B981',
+                warning: '#F59E0B',
+                error: '#EF4444',
+                info: '#0D9488'
+            };
+
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                font-weight: 600;
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
 
         function editField(field) {
@@ -1488,15 +1538,19 @@
 
         async function refreshData() {
             const phone = localStorage.getItem('moneyview_phone');
-            if (phone && localStorage.getItem('moneyview_demo') !== 'true') {
-                await fetchUserData(phone);
+            if (phone) {
+                await fetchUserData(phone, false);
             }
-            alert('Data refreshed!');
+            showNotification('Data refreshed!', 'success');
         }
 
         function logout() {
+            // Clear all stored data
             localStorage.removeItem('moneyview_phone');
             localStorage.removeItem('moneyview_demo');
+            localStorage.removeItem('moneyview_user_data');
+            currentUser = null;
+
             document.getElementById('dashboard').classList.remove('active');
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('phoneSection').classList.remove('hidden');
@@ -1505,14 +1559,40 @@
             [1, 2, 3, 4].forEach(i => document.getElementById('otp' + i).value = '');
         }
 
-        // Auto-refresh every 30 seconds
+        // Auto-refresh every 60 seconds (not 30 to reduce API calls)
         setInterval(() => {
             const phone = localStorage.getItem('moneyview_phone');
             if (phone && localStorage.getItem('moneyview_demo') !== 'true') {
-                fetchUserData(phone);
+                fetchUserData(phone, false);
             }
-        }, 30000);
+        }, 60000);
     </script>
+
+    <style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    </style>
 </body>
 
 </html>
