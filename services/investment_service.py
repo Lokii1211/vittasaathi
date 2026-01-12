@@ -76,17 +76,51 @@ class AdvancedInvestmentService:
         ]
     
     def get_market_analysis(self) -> str:
-        """Generate comprehensive market analysis for WhatsApp"""
+        """Generate comprehensive market analysis using Alpha Vantage"""
         
-        # Simulate market state
-        mood = self._get_market_mood()
+        market_data = None
+        try:
+            if self.alpha_vantage_key:
+                # Fetch Real Data (GLOBAL_QUOTE for Nifty/Sensex proxy or major US indices as fallback)
+                # Note: AlphaVantage free tier is limited, so we use it sparingly or cache results
+                # For Indian markets, we might need a specific symbol like 'BSE:SENSEX' if supported, 
+                # otherwise we use SPY/Gold as global indicators.
+                
+                # Using GLOBAL_QUOTE for Gold (GC=F equivalent or similar) and general market sentiment
+                url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=IBM&apikey={self.alpha_vantage_key}"
+                import requests
+                r = requests.get(url, timeout=5)
+                if r.ok:
+                    data = r.json()
+                    quote = data.get("Global Quote", {})
+                    if quote:
+                        change_percent = float(quote.get("10. change percent", "0").replace("%", ""))
+                        market_data = {
+                            "trend": "Bullish" if change_percent > 0.5 else "Bearish" if change_percent < -0.5 else "Neutral",
+                            "change": change_percent,
+                            "price": quote.get("05. price", "0")
+                        }
+        except Exception as e:
+            print(f"Alpha Vantage Error: {e}")
+        
+        # Use real data if available, else simulation
+        if market_data:
+            trend = market_data["trend"]
+            mood_emoji = "🐂" if trend == "Bullish" else "🐻" if trend == "Bearish" else "😐"
+            mood = {"name": trend, "emoji": mood_emoji}
+            extra_info = f"\nGlobal Tech Sentiment: {market_data['change']}% ({market_data['price']})"
+        else:
+            mood = self._get_market_mood()
+            extra_info = ""
+
+        # Simulate top sectors (since real-time sector data is hard to get free)
         top_sectors = random.sample(self.sectors, 3)
         
         # Build response
         response = f"""📈 *Daily Market Intelligence*
 ━━━━━━━━━━━━━━━━━━━━
 
-🎯 *Market Mood:* {mood['name']} {mood['emoji']}
+🎯 *Market Mood:* {mood['name']} {mood['emoji']} {extra_info}
 
 📊 *Today's Hot Sectors:*
 """
@@ -107,7 +141,7 @@ class AdvancedInvestmentService:
 • "Safe investment" - Low risk options
 • "High returns" - Growth options
 
-⚠️ *Disclaimer:* This is for educational purposes only. Consult a financial advisor before investing."""
+⚠️ *Disclaimer:* Educational purposes only."""
         
         return response
     

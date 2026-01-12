@@ -425,14 +425,40 @@ Enter this code on the website to access your dashboard.""",
     
     def _ai_detect_intent(self, text: str, context: Dict) -> Tuple[str, Dict]:
         """Use AI/LLM for complex intent detection"""
-        # For now, use rule-based fallback
-        # In production, this would call OpenAI
         
-        # Check if there's a number - might be expense/income
+        # Use OpenAI Service if available
+        if openai_service.is_available():
+            result = openai_service.understand_message(text, context.get("language", "english"))
+            intent = result.get("intent", "").lower()
+            
+            # Map OpenAI intents to internal intents
+            intent_map = {
+                "expense_entry": "log_expense",
+                "income_entry": "log_income",
+                "balance_query": "check_balance",
+                "report_query": "view_report",
+                "greeting": "greeting",
+                "investment_query": "investment_advice"
+            }
+            
+            if mapped_intent := intent_map.get(intent):
+                entities = {
+                    "amount": result.get("amount"),
+                    "category": result.get("category", "other"),
+                    "description": result.get("description", text)
+                }
+                return mapped_intent, entities
+        
+        # Fallback to smart heuristics
         if amount := self._extract_amount(text):
             # Check context for hints
-            if "expense" in context.get("last_intent", "") or "spent" in context.get("last_response", "").lower():
+            last_intent = context.get("last_intent", "")
+            last_response = context.get("last_response", "").lower()
+            
+            if "expense" in last_intent or "spent" in last_response:
                 return "log_expense", {"amount": amount, "category": "other"}
+            elif "income" in last_intent or "earned" in last_response:
+                return "log_income", {"amount": amount, "category": "other"}
         
         return "fallback", {}
     
@@ -782,10 +808,36 @@ Or type "done" when finished."""
 Type "invest" for personalized advice."""
     
     def _handle_fallback(self, message: str, user_data: Dict, entities: Dict, context: Dict) -> str:
-        """Handle unrecognized messages with AI"""
+        """Handle unrecognized messages using AI for smart conversation"""
+        
         # Try to understand with context
         name = user_data.get("name", "Friend")
+        lang = user_data.get("language", "english")
         
+        # Use OpenAI if available for smart chat
+        if openai_service.is_available():
+            try:
+                import requests
+                # Simple chat completion for general queries
+                response = requests.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {self.openai_key}", "Content-Type": "application/json"},
+                    json={
+                        "model": "gpt-3.5-turbo",
+                        "messages": [
+                            {"role": "system", "content": f"You are MoneyViya, a helpful financial advisor on WhatsApp. The user's name is {name}. Keep responses short, friendly, and helpful. Language: {lang}. If valid financial advice is asked, give it. If off-topic, nicely guide back to finance."},
+                            {"role": "user", "content": message}
+                        ],
+                        "temperature": 0.7,
+                        "max_tokens": 150
+                    },
+                    timeout=10
+                )
+                if response.ok:
+                    return response.json()["choices"][0]["message"]["content"].strip()
+            except Exception as e:
+                print(f"OpenAI Chat Error: {e}")
+
         # Check if it might be a number (for expense/income)
         if amount := self._extract_amount(message):
             context["pending_amount"] = amount
@@ -800,17 +852,16 @@ Just reply with 1 or 2, or say "spent on food" / "earned from work\""""
         # Generic helpful response
         return f"""🤔 *Hi {name}!*
 
-I'm not sure what you mean. Here are some things you can try:
+I'm not fully sure, but I can help you with your finances!
 
-💸 "Spent 200 on food" - Log expense
-💵 "Earned 5000 from delivery" - Log income
-📊 "Balance" - Check your balance
-📋 "Report" - See your spending report
-🎯 "Goal" - Check goal progress
-📈 "Investment ideas" - Get advice
-❓ "Help" - See all commands
+Try these:
+💸 "Spent 200 on food"
+💵 "Earned 5000"
+📊 "Show balance"
+📈 "Investment advice"
+❓ "Help"
 
-Just chat naturally - I'm here to help!"""
+Or ask me any financial question!"""
     
     # =================== ONBOARDING ===================
     
@@ -823,46 +874,58 @@ Just chat naturally - I'm here to help!"""
             step = 0
             user_data["onboarding_step"] = 0
         
-        if step == 0:
+        if step == 0:  # Language selection
             user_data["onboarding_step"] = 1
             user_repo.update_user(phone, user_data)
-            return """👋 *Welcome to MoneyViya!*
-Your Personal Financial Advisor on WhatsApp 💰
+            return """👋 *Welcome to VittaSaathi!*
+Your Personal AI Financial Advisor 💰
 
-I'll help you:
-✅ Track income & expenses
-✅ Set and achieve savings goals
-✅ Get smart financial advice
-✅ Daily reminders & reports
+🌐 *Please select your language:*
 
-Let's get started! 
+1️⃣ English
+2️⃣ हिंदी (Hindi)
+3️⃣ தமிழ் (Tamil)
+4️⃣ తెలుగు (Telugu)
 
-*What should I call you?*
-(Just type your name)"""
+_(Reply with 1, 2, 3, or 4)_"""
         
-        elif step == 1:  # Got name
-            user_data["name"] = message.strip().title()
+        elif step == 1:  # Got language
+            lang_map = {"1": "en", "2": "hi", "3": "ta", "4": "te", 
+                       "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te"}
+            lang = lang_map.get(message.strip().lower(), "en")
+            user_data["language"] = lang
             user_data["onboarding_step"] = 2
             user_repo.update_user(phone, user_data)
-            return f"""Nice to meet you, {user_data['name']}! 😊
+            
+            greetings = {"en": "Great!", "hi": "बहुत अच्छा!", "ta": "நல்லது!", "te": "చాలా బాగుంది!"}
+            return f"""{greetings.get(lang, 'Great!')} ✅
+
+*What should I call you?*
+_(Just type your name)_"""
+        
+        elif step == 2:  # Got name
+            user_data["name"] = message.strip().title()
+            user_data["onboarding_step"] = 3
+            user_repo.update_user(phone, user_data)
+            return f"""Nice to meet you, *{user_data['name']}*! 😊
 
 *What do you do for work?*
-(e.g., Student, Delivery Partner, Business Owner, Homemaker, or just tell me!)"""
+_(e.g., Student, Delivery Partner, Business Owner, Homemaker)_"""
         
-        elif step == 2:  # Got occupation
+        elif step == 3:  # Got occupation
             user_data["occupation"] = message.strip().title()
-            user_data["onboarding_step"] = 3
+            user_data["onboarding_step"] = 4
             user_repo.update_user(phone, user_data)
             return """Got it! 👍
 
-*What's your monthly income approximately?*
-(Just type the amount, e.g., 25000 or 25k)"""
+*What's your approximate monthly income?*
+_(Just type amount, e.g., 25000 or 25k)_"""
         
-        elif step == 3:  # Got income
+        elif step == 4:  # Got income
             amount = self._extract_amount(message)
             if amount:
                 user_data["monthly_income"] = amount
-                user_data["onboarding_step"] = 4
+                user_data["onboarding_step"] = 5
                 user_repo.update_user(phone, user_data)
                 return """💰 *Now let's set your financial goal!*
 
@@ -873,27 +936,27 @@ Just tell me in your own words."""
             else:
                 return "🔢 Please type your monthly income (e.g., 25000 or 25k)"
         
-        elif step == 4:  # Got goal
+        elif step == 5:  # Got goal
             user_data["goal_type"] = message.strip().title()
-            user_data["onboarding_step"] = 5
+            user_data["onboarding_step"] = 6
             user_repo.update_user(phone, user_data)
             return f"""Great goal: *{user_data['goal_type']}*! 🎯
 
 *How much do you want to save/achieve?*
 (Type amount, e.g., 100000 or 1 lakh)"""
         
-        elif step == 5:  # Got target
+        elif step == 6:  # Got target
             amount = self._extract_amount(message)
             if amount:
                 user_data["target_amount"] = amount
-                user_data["onboarding_step"] = 6
+                user_data["onboarding_step"] = 7
                 user_repo.update_user(phone, user_data)
                 return """📅 *And by when do you want to achieve this?*
 (e.g., 6 months, 1 year, December 2024)"""
             else:
                 return "🔢 Please type the target amount (e.g., 100000 or 1 lakh)"
         
-        elif step == 6:  # Got timeline
+        elif step == 7:  # Got timeline
             months = self._parse_timeline(message)
             days = months * 30
             timeline_str = f"{months} Months" if months < 24 else f"{months/12:.1f} Years"
@@ -901,7 +964,7 @@ Just tell me in your own words."""
             user_data["timeline"] = timeline_str
             user_data["timeline_days"] = days
             user_data["onboarding_complete"] = True
-            user_data["onboarding_step"] = 7
+            user_data["onboarding_step"] = 8
             user_data["start_date"] = datetime.now().isoformat()
             
             # Calculate targets

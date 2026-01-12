@@ -2881,52 +2881,57 @@ async def api_verify_otp(request: Request):
         
         if not phone or not otp:
             return {"success": False, "message": "Phone and OTP required"}
-            
-        record = OTP_CACHE.get(phone)
-        valid = False
+        
         import time
         
         # Normalize inputs
         otp = str(otp).replace(" ", "").strip()
+        phone_normalized = phone.replace("+", "").replace(" ", "").replace("-", "")
+        phone_with_plus = "+" + phone_normalized if not phone.startswith("+") else phone
         
-        # Check global cache (if sent via Backend/Cloud API)
-        if record:
-             if time.time() > record["expires"]:
-                print(f"[OTP] Global cache expired for {phone}")
-                del OTP_CACHE[phone]
-             elif str(record["otp"]).strip() == otp:
-                valid = True
-                del OTP_CACHE[phone]
+        valid = False
         
-        # Check user database (if requested via Agent "Send OTP")
+        # Check global cache with multiple phone formats
+        for phone_variant in [phone, phone_normalized, phone_with_plus]:
+            record = OTP_CACHE.get(phone_variant)
+            if record:
+                if time.time() > record["expires"]:
+                    print(f"[OTP] Cache expired for {phone_variant}")
+                    del OTP_CACHE[phone_variant]
+                elif str(record["otp"]).strip() == otp:
+                    valid = True
+                    del OTP_CACHE[phone_variant]
+                    print(f"[OTP] Verified from cache for {phone_variant}")
+                    break
+        
+        # Check user database with multiple phone formats
         if not valid:
-            user = user_repo.get_user(phone)
-            if user:
-                temp_otp = user.get("temp_otp")
-                expiry = user.get("otp_expiry", 0)
-                
-                print(f"[OTP] Checking User Repo: Stored={temp_otp}, Input={otp}")
-                
-                if temp_otp and str(temp_otp).strip() == otp:
-                    if time.time() <= expiry:
-                        valid = True
-                        # Clear used OTP
-                        user["temp_otp"] = None 
-                        user_repo.update_user(phone, user)
-                    else:
-                        print(f"[OTP] User repo OTP expired")
+            for phone_variant in [phone, phone_normalized, phone_with_plus]:
+                user = user_repo.get_user(phone_variant)
+                if user:
+                    temp_otp = user.get("temp_otp")
+                    expiry = user.get("otp_expiry", 0)
+                    
+                    print(f"[OTP] Checking User Repo ({phone_variant}): Stored={temp_otp}, Input={otp}")
+                    
+                    if temp_otp and str(temp_otp).strip() == otp:
+                        if time.time() <= expiry:
+                            valid = True
+                            user["temp_otp"] = None 
+                            user_repo.update_user(phone_variant, user)
+                            phone = phone_variant  # Use the matched variant
+                            print(f"[OTP] Verified from user repo for {phone_variant}")
+                            break
+                        else:
+                            print(f"[OTP] User repo OTP expired")
 
         if not valid:
             print(f"[OTP] Validation Failed for {phone}. Input: {otp}")
-            return {"success": False, "message": "Invalid OTP. Ask bot for new code."}
+            return {"success": False, "message": "Invalid OTP. Please request a new code."}
             
         # Success! 
         user_repo.ensure_user(phone)
-        
-        # Create session token (simple one for now)
         token = f"session_{phone}_{int(time.time())}"
-        
-        # Get Name
         user_data = user_repo.get_user(phone)
         
         return {
@@ -2937,6 +2942,7 @@ async def api_verify_otp(request: Request):
         }
         
     except Exception as e:
+        print(f"[OTP] Error: {e}")
         return {"success": False, "message": str(e)}
 
 
