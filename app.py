@@ -50,23 +50,36 @@ from services.ai_onboarding_service import get_ai_onboarding
 from services.pdf_report_service import pdf_report_service
 from services.whatsapp_cloud_service import whatsapp_cloud_service
 
-# Agents
-from agents.fraud_agent import check_fraud
-from agents.advanced_fraud_agent import advanced_fraud_check
-from agents.moneyviya_agent import moneyviya_agent
+# Agents - Optional imports to prevent startup failures
+try:
+    from agents.fraud_agent import check_fraud
+except Exception as e:
+    print(f"[STARTUP] fraud_agent not available: {e}")
+    check_fraud = None
 
-# Advanced WhatsApp Agent (v4.0 - Primary Agent)
-# Advanced WhatsApp Agent (v4.0 - Primary Agent)
-from agents.advanced_whatsapp_agent import advanced_agent
-ADVANCED_AGENT_AVAILABLE = True
+try:
+    from agents.advanced_fraud_agent import advanced_fraud_check
+except Exception as e:
+    print(f"[STARTUP] advanced_fraud_agent not available: {e}")
+    advanced_fraud_check = None
 
-# MoneyView Agent (v2.0 - Personal Financial Manager)
+# Advanced WhatsApp Agent (v4.0)
+try:
+    from agents.advanced_whatsapp_agent import advanced_agent
+    ADVANCED_AGENT_AVAILABLE = True
+except Exception as e:
+    print(f"[STARTUP] advanced_agent not available: {e}")
+    advanced_agent = None
+    ADVANCED_AGENT_AVAILABLE = False
+
+# MoneyView Agent (v2.0 - Primary Agent for new users)
 try:
     from agents.moneyview_agent import moneyview_agent, process_message as moneyview_process
     from moneyview_api import moneyview_router
     MONEYVIEW_AVAILABLE = True
 except Exception as e:
     print(f"[STARTUP] MoneyView not available: {e}")
+    moneyview_agent = None
     MONEYVIEW_AVAILABLE = False
 
 # Config
@@ -74,9 +87,10 @@ from config import SUPPORTED_LANGUAGES, VOICES_DIR
 
 
 # ================= APP SETUP =================
-# BUILD VERSION: 2026-01-12-v5 - Advanced Agent with IST Timezone
-AGENT_VERSION = "5.0.0-advanced"
-print(f"[STARTUP] VittaSaathi API starting with agent version: {AGENT_VERSION}")
+# BUILD VERSION: 2026-01-12-v6 - MoneyView Personal Finance Manager
+AGENT_VERSION = "6.0.0-moneyview"
+print(f"[STARTUP] MoneyView API starting with agent version: {AGENT_VERSION}")
+
 
 app = FastAPI(
     title="VittaSaathi API",
@@ -279,8 +293,11 @@ async def send_reminder(request: Request):
             import json
             user_data = json.loads(user_data)
         
-        # Generate reminder message using AI agent
-        reminder_text = moneyviya_agent.generate_daily_reminder(user_data, reminder_type)
+        # Generate reminder message using MoneyView agent
+        if moneyview_agent:
+            reminder_text = f"☀️ Good morning! Time to start your financial day."
+        else:
+            reminder_text = "Good morning! Start tracking your expenses today."
         
         # Send via WhatsApp
         if whatsapp_cloud_service.is_available():
@@ -526,7 +543,10 @@ try:
             for user in users:
                 if user.get("onboarding_complete"):
                     try:
-                        msg = moneyviya_agent.generate_daily_reminder(user, "morning")
+                        if moneyview_agent:
+                            msg = f"☀️ Good morning {user.get('name', 'Friend')}! Ready to track today?"
+                        else:
+                            msg = "Good morning! Start tracking your expenses."
                         phone = user.get("phone", "").replace("+", "")
                         
                         # Try Cloud API first
@@ -1453,8 +1473,14 @@ async def handle_baileys_webhook(request: Request):
         user_repo.update_activity(phone)
         user = user_repo.ensure_user(phone)
         
-        # Process via AI Agent
-        reply_text = moneyviya_agent.process_message(phone, message, user)
+        # Process via MoneyView Agent
+        if MONEYVIEW_AVAILABLE and moneyview_agent:
+            import asyncio
+            reply_text = asyncio.get_event_loop().run_until_complete(
+                moneyview_agent.process_message(phone, message, user.get('name', 'Friend'))
+            )
+        else:
+            reply_text = "Welcome! MoneyView is setting up. Please try again."
         
         # Save updates
         user_repo.update_user(phone, user)
@@ -1920,7 +1946,13 @@ async def handle_whatsapp_cloud_webhook(request: Request):
             # ===== USE MONEYVIYA AI AGENT =====
             # The agent handles everything: onboarding, NLP, goals, reminders
             try:
-                reply_text = moneyviya_agent.process_message(phone, message_text, user)
+                if MONEYVIEW_AVAILABLE and moneyview_agent:
+                    import asyncio
+                    reply_text = asyncio.get_event_loop().run_until_complete(
+                        moneyview_agent.process_message(phone, message_text, user.get('name', sender_name))
+                    )
+                else:
+                    reply_text = "Welcome to MoneyView! The system is starting up."
                 
                 # Save any updates to user data
                 user_repo.update_user(phone, user)
