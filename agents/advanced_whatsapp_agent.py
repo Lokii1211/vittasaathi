@@ -294,24 +294,63 @@ Enter this code on the website to access your dashboard.""",
         # Store phone in user_data for handlers
         user_data["phone"] = phone
         
-        # FORCE LANGUAGE SELECTION for ALL users without valid language
+        # SMART COMMAND HANDLING
+        msg_lower = message.strip().lower()
         current_lang = user_data.get("language")
         valid_langs = ["en", "hi", "ta", "te"]
         
-        # Check for language command
-        msg_lower = message.strip().lower()
-        if msg_lower in ["language", "change language", "lang", "भाषा"]:
+        # Reset/Start Fresh commands
+        if msg_lower in ["reset", "start fresh", "start over", "restart", "नया शुरू", "மீண்டும் தொடங்கு"]:
+            user_data["onboarding_step"] = 0
+            user_data["onboarding_complete"] = False
+            user_data["language"] = None
+            user_repo.update_user(phone, user_data)
+            return """🔄 *Starting Fresh!*
+
+Let's begin again...
+
+👋 *Welcome to VittaSaathi!*
+Your Personal AI Financial Advisor 💰
+
+🌐 *Please select your language:*
+
+1️⃣ English
+2️⃣ हिंदी (Hindi)
+3️⃣ தமிழ் (Tamil)
+4️⃣ తెలుగు (Telugu)
+
+_(Reply with 1, 2, 3, or 4)_"""
+        
+        # Language change command
+        if msg_lower in ["language", "change language", "lang", "भाषा", "மொழி"]:
             user_data["onboarding_step"] = 0
             user_data["language"] = None
             user_repo.update_user(phone, user_data)
-            return self._handle_onboarding(phone, message, user_data, {})
+            return """🌐 *Change Language*
+
+Please select your preferred language:
+
+1️⃣ English
+2️⃣ हिंदी (Hindi)
+3️⃣ தமிழ் (Tamil)
+4️⃣ తెలుగు (Telugu)
+
+_(Reply with 1, 2, 3, or 4)_"""
+        
+        # Quick language selection (direct)
+        if msg_lower in ["english", "hindi", "tamil", "telugu"]:
+            lang_map = {"english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te"}
+            user_data["language"] = lang_map.get(msg_lower, "en")
+            user_repo.update_user(phone, user_data)
+            confirms = {"en": "Language set to English! ✅", "hi": "भाषा हिंदी में सेट है! ✅", 
+                       "ta": "மொழி தமிழில் அமைக்கப்பட்டது! ✅", "te": "భాష తెలుగులో సెట్ చేయబడింది! ✅"}
+            return confirms.get(user_data["language"], "Language updated! ✅") + "\n\nHow can I help you today?"
         
         # Force language selection if not set or invalid
         if not current_lang or current_lang not in valid_langs:
             # Check if user is selecting language (1, 2, 3, 4)
-            if msg_lower in ["1", "2", "3", "4", "english", "hindi", "tamil", "telugu"]:
-                lang_map = {"1": "en", "2": "hi", "3": "ta", "4": "te",
-                           "english": "en", "hindi": "hi", "tamil": "ta", "telugu": "te"}
+            if msg_lower in ["1", "2", "3", "4"]:
+                lang_map = {"1": "en", "2": "hi", "3": "ta", "4": "te"}
                 user_data["language"] = lang_map.get(msg_lower, "en")
                 user_data["onboarding_step"] = 2  # Move to name step
                 user_repo.update_user(phone, user_data)
