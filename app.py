@@ -173,7 +173,8 @@ def health_check():
         "status": "ok",
         "version": AGENT_VERSION,
         "whatsapp_cloud_configured": whatsapp_cloud_service.is_available(),
-        "openai_configured": openai_service.is_available()
+        "openai_configured": openai_service.is_available(),
+        "moneyview_available": MONEYVIEW_AVAILABLE
     }
 
 
