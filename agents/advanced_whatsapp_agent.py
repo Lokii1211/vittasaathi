@@ -271,8 +271,60 @@ Enter this code on the website to access your dashboard.""",
             "otp": [r"otp|login|code|verification|वेरिफिकेशन|உறுதிப்படுத்தல்"],
         }
 
-    # Old process_message removed to avoid duplicates - new version follows below
-
+    async def process_message(self, phone: str, message: str, user_data: Dict = None) -> str:
+        """
+        Main entry point for processing WhatsApp messages
+        """
+        import pytz
+        
+        # Load user data if not provided
+        if user_data is None:
+            user_data = user_repo.get_user(phone) or {}
+        
+        # Ensure user exists
+        if not user_data.get("phone"):
+            user_repo.ensure_user(phone)
+            user_data = user_repo.get_user(phone) or {"phone": phone}
+            user_data["onboarding_step"] = 0
+            user_repo.update_user(phone, user_data)
+        
+        # FORCE LANGUAGE SELECTION if missing or invalid
+        current_lang = user_data.get("language")
+        if not current_lang or current_lang not in ["en", "hi", "ta", "te"]:
+            if not user_data.get("onboarding_complete"):
+                user_data["onboarding_step"] = 0
+                user_repo.update_user(phone, user_data)
+                return self._handle_onboarding(phone, message, user_data, {})
+        
+        # Get conversation context
+        context = self._get_context(phone)
+        context["language"] = user_data.get("language", "en")
+        
+        # Check if onboarding is needed
+        if not user_data.get("onboarding_complete"):
+            return self._handle_onboarding(phone, message, user_data, context)
+        
+        # Get IST timestamp
+        ist = pytz.timezone('Asia/Kolkata')
+        context["timestamp"] = datetime.now(ist).isoformat()
+        
+        # Detect intent using smart NLP
+        intent, entities = self._detect_intent(message, context)
+        
+        # Update context
+        context["last_message"] = message
+        context["last_intent"] = intent
+        context["last_entities"] = entities
+        
+        # Route to handler
+        handler = self.intent_handlers.get(intent, self._handle_fallback)
+        response = handler(message, user_data, entities, context)
+        
+        # Save context
+        context["last_response"] = response
+        self._save_context(phone, context)
+        
+        return response
     
     def _detect_language(self, text: str, default: str = "en") -> str:
         """Detect language from text"""
@@ -603,56 +655,6 @@ Enter this code on the website to access your dashboard.""",
         import pytz
         return datetime.now(pytz.timezone('Asia/Kolkata'))
 
-    async def process_message(self, phone: str, message: str, user_data: Dict = None) -> str:
-        """
-        Main entry point for processing WhatsApp messages
-        """
-        # Load user data if not provided
-        if user_data is None:
-            user_data = user_repo.get_user(phone) or {}
-        
-        # Ensure user exists
-        if not user_data.get("phone"):
-            user_repo.ensure_user(phone)
-            user_data = user_repo.get_user(phone) or {"phone": phone}
-            user_data["onboarding_step"] = 0  # Force onboarding start
-            user_repo.update_user(phone, user_data)
-        
-        # FORCE LANGUAGE SELECTION if missing or invalid
-        if not user_data.get("language") or user_data.get("language") not in ["en", "hi", "ta", "te"]:
-            user_data["onboarding_step"] = 0
-            user_repo.update_user(phone, user_data)
-            return self._handle_onboarding(phone, message, user_data, {})
-            
-        # Get or create conversation context
-        context = self._get_context(phone)
-        
-        # Check if onboarding is needed
-        if not user_data.get("onboarding_complete"):
-            return self._handle_onboarding(phone, message, user_data, context)
-            
-        # ... rest of processing ...
-        
-        # Update timestamp with IST
-        context["timestamp"] = self._get_ist_time().isoformat()
-        
-        # Detect intent using smart NLP
-        intent, entities = self._detect_intent(message, context)
-        
-        # Update context with current message
-        context["last_message"] = message
-        context["last_intent"] = intent
-        context["last_entities"] = entities
-        
-        # Route to appropriate handler
-        handler = self.intent_handlers.get(intent, self._handle_fallback)
-        response = handler(message, user_data, entities, context)
-        
-        # Update context with response
-        context["last_response"] = response
-        self._save_context(phone, context)
-        
-        return response
     
     def _handle_investment(self, message: str, user_data: Dict, entities: Dict, context: Dict) -> str:
         """Handle investment advice request"""
