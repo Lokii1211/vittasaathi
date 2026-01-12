@@ -1,35 +1,31 @@
 {
-    "name": "MoneyViya Scheduled Messages",
+    "name": "MoneyViya Complete Bot",
     "nodes": [
         {
             "parameters": {
-                "rule": {
-                    "interval": [
-                        {
-                            "field": "cronExpression",
-                            "expression": "0 6 * * *"
-                        }
-                    ]
-                }
+                "httpMethod": "POST",
+                "path": "whatsapp-message",
+                "responseMode": "responseNode",
+                "options": {}
             },
-            "id": "b9e2f1a0-1234-4567-890a-bcdef1234567",
-            "name": "Morning 6 AM",
-            "type": "n8n-nodes-base.scheduleTrigger",
+            "id": "webhook-receiver",
+            "name": "Receive WhatsApp Message",
+            "type": "n8n-nodes-base.webhook",
             "typeVersion": 1.1,
             "position": [
                 240,
                 300
-            ]
+            ],
+            "webhookId": "moneyviya-webhook"
         },
         {
             "parameters": {
-                "url": "https://moneyviya.up.railway.app/api/v2/users/active",
-                "options": {}
+                "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nreturn {\n  phone: body.phone || '',\n  message: body.message || '',\n  sender_name: body.sender_name || 'Friend'\n};"
             },
-            "id": "c8d3e2b1-2345-5678-901b-cdef23456789",
-            "name": "Get Active Users Morning",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
+            "id": "extract-data",
+            "name": "Extract Message Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
             "position": [
                 460,
                 300
@@ -37,35 +33,8 @@
         },
         {
             "parameters": {
-                "jsCode": "const users = $input.first().json;\nconst results = [];\n\nconst userList = Array.isArray(users) ? users : [];\n\nfor (const user of userList) {\n  const lang = user.language || 'en';\n  const name = user.name || 'Friend';\n  const dailyBudget = user.daily_budget || 1000;\n  const dailyTarget = user.daily_target || 500;\n  \n  let message = '';\n  \n  if (lang === 'ta') {\n    message = `☀️ காலை வணக்கம், ${name}!\\n\\n📊 இன்றைய திட்டம்:\\n💰 தினசரி பட்ஜெட்: ₹${dailyBudget}\\n🎯 சேமிப்பு இலக்கு: ₹${dailyTarget}\\n\\n💪 இன்று ஒரு நல்ல நாளாக இருக்கும்!`;\n  } else if (lang === 'hi') {\n    message = `☀️ सुप्रभात, ${name}!\\n\\n📊 आज की योजना:\\n💰 दैनिक बजट: ₹${dailyBudget}\\n🎯 बचत लक्ष्य: ₹${dailyTarget}\\n\\n💪 आज एक अच्छा दिन होगा!`;\n  } else {\n    message = `☀️ Good Morning, ${name}!\\n\\n📊 Today's Plan:\\n💰 Daily Budget: ₹${dailyBudget}\\n🎯 Savings Target: ₹${dailyTarget}\\n\\n💪 Have a great day!`;\n  }\n  \n  results.push({ phone: user.phone, message: message });\n}\n\nreturn results;"
-            },
-            "id": "d7c4b3a2-3456-6789-012c-def345678901",
-            "name": "Generate Morning Messages",
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
-            "position": [
-                680,
-                300
-            ]
-        },
-        {
-            "parameters": {
-                "batchSize": 1,
-                "options": {}
-            },
-            "id": "e6b5c4a3-4567-7890-123d-ef4567890123",
-            "name": "Loop Morning",
-            "type": "n8n-nodes-base.splitInBatches",
-            "typeVersion": 3,
-            "position": [
-                900,
-                300
-            ]
-        },
-        {
-            "parameters": {
                 "method": "POST",
-                "url": "http://localhost:3001/send",
+                "url": "https://moneyviya.up.railway.app/api/v2/whatsapp/process",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
@@ -77,16 +46,125 @@
                 },
                 "sendBody": true,
                 "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.message, sender_name: $json.sender_name }) }}",
+                "options": {
+                    "timeout": 30000
+                }
+            },
+            "id": "process-railway",
+            "name": "Process via Railway API",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const response = $input.first().json;\nconst prevData = $('Extract Message Data').first().json;\n\nreturn {\n  phone: prevData.phone,\n  reply: response.reply || 'Sorry, something went wrong. Please try again.'\n};"
+            },
+            "id": "prepare-reply",
+            "name": "Prepare Reply",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({ success: true, phone: $json.phone, reply: $json.reply }) }}",
+                "options": {}
+            },
+            "id": "respond-webhook",
+            "name": "Send Response to Baileys",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1120,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 6 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "morning-trigger",
+            "name": "Morning 6 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                540
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://moneyviya.up.railway.app/api/v2/users/active",
+                "options": {}
+            },
+            "id": "get-users-morning",
+            "name": "Get Users Morning",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                540
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const data = $input.first().json;\nconst users = Array.isArray(data) ? data : [];\nconst results = [];\n\nfor (const user of users) {\n  const lang = user.language || 'en';\n  const name = user.name || 'Friend';\n  const budget = user.daily_budget || 1000;\n  const target = user.daily_target || 500;\n  \n  let msg = '';\n  if (lang === 'ta') {\n    msg = `☀️ காலை வணக்கம், ${name}!\\n\\n📊 இன்றைய திட்டம்:\\n💰 பட்ஜெட்: ₹${budget}\\n🎯 இலக்கு: ₹${target}\\n\\n💪 நல்ல நாளாக இருக்கும்!`;\n  } else if (lang === 'hi') {\n    msg = `☀️ सुप्रभात, ${name}!\\n\\n📊 आज की योजना:\\n💰 बजट: ₹${budget}\\n🎯 लक्ष्य: ₹${target}\\n\\n💪 अच्छा दिन होगा!`;\n  } else {\n    msg = `☀️ Good Morning, ${name}!\\n\\n📊 Today's Plan:\\n💰 Budget: ₹${budget}\\n🎯 Target: ₹${target}\\n\\n💪 Have a great day!`;\n  }\n  results.push({ phone: user.phone, message: msg });\n}\n\nreturn results;"
+            },
+            "id": "gen-morning",
+            "name": "Generate Morning Msgs",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                680,
+                540
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop-morning",
+            "name": "Loop Morning",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                900,
+                540
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://localhost:3001/send",
+                "sendBody": true,
+                "specifyBody": "json",
                 "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.message }) }}",
                 "options": {}
             },
-            "id": "f5a6d5b4-5678-8901-234e-f56789012345",
-            "name": "Send Morning Baileys",
+            "id": "send-morning",
+            "name": "Send Morning",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 1120,
-                300
+                540
             ]
         },
         {
@@ -100,13 +178,13 @@
                     ]
                 }
             },
-            "id": "a1b2c3d4-6789-0123-345f-678901234567",
+            "id": "evening-trigger",
             "name": "Evening 8 PM",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
             "position": [
                 240,
-                520
+                760
             ]
         },
         {
@@ -114,26 +192,26 @@
                 "url": "https://moneyviya.up.railway.app/api/v2/users/active",
                 "options": {}
             },
-            "id": "b2c3d4e5-7890-1234-456a-789012345678",
-            "name": "Get Active Users Evening",
+            "id": "get-users-evening",
+            "name": "Get Users Evening",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 460,
-                520
+                760
             ]
         },
         {
             "parameters": {
-                "jsCode": "const users = $input.first().json;\nconst results = [];\n\nconst userList = Array.isArray(users) ? users : [];\n\nfor (const user of userList) {\n  const lang = user.language || 'en';\n  const name = user.name || 'Friend';\n  const todayIncome = user.today_income || 0;\n  const todayExpenses = user.today_expenses || 0;\n  const savings = todayIncome - todayExpenses;\n  const emoji = savings > 0 ? '🎉' : '📊';\n  \n  let message = '';\n  \n  if (lang === 'ta') {\n    message = `🌙 ${name}, இன்றைய சுருக்கம்\\n\\n💵 வருமானம்: ₹${todayIncome}\\n💸 செலவுகள்: ₹${todayExpenses}\\n${emoji} நிகரம்: ₹${savings}\\n\\n${savings > 0 ? '👏 நல்ல வேலை!' : '💪 நாளை சிறப்பாக இருக்கும்!'}`;\n  } else if (lang === 'hi') {\n    message = `🌙 ${name}, आज का सारांश\\n\\n💵 आय: ₹${todayIncome}\\n💸 खर्च: ₹${todayExpenses}\\n${emoji} शुद्ध: ₹${savings}\\n\\n${savings > 0 ? '👏 बढ़िया काम!' : '💪 कल बेहतर होगा!'}`;\n  } else {\n    message = `🌙 ${name}, Today's Summary\\n\\n💵 Income: ₹${todayIncome}\\n💸 Expenses: ₹${todayExpenses}\\n${emoji} Net: ₹${savings}\\n\\n${savings > 0 ? '👏 Great job!' : '💪 Tomorrow will be better!'}`;\n  }\n  \n  results.push({ phone: user.phone, message: message });\n}\n\nreturn results;"
+                "jsCode": "const data = $input.first().json;\nconst users = Array.isArray(data) ? data : [];\nconst results = [];\n\nfor (const user of users) {\n  const lang = user.language || 'en';\n  const name = user.name || 'Friend';\n  const inc = user.today_income || 0;\n  const exp = user.today_expenses || 0;\n  const net = inc - exp;\n  const emoji = net > 0 ? '🎉' : '📊';\n  \n  let msg = '';\n  if (lang === 'ta') {\n    msg = `🌙 ${name}, இன்றைய சுருக்கம்\\n\\n💵 வருமானம்: ₹${inc}\\n💸 செலவு: ₹${exp}\\n${emoji} நிகரம்: ₹${net}\\n\\n${net > 0 ? '👏 நல்ல வேலை!' : '💪 நாளை சிறப்பாக!'}`;\n  } else if (lang === 'hi') {\n    msg = `🌙 ${name}, आज का सारांश\\n\\n💵 आय: ₹${inc}\\n💸 खर्च: ₹${exp}\\n${emoji} शुद्ध: ₹${net}\\n\\n${net > 0 ? '👏 बढ़िया!' : '💪 कल बेहतर!'}`;\n  } else {\n    msg = `🌙 ${name}, Today's Summary\\n\\n💵 Income: ₹${inc}\\n💸 Expenses: ₹${exp}\\n${emoji} Net: ₹${net}\\n\\n${net > 0 ? '👏 Great job!' : '💪 Tomorrow!'}`;\n  }\n  results.push({ phone: user.phone, message: msg });\n}\n\nreturn results;"
             },
-            "id": "c3d4e5f6-8901-2345-567b-890123456789",
-            "name": "Generate Evening Messages",
+            "id": "gen-evening",
+            "name": "Generate Evening Msgs",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
             "position": [
                 680,
-                520
+                760
             ]
         },
         {
@@ -141,40 +219,31 @@
                 "batchSize": 1,
                 "options": {}
             },
-            "id": "d4e5f6a7-9012-3456-678c-901234567890",
+            "id": "loop-evening",
             "name": "Loop Evening",
             "type": "n8n-nodes-base.splitInBatches",
             "typeVersion": 3,
             "position": [
                 900,
-                520
+                760
             ]
         },
         {
             "parameters": {
                 "method": "POST",
                 "url": "http://localhost:3001/send",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "Content-Type",
-                            "value": "application/json"
-                        }
-                    ]
-                },
                 "sendBody": true,
                 "specifyBody": "json",
                 "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.message }) }}",
                 "options": {}
             },
-            "id": "e5f6a7b8-0123-4567-789d-012345678901",
-            "name": "Send Evening Baileys",
+            "id": "send-evening",
+            "name": "Send Evening",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 1120,
-                520
+                760
             ]
         },
         {
@@ -188,13 +257,13 @@
                     ]
                 }
             },
-            "id": "f6a7b8c9-1234-5678-890e-123456789012",
-            "name": "Sunday 10 AM Weekly",
+            "id": "weekly-trigger",
+            "name": "Sunday 10 AM",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
             "position": [
                 240,
-                740
+                980
             ]
         },
         {
@@ -203,13 +272,13 @@
                 "url": "https://moneyviya.up.railway.app/api/v2/reports/weekly/generate",
                 "options": {}
             },
-            "id": "a7b8c9d0-2345-6789-901f-234567890123",
+            "id": "gen-weekly",
             "name": "Generate Weekly Reports",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 460,
-                740
+                980
             ]
         },
         {
@@ -217,67 +286,102 @@
                 "batchSize": 1,
                 "options": {}
             },
-            "id": "b8c9d0e1-3456-7890-012a-345678901234",
+            "id": "loop-weekly",
             "name": "Loop Weekly",
             "type": "n8n-nodes-base.splitInBatches",
             "typeVersion": 3,
             "position": [
                 680,
-                740
+                980
             ]
         },
         {
             "parameters": {
                 "method": "POST",
                 "url": "http://localhost:3001/send",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "Content-Type",
-                            "value": "application/json"
-                        }
-                    ]
-                },
                 "sendBody": true,
                 "specifyBody": "json",
                 "jsonBody": "={{ JSON.stringify({ phone: $json.phone, message: $json.report }) }}",
                 "options": {}
             },
-            "id": "c9d0e1f2-4567-8901-123b-456789012345",
-            "name": "Send Weekly Baileys",
+            "id": "send-weekly",
+            "name": "Send Weekly",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
                 900,
-                740
+                980
             ]
         }
     ],
     "connections": {
+        "Receive WhatsApp Message": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Message Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Message Data": {
+            "main": [
+                [
+                    {
+                        "node": "Process via Railway API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process via Railway API": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Reply",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Reply": {
+            "main": [
+                [
+                    {
+                        "node": "Send Response to Baileys",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
         "Morning 6 AM": {
             "main": [
                 [
                     {
-                        "node": "Get Active Users Morning",
+                        "node": "Get Users Morning",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Get Active Users Morning": {
+        "Get Users Morning": {
             "main": [
                 [
                     {
-                        "node": "Generate Morning Messages",
+                        "node": "Generate Morning Msgs",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Generate Morning Messages": {
+        "Generate Morning Msgs": {
             "main": [
                 [
                     {
@@ -292,7 +396,7 @@
             "main": [
                 [
                     {
-                        "node": "Send Morning Baileys",
+                        "node": "Send Morning",
                         "type": "main",
                         "index": 0
                     }
@@ -303,25 +407,25 @@
             "main": [
                 [
                     {
-                        "node": "Get Active Users Evening",
+                        "node": "Get Users Evening",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Get Active Users Evening": {
+        "Get Users Evening": {
             "main": [
                 [
                     {
-                        "node": "Generate Evening Messages",
+                        "node": "Generate Evening Msgs",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Generate Evening Messages": {
+        "Generate Evening Msgs": {
             "main": [
                 [
                     {
@@ -336,14 +440,14 @@
             "main": [
                 [
                     {
-                        "node": "Send Evening Baileys",
+                        "node": "Send Evening",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Sunday 10 AM Weekly": {
+        "Sunday 10 AM": {
             "main": [
                 [
                     {
@@ -369,7 +473,7 @@
             "main": [
                 [
                     {
-                        "node": "Send Weekly Baileys",
+                        "node": "Send Weekly",
                         "type": "main",
                         "index": 0
                     }
@@ -383,7 +487,7 @@
     },
     "staticData": null,
     "tags": [],
-    "triggerCount": 3,
-    "updatedAt": "2026-01-12T11:00:00.000Z",
-    "versionId": "1"
+    "triggerCount": 4,
+    "updatedAt": "2026-01-12T11:18:00.000Z",
+    "versionId": "2"
 }

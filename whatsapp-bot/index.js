@@ -1,6 +1,7 @@
 /**
- * MoneyViya WhatsApp Bot v2.1
- * - Forwards all messages to Railway API for processing
+ * MoneyViya WhatsApp Bot v3.0
+ * - Sends all messages to n8n webhook for processing
+ * - n8n handles: onboarding, expenses, income, reports, etc.
  * - Provides HTTP API for n8n to send scheduled messages
  */
 
@@ -10,19 +11,19 @@ const pino = require('pino');
 const axios = require('axios');
 const express = require('express');
 
-// Configuration
-const RAILWAY_API_URL = process.env.RAILWAY_API_URL || 'https://moneyviya.up.railway.app';
-const API_ENDPOINT = `${RAILWAY_API_URL}/api/v2/whatsapp/process`;
+// Configuration - IMPORTANT: Update these!
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'http://localhost:5678/webhook/whatsapp-message';
 const HTTP_PORT = process.env.BOT_PORT || 3001;
 
-// Logger
-const logger = pino({ level: 'info' });
+// Fallback to Railway if n8n not available
+const RAILWAY_API_URL = process.env.RAILWAY_API_URL || 'https://moneyviya.up.railway.app';
+const RAILWAY_ENDPOINT = `${RAILWAY_API_URL}/api/v2/whatsapp/process`;
 
 // Store for connection
 let sock;
 let isConnected = false;
 
-// Express app for n8n integration
+// Express app for n8n to send messages
 const app = express();
 app.use(express.json());
 
@@ -31,11 +32,12 @@ app.get('/health', (req, res) => {
     res.json({
         status: 'ok',
         connected: isConnected,
-        bot: 'MoneyViya WhatsApp Bot v2.1'
+        bot: 'MoneyViya WhatsApp Bot v3.0',
+        n8n_webhook: N8N_WEBHOOK_URL
     });
 });
 
-// Send message endpoint (called by n8n)
+// Send message endpoint (called by n8n scheduled messages)
 app.post('/send', async (req, res) => {
     try {
         const { phone, message } = req.body;
@@ -68,45 +70,61 @@ app.post('/send', async (req, res) => {
 
 // Start HTTP server
 app.listen(HTTP_PORT, () => {
-    console.log(`📡 HTTP API running on port ${HTTP_PORT}`);
-    console.log(`   - Health: http://localhost:${HTTP_PORT}/health`);
-    console.log(`   - Send:   POST http://localhost:${HTTP_PORT}/send`);
+    console.log(`\n📡 HTTP API running on port ${HTTP_PORT}`);
+    console.log(`   POST http://localhost:${HTTP_PORT}/send`);
 });
 
-async function processMessageViaAPI(phone, message, senderName) {
+async function processMessage(phone, message, senderName) {
     try {
-        console.log(`[API] Sending to Railway: ${phone} -> "${message.substring(0, 50)}..."`);
+        console.log(`[Processing] ${phone} -> "${message.substring(0, 50)}..."`);
 
-        const response = await axios.post(API_ENDPOINT, {
+        // Try n8n first
+        try {
+            const response = await axios.post(N8N_WEBHOOK_URL, {
+                phone: phone,
+                message: message,
+                sender_name: senderName
+            }, {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 30000
+            });
+
+            if (response.data && response.data.reply) {
+                console.log(`[n8n] Got reply`);
+                return response.data.reply;
+            }
+        } catch (n8nError) {
+            console.log(`[n8n] Not available, trying Railway...`);
+        }
+
+        // Fallback to Railway
+        const response = await axios.post(RAILWAY_ENDPOINT, {
             phone: phone,
             message: message,
             sender_name: senderName
         }, {
             headers: { 'Content-Type': 'application/json' },
-            timeout: 30000 // 30 second timeout
+            timeout: 30000
         });
 
         if (response.data && response.data.reply) {
-            console.log(`[API] Got reply from Railway`);
+            console.log(`[Railway] Got reply`);
             return response.data.reply;
-        } else {
-            console.log(`[API] No reply in response:`, response.data);
-            return null;
         }
-    } catch (error) {
-        console.error(`[API] Error calling Railway:`, error.message);
 
-        // Fallback error message
-        return "⚠️ Sorry, I'm having trouble connecting to the server. Please try again in a moment.";
+        return null;
+    } catch (error) {
+        console.error(`[Error]`, error.message);
+        return "⚠️ Sorry, I'm having trouble. Please try again.";
     }
 }
 
 async function sendMessage(jid, text) {
     try {
         await sock.sendMessage(jid, { text: text });
-        console.log(`[Send] Message sent to ${jid}`);
+        console.log(`[Sent] to ${jid}`);
     } catch (error) {
-        console.error(`[Send] Error sending message:`, error.message);
+        console.error(`[Send Error]`, error.message);
     }
 }
 
@@ -115,12 +133,13 @@ async function startBot() {
     const { version } = await fetchLatestBaileysVersion();
 
     console.log(`
-╔════════════════════════════════════════════════╗
-║     💰 MoneyViya WhatsApp Bot v2.1             ║
-║     Railway API + n8n Integration              ║
-╠════════════════════════════════════════════════╣
-║  API: ${RAILWAY_API_URL.substring(0, 40).padEnd(40)}║
-╚════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════╗
+║     💰 MoneyViya WhatsApp Bot v3.0                ║
+║     n8n Workflow Integration                       ║
+╠═══════════════════════════════════════════════════╣
+║  n8n: ${N8N_WEBHOOK_URL.substring(0, 45).padEnd(45)}║
+║  Fallback: Railway API                             ║
+╚═══════════════════════════════════════════════════╝
     `);
 
     sock = makeWASocket({
@@ -131,7 +150,6 @@ async function startBot() {
         browser: ['MoneyViya', 'Chrome', '120.0.0'],
     });
 
-    // Handle connection events
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
@@ -151,27 +169,21 @@ async function startBot() {
         } else if (connection === 'open') {
             isConnected = true;
             console.log('\n✅ Connected to WhatsApp!\n');
-            console.log('📡 All messages will be forwarded to Railway API');
-            console.log('🔄 n8n can send scheduled messages via HTTP API');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+            console.log('🔄 Messages go to: n8n → Railway API');
+            console.log('📤 n8n sends scheduled messages via: localhost:' + HTTP_PORT);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         }
     });
 
-    // Save credentials when updated
     sock.ev.on('creds.update', saveCreds);
 
-    // Handle incoming messages
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
         if (type !== 'notify') return;
 
         for (const msg of messages) {
-            // Skip if no message content or from self
             if (!msg.message || msg.key.fromMe) continue;
-
-            // Skip status broadcasts
             if (msg.key.remoteJid === 'status@broadcast') continue;
 
-            // Extract message text
             const messageContent = msg.message.conversation
                 || msg.message.extendedTextMessage?.text
                 || msg.message.imageMessage?.caption
@@ -180,15 +192,13 @@ async function startBot() {
 
             if (!messageContent) continue;
 
-            // Extract sender info
             const jid = msg.key.remoteJid;
             const phone = jid.replace('@s.whatsapp.net', '');
             const senderName = msg.pushName || 'Friend';
 
             console.log(`\n[Received] ${senderName} (${phone}): ${messageContent}`);
 
-            // Process via Railway API
-            const reply = await processMessageViaAPI(phone, messageContent, senderName);
+            const reply = await processMessage(phone, messageContent, senderName);
 
             if (reply) {
                 await sendMessage(jid, reply);
@@ -197,6 +207,5 @@ async function startBot() {
     });
 }
 
-// Start the bot
-console.log('Starting MoneyViya WhatsApp Bot...\n');
+console.log('Starting MoneyViya WhatsApp Bot v3.0...\n');
 startBot().catch(err => console.error('Startup error:', err));
