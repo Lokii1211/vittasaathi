@@ -774,6 +774,8 @@ You've got this! 💪"""
         
         trend = "🟢 +" if nifty_change > 0 else "🔴 "
         
+        tip_text = "Good time for SIP investments!" if nifty_change > 0 else "Markets volatile - stay invested, do not panic!"
+        
         return f"""📈 *Market Update*
 {self._get_ist_time().strftime('%d %b %Y, %I:%M %p')}
 
@@ -783,7 +785,7 @@ You've got this! 💪"""
 📊 SENSEX: {sensex:,.0f}
 
 💡 *Tip:*
-{'Good time for SIP investments!' if nifty_change > 0 else 'Markets volatile - stay invested, don\'t panic!'}
+{tip_text}
 
 _Type "investment tips" for personalized advice_"""
     
