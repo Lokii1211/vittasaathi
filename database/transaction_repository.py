@@ -19,23 +19,46 @@ class TransactionRepository:
     def __init__(self):
         self.store = JSONStore(TRANSACTIONS_DB_FILE)
     
+    def _normalize_phone(self, phone: str) -> str:
+        """Normalize phone number to consistent format: +91XXXXXXXXXX"""
+        if not phone:
+            return phone
+        clean = ''.join(c for c in phone if c.isdigit() or c == '+')
+        digits = clean.replace('+', '')
+        if not digits.startswith('91'):
+            digits = '91' + digits
+        return '+' + digits
+    
     def add_transaction(
         self,
         user_id: str,
-        amount: int,
-        txn_type: str,  # income, expense, transfer
-        category: str,
+        amount: int = None,
+        txn_type: str = None,  # income, expense, transfer
+        category: str = "Other",
         source: str = "MANUAL",
         description: str = "",
         is_recurring: bool = False,
-        receipt_image: str = None
+        receipt_image: str = None,
+        transaction_data: Dict = None  # Allow passing dict directly
     ) -> Dict:
         """Add a new transaction"""
+        import pytz
+        ist = pytz.timezone('Asia/Kolkata')
+        now = datetime.now(ist)
+        
+        normalized_user_id = self._normalize_phone(user_id)
+        
+        # Support both old-style args and new dict-style
+        if transaction_data:
+            amount = transaction_data.get("amount", amount)
+            txn_type = transaction_data.get("type", txn_type)
+            category = transaction_data.get("category", category)
+            description = transaction_data.get("description", description)
         
         txn_id = self.store.generate_id()
         transaction = {
             "id": txn_id,
-            "user_id": user_id,
+            "user_id": normalized_user_id,
             "amount": amount,
             "type": txn_type,
             "category": category,
@@ -43,13 +66,14 @@ class TransactionRepository:
             "description": description,
             "is_recurring": is_recurring,
             "receipt_image": receipt_image,
-            "timestamp": datetime.now().isoformat(),
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "month": datetime.now().strftime("%Y-%m"),
-            "created_at": datetime.now().isoformat(),
+            "timestamp": now.isoformat(),
+            "date": now.strftime("%Y-%m-%d"),
+            "month": now.strftime("%Y-%m"),
+            "created_at": now.isoformat(),
         }
         
         self.store.set(txn_id, transaction)
+        print(f"[Transaction] Added {txn_type} ₹{amount} for {normalized_user_id} at {now.strftime('%I:%M %p IST')}")
         return transaction
     
     def get_transaction(self, txn_id: str) -> Optional[Dict]:
@@ -71,11 +95,14 @@ class TransactionRepository:
     ) -> List[Dict]:
         """Get user transactions with filters"""
         
+        normalized_user_id = self._normalize_phone(user_id)
         all_txns = self.store.get_all()
         user_txns = []
         
         for txn in all_txns.values():
-            if txn.get("user_id") != user_id:
+            # Check both normalized and original user_id for backward compatibility
+            txn_user = txn.get("user_id", "")
+            if txn_user != normalized_user_id and self._normalize_phone(txn_user) != normalized_user_id:
                 continue
             
             if txn_type and txn.get("type") != txn_type:

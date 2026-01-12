@@ -18,19 +18,51 @@ class UserRepository:
     def __init__(self):
         self.store = JSONStore(USERS_DB_FILE)
     
+    def _normalize_phone(self, phone: str) -> str:
+        """Normalize phone number to consistent format: +91XXXXXXXXXX"""
+        if not phone:
+            return phone
+        # Remove all non-digit characters except +
+        clean = ''.join(c for c in phone if c.isdigit() or c == '+')
+        # Remove leading +
+        digits = clean.replace('+', '')
+        # Add country code if missing
+        if not digits.startswith('91'):
+            digits = '91' + digits
+        # Return with + prefix
+        return '+' + digits
+    
     def get_user(self, phone: str) -> Optional[Dict]:
-        """Get user by phone number"""
-        return self.store.get(phone)
+        """Get user by phone number (with normalization)"""
+        normalized = self._normalize_phone(phone)
+        # Try normalized first
+        user = self.store.get(normalized)
+        if user:
+            return user
+        # Try original (for backward compatibility)
+        user = self.store.get(phone)
+        if user:
+            # Migrate to normalized key
+            self.store.set(normalized, user)
+            return user
+        # Try without + prefix
+        user = self.store.get(normalized.replace('+', ''))
+        if user:
+            # Migrate to normalized key
+            self.store.set(normalized, user)
+            return user
+        return None
     
     def create_user(self, phone: str) -> Dict:
         """Create new user with initial onboarding state"""
+        normalized = self._normalize_phone(phone)
         user = {
-            "phone": phone,
+            "phone": normalized,
             "name": None,
-            "language": "en",
-            "preferred_language": "english",
+            "language": None,  # Force language selection
+            "preferred_language": None,
             "voice_enabled": True,
-            "onboarding_step": "language",
+            "onboarding_step": 0,  # Start at language selection
             "onboarding_complete": False,
             
             # Profile
@@ -64,19 +96,21 @@ class UserRepository:
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
         }
-        self.store.set(phone, user)
+        self.store.set(normalized, user)
         return user
     
     def ensure_user(self, phone: str) -> Dict:
         """Get or create user"""
-        user = self.get_user(phone)
+        normalized = self._normalize_phone(phone)
+        user = self.get_user(normalized)
         if not user:
-            user = self.create_user(phone)
+            user = self.create_user(normalized)
         return user
     
     def update_user(self, phone: str, updates: Dict) -> Optional[Dict]:
         """Update user fields"""
-        return self.store.update(phone, updates)
+        normalized = self._normalize_phone(phone)
+        return self.store.update(normalized, updates)
     
     def save_name(self, phone: str, name: str) -> Dict:
         """Save user name and advance onboarding"""
