@@ -1,22 +1,77 @@
 /**
- * VittaSaathi WhatsApp Bot v2.0
- * Forwards all messages to Railway API for processing
+ * MoneyViya WhatsApp Bot v2.1
+ * - Forwards all messages to Railway API for processing
+ * - Provides HTTP API for n8n to send scheduled messages
  */
 
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const pino = require('pino');
 const axios = require('axios');
+const express = require('express');
 
 // Configuration
 const RAILWAY_API_URL = process.env.RAILWAY_API_URL || 'https://moneyviya.up.railway.app';
 const API_ENDPOINT = `${RAILWAY_API_URL}/api/v2/whatsapp/process`;
+const HTTP_PORT = process.env.BOT_PORT || 3001;
 
 // Logger
 const logger = pino({ level: 'info' });
 
 // Store for connection
 let sock;
+let isConnected = false;
+
+// Express app for n8n integration
+const app = express();
+app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        connected: isConnected,
+        bot: 'MoneyViya WhatsApp Bot v2.1'
+    });
+});
+
+// Send message endpoint (called by n8n)
+app.post('/send', async (req, res) => {
+    try {
+        const { phone, message } = req.body;
+
+        if (!phone || !message) {
+            return res.status(400).json({ error: 'Phone and message required' });
+        }
+
+        if (!isConnected || !sock) {
+            return res.status(503).json({ error: 'Bot not connected' });
+        }
+
+        // Format phone number
+        let cleanPhone = phone.toString().replace(/[^0-9]/g, '');
+        if (!cleanPhone.startsWith('91') && cleanPhone.length === 10) {
+            cleanPhone = '91' + cleanPhone;
+        }
+
+        const jid = cleanPhone + '@s.whatsapp.net';
+
+        await sock.sendMessage(jid, { text: message });
+        console.log(`[n8n] Sent message to ${cleanPhone}`);
+
+        res.json({ success: true, sent_to: cleanPhone });
+    } catch (error) {
+        console.error('[n8n] Error sending:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Start HTTP server
+app.listen(HTTP_PORT, () => {
+    console.log(`📡 HTTP API running on port ${HTTP_PORT}`);
+    console.log(`   - Health: http://localhost:${HTTP_PORT}/health`);
+    console.log(`   - Send:   POST http://localhost:${HTTP_PORT}/send`);
+});
 
 async function processMessageViaAPI(phone, message, senderName) {
     try {
@@ -61,8 +116,8 @@ async function startBot() {
 
     console.log(`
 ╔════════════════════════════════════════════════╗
-║     VittaSaathi WhatsApp Bot v2.0              ║
-║     Railway API Integration                     ║
+║     💰 MoneyViya WhatsApp Bot v2.1             ║
+║     Railway API + n8n Integration              ║
 ╠════════════════════════════════════════════════╣
 ║  API: ${RAILWAY_API_URL.substring(0, 40).padEnd(40)}║
 ╚════════════════════════════════════════════════╝
@@ -73,7 +128,7 @@ async function startBot() {
         auth: state,
         printQRInTerminal: false,
         logger: pino({ level: 'silent' }),
-        browser: ['VittaSaathi', 'Chrome', '120.0.0'],
+        browser: ['MoneyViya', 'Chrome', '120.0.0'],
     });
 
     // Handle connection events
@@ -86,6 +141,7 @@ async function startBot() {
         }
 
         if (connection === 'close') {
+            isConnected = false;
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             console.log('[Connection] Closed. Reconnecting:', shouldReconnect);
 
@@ -93,8 +149,10 @@ async function startBot() {
                 setTimeout(startBot, 5000);
             }
         } else if (connection === 'open') {
+            isConnected = true;
             console.log('\n✅ Connected to WhatsApp!\n');
             console.log('📡 All messages will be forwarded to Railway API');
+            console.log('🔄 n8n can send scheduled messages via HTTP API');
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         }
     });
@@ -140,5 +198,5 @@ async function startBot() {
 }
 
 // Start the bot
-console.log('Starting VittaSaathi WhatsApp Bot...\n');
+console.log('Starting MoneyViya WhatsApp Bot...\n');
 startBot().catch(err => console.error('Startup error:', err));

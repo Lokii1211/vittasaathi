@@ -1,166 +1,146 @@
-# VittaSaathi n8n Workflow Guide
+# MoneyViya n8n Workflow Guide (Baileys Bot)
 
-## 📋 Complete Workflow Overview
+## 📋 Overview
 
-The `vittasaathi_complete_workflow.json` provides a comprehensive n8n workflow that handles:
+The `moneyviya_baileys_workflow.json` provides n8n automation for MoneyViya using your local Baileys WhatsApp bot.
 
-1. **WhatsApp Message Processing**
-2. **Morning Reminders (6 AM)**
-3. **Evening Summaries (8 PM)**
-4. **Weekly Reports (Sunday 10 AM)**
-5. **Custom Reminders**
+### Features:
+- ☀️ **Morning Reminders** (6 AM) - Daily motivation & budget info
+- 🌙 **Evening Summaries** (8 PM) - Today's income/expense summary
+- 📊 **Weekly Reports** (Sunday 10 AM) - Full week financial report
+- 🔔 **Hourly Reminders** - Bill due date alerts
+
+All messages are in the user's selected language (EN, HI, TA, TE).
 
 ---
 
-## 🔧 Prerequisites
-
-### 1. Environment Variables in n8n
-
-Set these in n8n Credentials/Settings:
+## 🔧 Architecture
 
 ```
-WHATSAPP_ACCESS_TOKEN=your_meta_whatsapp_token
-WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
+┌─────────────┐      ┌─────────────┐      ┌───────────────┐
+│    n8n      │─────▶│ Baileys Bot │─────▶│   WhatsApp    │
+│  (Scheduler)│      │  (Local)    │      │   (User)      │
+└─────────────┘      └─────────────┘      └───────────────┘
+      │                    ▲
+      │                    │
+      ▼                    │
+┌─────────────┐            │
+│  Railway    │────────────┘
+│  API        │  (Get user data)
+└─────────────┘
 ```
 
-### 2. Railway API Endpoints
+---
 
-Your Railway server needs these endpoints:
+## 🚀 Setup Steps
+
+### Step 1: Update Baileys Bot
+
+In `whatsapp-bot/`, run:
+```bash
+npm install
+```
+
+This installs Express for the HTTP API.
+
+### Step 2: Start Baileys Bot
+
+```bash
+cd whatsapp-bot
+npm start
+```
+
+The bot now runs:
+- **WhatsApp Connection** on Baileys protocol
+- **HTTP API** on port 3001 for n8n
+
+### Step 3: Import n8n Workflow
+
+1. Open n8n (http://localhost:5678)
+2. Import → File → `moneyviya_baileys_workflow.json`
+3. Activate the workflow
+
+### Step 4: Configure n8n Endpoints
+
+Update the HTTP Request nodes if needed:
+- **Railway API**: `https://moneyviya.up.railway.app`
+- **Baileys API**: `http://localhost:3001` (or your bot's IP)
+
+---
+
+## 📡 Baileys Bot HTTP API
+
+Your local bot exposes these endpoints:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v2/whatsapp/process` | POST | Process incoming messages |
-| `/api/v2/users/active` | GET | Get all active users |
-| `/api/v2/reminders/pending` | GET | Get pending reminders |
-| `/api/v2/reports/weekly/generate` | POST | Generate weekly reports |
+| `/health` | GET | Check bot status |
+| `/send` | POST | Send a WhatsApp message |
 
----
-
-## 📊 Workflow Components
-
-### 1. WhatsApp Webhook Handler
-- **Trigger**: Incoming WhatsApp messages
-- **Flow**: 
-  ```
-  Webhook → Extract Data → Process with AI → Send Reply → Respond OK
-  ```
-
-### 2. Morning Motivation (6 AM IST)
-- **Trigger**: Cron `0 6 * * *`
-- **Flow**:
-  ```
-  6 AM Trigger → Get Users → Generate Message (by language) → Send
-  ```
-- **Multilingual**: Messages in EN, HI, TA, TE
-
-### 3. Evening Summary (8 PM IST)
-- **Trigger**: Cron `0 20 * * *`
-- **Flow**:
-  ```
-  8 PM Trigger → Get Users → Calculate Today's Data → Send Summary
-  ```
-
-### 4. Weekly Report (Sunday 10 AM)
-- **Trigger**: Cron `0 10 * * 0`
-- **Flow**:
-  ```
-  Sunday 10 AM → Generate Reports → Loop Users → Send Reports
-  ```
-
-### 5. Hourly Reminder Check
-- **Trigger**: Every hour
-- **Flow**:
-  ```
-  Hourly Trigger → Get Pending Reminders → Send Each
-  ```
-
----
-
-## 🚀 How to Import
-
-### Step 1: Open n8n
-Go to your n8n instance (e.g., `http://localhost:5678`)
-
-### Step 2: Import Workflow
-1. Click "Workflows" → "Import from File"
-2. Select `vittasaathi_complete_workflow.json`
-3. Click "Import"
-
-### Step 3: Configure Credentials
-1. Click on each HTTP Request node
-2. Update URLs if your Railway URL is different
-3. Add WhatsApp API credentials
-
-### Step 4: Set Webhook URL
-Copy the webhook URL from n8n and set it in Meta WhatsApp Business:
-```
-https://your-n8n-instance.com/webhook/whatsapp-webhook
-```
-
-### Step 5: Activate Workflow
-Toggle the workflow to "Active"
-
----
-
-## 🌍 Multilingual Support
-
-The workflow automatically sends messages in the user's preferred language:
-
-| Language | Code | Example Morning Message |
-|----------|------|------------------------|
-| English | `en` | "Good Morning, John!" |
-| Hindi | `hi` | "सुप्रभात, राज!" |
-| Tamil | `ta` | "காலை வணக்கம், குமார்!" |
-| Telugu | `te` | "శుభోదయం, రాజు!" |
-
----
-
-## ⏰ Timezone Note
-
-The cron times are in **IST (Indian Standard Time)**. n8n will run based on your server timezone.
-
-For IST:
-- 6 AM IST = `0 6 * * *`
-- 8 PM IST = `0 20 * * *`
-- Sunday 10 AM IST = `0 10 * * 0`
-
----
-
-## 📱 Testing
-
-### Test Webhook Manually
+### Send Message Example:
 ```bash
-curl -X POST https://your-n8n.com/webhook/whatsapp-webhook \
+curl -X POST http://localhost:3001/send \
   -H "Content-Type: application/json" \
-  -d '{
-    "entry": [{
-      "changes": [{
-        "value": {
-          "messages": [{
-            "from": "919003360494",
-            "text": {"body": "Hello"}
-          }],
-          "contacts": [{
-            "profile": {"name": "Test User"}
-          }]
-        }
-      }]
-    }]
-  }'
+  -d '{"phone": "919003360494", "message": "Hello from n8n!"}'
 ```
-
-### Test Manual Execution
-1. Open the workflow
-2. Click "Execute Workflow"
-3. Check each node's output
 
 ---
 
-## 🔒 Security
+## ⏰ Scheduled Messages
 
-1. **Never expose credentials** in the workflow JSON
-2. **Use n8n Credentials** for storing API tokens
-3. **Enable authentication** on your n8n instance
+### Morning (6 AM IST)
+```
+☀️ *Good Morning, {name}!*
+
+📊 Today's Plan:
+💰 Daily Budget: ₹{budget}
+🎯 Savings Target: ₹{target}
+
+💪 Today is going to be a great day!
+```
+
+### Evening (8 PM IST)
+```
+🌙 *{name}, Today's Summary*
+
+💵 Income: ₹{income}
+💸 Expenses: ₹{expenses}
+💰 Net: ₹{savings}
+
+👏 Great job! You saved money!
+```
+
+### Weekly (Sunday 10 AM)
+```
+📊 *{name} Weekly Report*
+
+💵 Total Income: ₹X,XXX
+💸 Total Expenses: ₹X,XXX
+💰 Net Savings: ₹X,XXX
+
+🎉 Great week! Keep it up!
+```
+
+---
+
+## 🌍 Multilingual
+
+Messages automatically use the user's language:
+
+| Language | Code |
+|----------|------|
+| English | `en` |
+| Hindi | `hi` |
+| Tamil | `ta` |
+| Telugu | `te` |
+
+---
+
+## 🔒 Security Notes
+
+1. The Baileys bot runs **locally** on your machine
+2. n8n should be on the **same network** as the bot
+3. Or expose via **ngrok/tunnel** if n8n is cloud-hosted
 
 ---
 
@@ -168,20 +148,27 @@ curl -X POST https://your-n8n.com/webhook/whatsapp-webhook \
 
 | Issue | Solution |
 |-------|----------|
-| Webhook not receiving | Check Meta webhook URL configuration |
-| Messages not sending | Verify WhatsApp API token is valid |
-| Wrong timezone | Update cron expressions for your TZ |
-| SSL errors | Ensure your n8n has valid HTTPS |
+| Bot not connected | Check if Baileys bot is running |
+| n8n can't reach bot | Verify IP/port is correct |
+| Messages not sending | Check Railway API is up at `/health` |
+| Wrong language | User may need to select language again (send `reset`) |
 
 ---
 
-## 📞 Support
+## 📞 Local Development
 
-For issues, check:
-1. n8n execution logs
-2. Railway server logs at `/health`
-3. WhatsApp Business API status
+To test manually:
+
+```bash
+# Check bot health
+curl http://localhost:3001/health
+
+# Send test message
+curl -X POST http://localhost:3001/send \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "919003360494", "message": "Test from n8n! 🎉"}'
+```
 
 ---
 
-*VittaSaathi - Your AI Financial Advisor* 🎯💰
+*MoneyViya - Your AI Financial Advisor* 💰
