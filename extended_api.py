@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Import services
 from services.analytics_service import analytics_service, report_generator
@@ -67,6 +67,170 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     language: Optional[str] = None
     occupation: Optional[str] = None
+
+
+# ============== N8N INTEGRATION ENDPOINTS ==============
+@extended_router.get("/users/active")
+def get_active_users():
+    """Get all active users for n8n reminders"""
+    from database.transaction_repository import transaction_repo
+    import pytz
+    
+    ist = pytz.timezone('Asia/Kolkata')
+    today = datetime.now(ist).strftime("%Y-%m-%d")
+    
+    all_users = user_repo.store.get_all()
+    active_users = []
+    
+    for phone, user in all_users.items():
+        if user.get("onboarding_complete"):
+            # Get today's data
+            transactions = transaction_repo.get_transactions(phone) or []
+            today_income = sum(
+                tx.get("amount", 0) for tx in transactions 
+                if tx.get("type") == "income" and tx.get("date", "").startswith(today)
+            )
+            today_expenses = sum(
+                tx.get("amount", 0) for tx in transactions 
+                if tx.get("type") == "expense" and tx.get("date", "").startswith(today)
+            )
+            
+            active_users.append({
+                "phone": phone,
+                "name": user.get("name", "Friend"),
+                "language": user.get("language", "en"),
+                "daily_target": user.get("daily_target", 500),
+                "daily_budget": user.get("daily_budget", 1000),
+                "today_income": today_income,
+                "today_expenses": today_expenses
+            })
+    
+    return active_users
+
+@extended_router.get("/reminders/pending")
+def get_pending_reminders():
+    """Get all pending reminders for n8n to send"""
+    import pytz
+    
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(ist)
+    current_hour = now.hour
+    
+    # Check bill reminders (simplified - would normally check database)
+    reminders = []
+    
+    # If it's 9 AM, send bill reminders for today
+    if current_hour == 9:
+        all_users = user_repo.store.get_all()
+        for phone, user in all_users.items():
+            if user.get("onboarding_complete"):
+                bills = user.get("bills", [])
+                for bill in bills:
+                    if bill.get("due_date") == now.day:
+                        lang = user.get("language", "en")
+                        messages = {
+                            "en": f"🔔 Reminder: Your {bill['type']} bill of ₹{bill['amount']} is due today!",
+                            "ta": f"🔔 நினைவூட்டல்: உங்கள் {bill['type']} பில் ₹{bill['amount']} இன்று செலுத்த வேண்டும்!",
+                            "hi": f"🔔 याद दिलाना: आपका {bill['type']} बिल ₹{bill['amount']} आज देय है!",
+                            "te": f"🔔 గుర్తింపు: మీ {bill['type']} బిల్లు ₹{bill['amount']} ఈరోజు చెల్లించాలి!"
+                        }
+                        reminders.append({
+                            "phone": phone,
+                            "message": messages.get(lang, messages["en"]),
+                            "type": "bill_reminder"
+                        })
+    
+    return reminders
+
+@extended_router.post("/reports/weekly/generate")
+def generate_weekly_reports():
+    """Generate weekly reports for all users - called by n8n on Sundays"""
+    from database.transaction_repository import transaction_repo
+    import pytz
+    
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(ist)
+    week_start = (now - timedelta(days=7)).strftime("%Y-%m-%d")
+    week_end = now.strftime("%Y-%m-%d")
+    
+    reports = []
+    all_users = user_repo.store.get_all()
+    
+    for phone, user in all_users.items():
+        if not user.get("onboarding_complete"):
+            continue
+            
+        lang = user.get("language", "en")
+        name = user.get("name", "Friend")
+        
+        # Get week's transactions
+        transactions = transaction_repo.get_transactions(phone) or []
+        
+        week_income = sum(
+            tx.get("amount", 0) for tx in transactions 
+            if tx.get("type") == "income" and week_start <= tx.get("date", "") <= week_end
+        )
+        week_expenses = sum(
+            tx.get("amount", 0) for tx in transactions 
+            if tx.get("type") == "expense" and week_start <= tx.get("date", "") <= week_end
+        )
+        savings = week_income - week_expenses
+        
+        # Generate multilingual report
+        if lang == "ta":
+            report = f"""📊 *{name} வாராந்திர அறிக்கை*
+━━━━━━━━━━━━━━━━━━━━
+
+💵 மொத்த வருமானம்: ₹{week_income:,}
+💸 மொத்த செலவுகள்: ₹{week_expenses:,}
+💰 நிகர சேமிப்பு: ₹{savings:,}
+
+{'🎉 அருமை! நீங்கள் சேமித்தீர்கள்!' if savings > 0 else '💪 அடுத்த வாரம் சிறப்பாக இருக்கும்!'}
+
+_VittaSaathi உங்கள் நிதி ஆலோசகர்_ 💰"""
+        elif lang == "hi":
+            report = f"""📊 *{name} साप्ताहिक रिपोर्ट*
+━━━━━━━━━━━━━━━━━━━━
+
+💵 कुल आय: ₹{week_income:,}
+💸 कुल खर्च: ₹{week_expenses:,}
+💰 शुद्ध बचत: ₹{savings:,}
+
+{'🎉 बढ़िया! आपने बचाया!' if savings > 0 else '💪 अगला हफ्ता बेहतर होगा!'}
+
+_VittaSaathi आपका वित्तीय सलाहकार_ 💰"""
+        elif lang == "te":
+            report = f"""📊 *{name} వారపు నివేదిక*
+━━━━━━━━━━━━━━━━━━━━
+
+💵 మొత్తం ఆదాయం: ₹{week_income:,}
+💸 మొత్తం ఖర్చులు: ₹{week_expenses:,}
+💰 నికర పొదుపు: ₹{savings:,}
+
+{'🎉 గొప్ప! మీరు ఆదా చేశారు!' if savings > 0 else '💪 వచ్చే వారం మెరుగ్గా ఉంటుంది!'}
+
+_VittaSaathi మీ ఆర్థిక సలహాదారు_ 💰"""
+        else:
+            report = f"""📊 *{name} Weekly Report*
+━━━━━━━━━━━━━━━━━━━━
+
+💵 Total Income: ₹{week_income:,}
+💸 Total Expenses: ₹{week_expenses:,}
+💰 Net Savings: ₹{savings:,}
+
+{'🎉 Great job! You saved money!' if savings > 0 else '💪 Next week will be better!'}
+
+_VittaSaathi - Your Financial Advisor_ 💰"""
+        
+        reports.append({
+            "phone": phone,
+            "report": report,
+            "week_income": week_income,
+            "week_expenses": week_expenses,
+            "savings": savings
+        })
+    
+    return reports
 
 
 # ============== DASHBOARD & USER ENDPOINTS ==============

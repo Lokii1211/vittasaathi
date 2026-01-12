@@ -1,0 +1,675 @@
+{
+    "name": "VittaSaathi - Complete WhatsApp Financial Assistant",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "whatsapp-webhook",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook_receiver",
+            "name": "WhatsApp Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Extract message data from WhatsApp webhook\nconst body = $input.first().json.body;\n\nlet phone = '';\nlet message = '';\nlet senderName = 'Friend';\n\n// Handle WhatsApp Cloud API format\nif (body.entry && body.entry[0] && body.entry[0].changes) {\n  const change = body.entry[0].changes[0];\n  if (change.value && change.value.messages && change.value.messages[0]) {\n    const msg = change.value.messages[0];\n    phone = msg.from;\n    message = msg.text?.body || '';\n    \n    // Get sender name from contacts\n    if (change.value.contacts && change.value.contacts[0]) {\n      senderName = change.value.contacts[0].profile?.name || 'Friend';\n    }\n  }\n}\n\n// Normalize phone\nif (!phone.startsWith('+')) {\n  phone = '+' + phone;\n}\n\nreturn {\n  phone: phone,\n  message: message,\n  senderName: senderName,\n  timestamp: new Date().toISOString()\n};"
+            },
+            "id": "extract_message",
+            "name": "Extract Message Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                460,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://moneyviya.up.railway.app/api/v2/whatsapp/process",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "phone",
+                            "value": "={{ $json.phone }}"
+                        },
+                        {
+                            "name": "message",
+                            "value": "={{ $json.message }}"
+                        },
+                        {
+                            "name": "sender_name",
+                            "value": "={{ $json.senderName }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "process_message",
+            "name": "Process with AI Agent",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://graph.facebook.com/v17.0/{{$env.WHATSAPP_PHONE_NUMBER_ID}}/messages",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer {{$env.WHATSAPP_ACCESS_TOKEN}}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Extract Message Data').item.json.phone.replace('+', '') }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.body.reply }}\"\n  }\n}",
+                "options": {}
+            },
+            "id": "send_reply",
+            "name": "Send WhatsApp Reply",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "OK",
+                "options": {}
+            },
+            "id": "respond_webhook",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1120,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "hoursInterval": 1
+                        }
+                    ]
+                }
+            },
+            "id": "hourly_check",
+            "name": "Hourly Reminder Check",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                520
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://moneyviya.up.railway.app/api/v2/reminders/pending",
+                "options": {}
+            },
+            "id": "get_reminders",
+            "name": "Get Pending Reminders",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                520
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop_reminders",
+            "name": "Loop Reminders",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                680,
+                520
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://graph.facebook.com/v17.0/{{$env.WHATSAPP_PHONE_NUMBER_ID}}/messages",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer {{$env.WHATSAPP_ACCESS_TOKEN}}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone.replace('+', '') }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.message }}\"\n  }\n}",
+                "options": {}
+            },
+            "id": "send_reminder",
+            "name": "Send Reminder",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                900,
+                520
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 6 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "morning_trigger",
+            "name": "Morning 6 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                740
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://moneyviya.up.railway.app/api/v2/users/active",
+                "options": {}
+            },
+            "id": "get_active_users",
+            "name": "Get Active Users",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                740
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Generate morning motivation message based on user language\nconst users = $input.all();\nconst results = [];\n\nfor (const user of users) {\n  const data = user.json;\n  const lang = data.language || 'en';\n  const name = data.name || 'Friend';\n  const dailyTarget = data.daily_target || 500;\n  const dailyBudget = data.daily_budget || 1000;\n  \n  let message = '';\n  \n  if (lang === 'ta') {\n    message = `☀️ *காலை வணக்கம், ${name}!*\\n\\n📊 இன்றைய திட்டம்:\\n💰 தினசரி பட்ஜெட்: ₹${dailyBudget}\\n🎯 சேமிப்பு இலக்கு: ₹${dailyTarget}\\n\\n💪 இன்று ஒரு நல்ல நாளாக இருக்கும்!\\n\\n_செலவை டிராக் செய்ய: \"50 டீக்கு\" என டைப் செய்யுங்கள்_`;\n  } else if (lang === 'hi') {\n    message = `☀️ *सुप्रभात, ${name}!*\\n\\n📊 आज की योजना:\\n💰 दैनिक बजट: ₹${dailyBudget}\\n🎯 बचत लक्ष्य: ₹${dailyTarget}\\n\\n💪 आज एक अच्छा दिन होगा!\\n\\n_खर्च ट्रैक करने के लिए: \"चाय पर 50\" टाइप करें_`;\n  } else if (lang === 'te') {\n    message = `☀️ *శుభోదయం, ${name}!*\\n\\n📊 ఈరోజు ప్లాన్:\\n💰 రోజువారీ బడ్జెట్: ₹${dailyBudget}\\n🎯 సేవింగ్స్ లక్ష్యం: ₹${dailyTarget}\\n\\n💪 ఈరోజు మంచి రోజు అవుతుంది!\\n\\n_ఖర్చు ట్రాక్ చేయడానికి: \"టీకి 50\" టైప్ చేయండి_`;\n  } else {\n    message = `☀️ *Good Morning, ${name}!*\\n\\n📊 Today's Plan:\\n💰 Daily Budget: ₹${dailyBudget}\\n🎯 Savings Target: ₹${dailyTarget}\\n\\n💪 Today is going to be a great day!\\n\\n_Track expenses by typing: \"Spent 50 on tea\"_`;\n  }\n  \n  results.push({\n    phone: data.phone,\n    message: message\n  });\n}\n\nreturn results;"
+            },
+            "id": "generate_morning_msg",
+            "name": "Generate Morning Message",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                680,
+                740
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop_morning",
+            "name": "Loop Users",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                900,
+                740
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://graph.facebook.com/v17.0/{{$env.WHATSAPP_PHONE_NUMBER_ID}}/messages",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer {{$env.WHATSAPP_ACCESS_TOKEN}}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone.replace('+', '') }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.message }}\"\n  }\n}",
+                "options": {}
+            },
+            "id": "send_morning_msg",
+            "name": "Send Morning Message",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1120,
+                740
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 20 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "evening_trigger",
+            "name": "Evening 8 PM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                960
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://moneyviya.up.railway.app/api/v2/users/active",
+                "options": {}
+            },
+            "id": "get_users_evening",
+            "name": "Get Active Users",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                960
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Generate evening summary based on user language\nconst users = $input.all();\nconst results = [];\n\nfor (const user of users) {\n  const data = user.json;\n  const lang = data.language || 'en';\n  const name = data.name || 'Friend';\n  const todayIncome = data.today_income || 0;\n  const todayExpenses = data.today_expenses || 0;\n  const savings = todayIncome - todayExpenses;\n  \n  let message = '';\n  let emoji = savings > 0 ? '🎉' : '📊';\n  \n  if (lang === 'ta') {\n    message = `🌙 *${name}, இன்றைய சுருக்கம்*\\n\\n💵 வருமானம்: ₹${todayIncome}\\n💸 செலவுகள்: ₹${todayExpenses}\\n${emoji} நிகரம்: ₹${savings}\\n\\n${savings > 0 ? '👏 நல்ல வேலை! நீங்கள் சேமித்தீர்கள்!' : '💪 நாளை சிறப்பாக இருக்கும்!'}\\n\\n_நாளை பார்க்கலாம்! 😊_`;\n  } else if (lang === 'hi') {\n    message = `🌙 *${name}, आज का सारांश*\\n\\n💵 आय: ₹${todayIncome}\\n💸 खर्च: ₹${todayExpenses}\\n${emoji} शुद्ध: ₹${savings}\\n\\n${savings > 0 ? '👏 बढ़िया काम! आपने बचाया!' : '💪 कल बेहतर होगा!'}\\n\\n_कल मिलते हैं! 😊_`;\n  } else if (lang === 'te') {\n    message = `🌙 *${name}, ఈరోజు సారాంశం*\\n\\n💵 ఆదాయం: ₹${todayIncome}\\n💸 ఖర్చులు: ₹${todayExpenses}\\n${emoji} నికరం: ₹${savings}\\n\\n${savings > 0 ? '👏 గొప్ప పని! మీరు ఆదా చేశారు!' : '💪 రేపు మెరుగ్గా ఉంటుంది!'}\\n\\n_రేపు కలుద్దాం! 😊_`;\n  } else {\n    message = `🌙 *${name}, Today's Summary*\\n\\n💵 Income: ₹${todayIncome}\\n💸 Expenses: ₹${todayExpenses}\\n${emoji} Net: ₹${savings}\\n\\n${savings > 0 ? '👏 Great job! You saved money!' : '💪 Tomorrow will be better!'}\\n\\n_See you tomorrow! 😊_`;\n  }\n  \n  results.push({\n    phone: data.phone,\n    message: message\n  });\n}\n\nreturn results;"
+            },
+            "id": "generate_evening_msg",
+            "name": "Generate Evening Summary",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                680,
+                960
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop_evening",
+            "name": "Loop Users",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                900,
+                960
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://graph.facebook.com/v17.0/{{$env.WHATSAPP_PHONE_NUMBER_ID}}/messages",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer {{$env.WHATSAPP_ACCESS_TOKEN}}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone.replace('+', '') }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.message }}\"\n  }\n}",
+                "options": {}
+            },
+            "id": "send_evening_msg",
+            "name": "Send Evening Summary",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1120,
+                960
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 10 * * 0"
+                        }
+                    ]
+                }
+            },
+            "id": "weekly_trigger",
+            "name": "Sunday 10 AM - Weekly Report",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                1180
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://moneyviya.up.railway.app/api/v2/reports/weekly/generate",
+                "method": "POST",
+                "options": {}
+            },
+            "id": "generate_weekly_reports",
+            "name": "Generate Weekly Reports",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                460,
+                1180
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop_weekly",
+            "name": "Loop Users",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                680,
+                1180
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://graph.facebook.com/v17.0/{{$env.WHATSAPP_PHONE_NUMBER_ID}}/messages",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer {{$env.WHATSAPP_ACCESS_TOKEN}}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone.replace('+', '') }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.report }}\"\n  }\n}",
+                "options": {}
+            },
+            "id": "send_weekly_report",
+            "name": "Send Weekly Report",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                900,
+                1180
+            ]
+        }
+    ],
+    "connections": {
+        "WhatsApp Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Message Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Message Data": {
+            "main": [
+                [
+                    {
+                        "node": "Process with AI Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process with AI Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Send WhatsApp Reply",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send WhatsApp Reply": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Hourly Reminder Check": {
+            "main": [
+                [
+                    {
+                        "node": "Get Pending Reminders",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Pending Reminders": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Reminders",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Reminders": {
+            "main": [
+                [
+                    {
+                        "node": "Send Reminder",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "Morning 6 AM": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Active Users": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Morning Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Morning Message": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Users": {
+            "main": [
+                [
+                    {
+                        "node": "Send Morning Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "Evening 8 PM": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Active Users": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Evening Summary",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Evening Summary": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Users": {
+            "main": [
+                [
+                    {
+                        "node": "Send Evening Summary",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "Sunday 10 AM - Weekly Report": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Weekly Reports",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Weekly Reports": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Users": {
+            "main": [
+                [
+                    {
+                        "node": "Send Weekly Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [
+        "VittaSaathi",
+        "WhatsApp",
+        "Financial Assistant",
+        "Multilingual"
+    ],
+    "triggerCount": 4,
+    "updatedAt": "2026-01-12T10:45:00.000Z",
+    "versionId": "v1.0.0"
+}
