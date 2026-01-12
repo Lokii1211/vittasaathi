@@ -448,21 +448,40 @@ _(Reply with 1, 2, 3, or 4)_"""
         if any(re.search(p, text) for p in self.smart_patterns["investment"]):
             return "investment_advice", entities
         
-        # Check for expense logging
-        expense_patterns = self.smart_patterns["expense"]["patterns"]
-        if any(re.search(p, text) for p in expense_patterns):
+        # Check for INCOME logging FIRST (important: before expense!)
+        # Income keywords: earned, received, got, income, salary, etc.
+        income_keywords = ["earn", "income", "received", "got paid", "salary", "kamai", "mila", "मिला", "கிடைத்தது", "వచ్చింది"]
+        if any(kw in text for kw in income_keywords):
             entities["amount"] = self._extract_amount(text)
-            entities["category"] = self._extract_category(text, "expense")
+            entities["category"] = self._extract_category(text, "income")
             if entities["amount"]:
-                return "log_expense", entities
+                return "log_income", entities
         
-        # Check for income logging
+        # Then check income patterns
         income_patterns = self.smart_patterns["income"]["patterns"]
         if any(re.search(p, text) for p in income_patterns):
             entities["amount"] = self._extract_amount(text)
             entities["category"] = self._extract_category(text, "income")
             if entities["amount"]:
                 return "log_income", entities
+        
+        # Check for expense logging (after income check)
+        expense_keywords = ["spent", "paid", "bought", "खर्च", "செலவு", "ఖర్చు", "kharcha", "kharach"]
+        if any(kw in text for kw in expense_keywords):
+            entities["amount"] = self._extract_amount(text)
+            entities["category"] = self._extract_category(text, "expense")
+            if entities["amount"]:
+                return "log_expense", entities
+        
+        # Then check expense patterns
+        expense_patterns = self.smart_patterns["expense"]["patterns"]
+        if any(re.search(p, text) for p in expense_patterns):
+            # But NOT if it matches income keywords
+            if not any(kw in text for kw in income_keywords):
+                entities["amount"] = self._extract_amount(text)
+                entities["category"] = self._extract_category(text, "expense")
+                if entities["amount"]:
+                    return "log_expense", entities
         
         # Check for balance/report queries
         for query_type, patterns in self.smart_patterns["query"].items():
