@@ -775,8 +775,22 @@ Keep going! You got this! 💪"""
     
     def _handle_help(self, message: str, user_data: Dict, entities: Dict, context: Dict) -> str:
         """Handle help request"""
-        lang = user_data.get("detected_language", "en")
-        return self.templates.get(lang, self.templates["en"])["help_menu"]
+        lang = user_data.get("language", "en")
+        return self.templates.get(lang, self.templates["en"]).get("help_menu", """📱 *VittaSaathi Help*
+
+*Quick Commands:*
+━━━━━━━━━━━━━━━━━
+💸 *Log Expense:* "Spent 200 on food"
+💵 *Log Income:* "Earned 5000 from delivery"
+📊 *See Balance:* "What's my balance?"
+📋 *Report:* "Show report"
+🎯 *Goals:* "How's my goal?"
+📈 *Invest:* "Investment ideas"
+📊 *Market:* "Today's market"
+🔐 *Login:* "Send OTP"
+🌐 *Language:* "Change language"
+
+*Just type naturally, I understand!* 🤖""")
     
     def _handle_greeting(self, message: str, user_data: Dict, entities: Dict, context: Dict) -> str:
         """Handle greeting"""
