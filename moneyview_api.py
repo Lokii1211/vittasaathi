@@ -513,13 +513,32 @@ async def get_user_profile(phone: str):
     
     # Try to find user with various formats
     user = None
-    for p in [phone, "91" + phone, phone.replace("91", "")]:
+    actual_phone = phone
+    
+    # Try different phone formats
+    phone_variants = [
+        phone, 
+        "91" + phone, 
+        phone.replace("91", ""),
+        phone[-10:] if len(phone) > 10 else phone  # Last 10 digits
+    ]
+    
+    for p in phone_variants:
         user = moneyview_agent.user_store.get(p)
         if user:
+            actual_phone = p
             break
     
+    # If still not found, search through all users for matching linked_phone
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        for uid, u in moneyview_agent.user_store.items():
+            if u.get("linked_phone") == phone or u.get("phone") == phone:
+                user = u
+                actual_phone = uid
+                break
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found. Complete onboarding via WhatsApp first.")
     
     # Get today's transactions
     today = datetime.now(IST).strftime("%Y-%m-%d") if IST else datetime.now().strftime("%Y-%m-%d")
@@ -632,15 +651,72 @@ async def update_user_profile(phone: str, updates: UserUpdate):
     }
 
 
+# ==================== USER MANAGEMENT ====================
+
+@moneyview_router.get("/users")
+async def list_all_users():
+    """List all registered users (for dashboard discovery)"""
+    users = []
+    for phone, user in moneyview_agent.user_store.items():
+        users.append({
+            "id": phone,
+            "name": user.get("name", "Unknown"),
+            "phone": user.get("phone", phone),
+            "language": user.get("language", "en"),
+            "onboarding_complete": user.get("onboarding_complete", False),
+            "occupation": user.get("occupation"),
+            "monthly_income": user.get("monthly_income", 0)
+        })
+    return {"users": users, "count": len(users)}
+
+
+@moneyview_router.post("/link-phone")
+async def link_phone_to_user(phone: str, user_id: str):
+    """Link a phone number to an existing user ID (for LID to phone mapping)"""
+    
+    # Find user by user_id (could be LID)
+    user = moneyview_agent.user_store.get(user_id)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Also store the user under the phone number for easier lookup
+    user["linked_phone"] = phone
+    moneyview_agent.user_store[phone] = user
+    
+    return {"success": True, "message": f"Phone {phone} linked to user {user_id}"}
+
+
+@moneyview_router.get("/user/search/{query}")
+async def search_user(query: str):
+    """Search for user by name or partial phone"""
+    query_lower = query.lower()
+    
+    results = []
+    for phone, user in moneyview_agent.user_store.items():
+        name = user.get("name", "").lower()
+        if query_lower in name or query_lower in phone:
+            results.append({
+                "id": phone,
+                "name": user.get("name"),
+                "phone": phone,
+                "onboarding_complete": user.get("onboarding_complete", False)
+            })
+    
+    return {"results": results, "count": len(results)}
+
+
 # ==================== HEALTH CHECK ====================
 
 @moneyview_router.get("/health")
 async def health_check():
     """MoneyViya API health check"""
+    user_count = len(moneyview_agent.user_store)
     return {
         "status": "healthy",
         "service": "MoneyViya API",
-        "version": "2.0.0",
+        "version": "2.1.0",
+        "user_count": user_count,
         "features": [
             "onboarding",
             "expense_tracking",

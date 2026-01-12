@@ -254,6 +254,64 @@
             margin-right: 8px;
         }
 
+        .users-section {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(13, 148, 136, 0.05);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .users-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-item:hover {
+            border-color: var(--primary);
+            background: rgba(13, 148, 136, 0.1);
+        }
+
+        .user-item .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .user-item .user-info {
+            text-align: left;
+        }
+
+        .user-item .user-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-item .user-detail {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
         .hidden {
             display: none !important;
         }
@@ -962,6 +1020,21 @@
                 </p>
             </div>
 
+            <!-- WhatsApp Users Section -->
+            <div id="usersSection" class="users-section">
+                <h4 style="margin-top: 24px; color: var(--text-muted); font-size: 13px">
+                    <i class="fab fa-whatsapp"></i> Or select your WhatsApp profile:
+                </h4>
+                <div id="usersList" class="users-list">
+                    <p style="color: var(--text-muted); font-size: 12px">Loading users...</p>
+                </div>
+                <button class="btn"
+                    style="margin-top: 12px; font-size: 12px; padding: 8px 16px; background: transparent; border: 1px solid var(--border)"
+                    onclick="loadWhatsAppUsers()">
+                    <i class="fas fa-sync-alt"></i> Refresh Users
+                </button>
+            </div>
+
             <div class="demo-note">
                 <i class="fas fa-info-circle"></i>
                 Start chatting on WhatsApp first! This dashboard shows your synced financial data.
@@ -1275,7 +1348,71 @@
             const phone = localStorage.getItem('MoneyViya_phone');
             if (phone) {
                 showDashboard(phone);
+            } else {
+                // Load WhatsApp users on auth screen
+                loadWhatsAppUsers();
             }
+        }
+
+        async function loadWhatsAppUsers() {
+            const container = document.getElementById('usersList');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/moneyview/users`);
+                if (!response.ok) throw new Error('Failed to fetch users');
+
+                const data = await response.json();
+                const users = data.users || [];
+
+                if (users.length === 0) {
+                    container.innerHTML = `
+                        <p style="color: var(--text-muted); font-size: 12px; text-align: center">
+                            No WhatsApp users yet.<br>
+                            Start chatting on WhatsApp first!
+                        </p>
+                    `;
+                    return;
+                }
+
+                // Filter to only show onboarded users
+                const onboardedUsers = users.filter(u => u.onboarding_complete || u.name);
+
+                if (onboardedUsers.length === 0) {
+                    container.innerHTML = `
+                        <p style="color: var(--text-muted); font-size: 12px; text-align: center">
+                            No completed profiles yet.<br>
+                            Complete onboarding via WhatsApp!
+                        </p>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = onboardedUsers.map(user => `
+                    <div class="user-item" onclick="loginAsUser('${user.id}', '${user.name || 'User'}')">
+                        <div class="user-avatar">${(user.name || 'U')[0].toUpperCase()}</div>
+                        <div class="user-info">
+                            <div class="user-name">${user.name || 'User'}</div>
+                            <div class="user-detail">${user.occupation || 'Tap to login'}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                container.innerHTML = `
+                    <p style="color: var(--text-muted); font-size: 12px; text-align: center">
+                        Could not load users.<br>
+                        <small>${error.message}</small>
+                    </p>
+                `;
+            }
+        }
+
+        function loginAsUser(userId, userName) {
+            localStorage.setItem('MoneyViya_phone', userId);
+            localStorage.removeItem('MoneyViya_demo');
+            localStorage.removeItem('MoneyViya_user_data');
+            showDashboard(userId);
         }
 
         async function showDashboard(phone) {
