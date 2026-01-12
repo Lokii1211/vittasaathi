@@ -577,20 +577,26 @@ _(Reply with 1, 2, 3, or 4)_"""
         if not amount:
             return "💵 I couldn't find the amount. Please say like: 'Earned 5000 from delivery'"
         
-        # Log the income
+        # Use IST for everything
+        import pytz
+        ist = pytz.timezone('Asia/Kolkata')
+        ist_now = datetime.now(ist)
+        
+        # Log the income WITH IST timestamp
         phone = user_data.get("phone")
         try:
             transaction_repo.add_transaction(phone, {
                 "type": "income",
                 "amount": amount,
                 "category": category,
-                "date": datetime.now().isoformat(),
+                "date": ist_now.isoformat(),  # IST timestamp!
                 "description": message
             })
+            print(f"[Income] Logged ₹{amount} for {phone} at {ist_now.strftime('%I:%M %p IST')}")
         except Exception as e:
             print(f"Error logging income: {e}")
         
-        # Get today's total income (accumulated)
+        # Get today's total income (accumulated) - INCLUDING this transaction
         today_income = self._get_today_income(phone)
         
         motivations = [
@@ -599,11 +605,6 @@ _(Reply with 1, 2, 3, or 4)_"""
             "🌟 You're making progress!",
             "🎯 Stay focused on your target!",
         ]
-        
-        # Use IST for date display
-        import pytz
-        ist = pytz.timezone('Asia/Kolkata')
-        ist_now = datetime.now(ist)
         
         lang = user_data.get("language", "en")
         template = self.templates.get(lang, self.templates["en"])["income_logged"]
@@ -1331,7 +1332,7 @@ I'll send you:
             return None
     
     def _get_today_income(self, phone: str) -> int:
-        """Get today's total income"""
+        """Get today's total income accumulated"""
         try:
             import pytz
             ist = pytz.timezone('Asia/Kolkata')
@@ -1339,18 +1340,32 @@ I'll send you:
             
             transactions = transaction_repo.get_transactions(phone)
             total = 0
+            print(f"[AccumulatedIncome] Checking {len(transactions) if transactions else 0} transactions for {phone}")
+            
             for tx in transactions:
                 if tx.get("type") == "income":
-                    tx_date = datetime.fromisoformat(tx.get("date", "")).date()
-                    if tx_date == today:
-                        total += tx.get("amount", 0)
+                    tx_date_str = tx.get("date", "")
+                    try:
+                        # Handle timezone-aware dates
+                        if "+" in tx_date_str:
+                            tx_date_str = tx_date_str.split("+")[0]  # Remove timezone
+                        tx_date = datetime.fromisoformat(tx_date_str).date()
+                        
+                        if tx_date == today:
+                            amt = tx.get("amount", 0)
+                            total += amt
+                            print(f"[AccumulatedIncome] Found ₹{amt} ({tx_date})")
+                    except Exception as parse_err:
+                        print(f"[AccumulatedIncome] Parse error: {parse_err}")
+            
+            print(f"[AccumulatedIncome] Total for today: ₹{total}")
             return total
         except Exception as e:
             print(f"Error getting today income: {e}")
             return 0
     
     def _get_today_expenses(self, phone: str) -> int:
-        """Get today's total expenses"""
+        """Get today's total expenses accumulated"""
         try:
             import pytz
             ist = pytz.timezone('Asia/Kolkata')
@@ -1360,9 +1375,15 @@ I'll send you:
             total = 0
             for tx in transactions:
                 if tx.get("type") == "expense":
-                    tx_date = datetime.fromisoformat(tx.get("date", "")).date()
-                    if tx_date == today:
-                        total += tx.get("amount", 0)
+                    tx_date_str = tx.get("date", "")
+                    try:
+                        if "+" in tx_date_str:
+                            tx_date_str = tx_date_str.split("+")[0]
+                        tx_date = datetime.fromisoformat(tx_date_str).date()
+                        if tx_date == today:
+                            total += tx.get("amount", 0)
+                    except:
+                        pass
             return total
         except Exception as e:
             print(f"Error getting today expenses: {e}")
