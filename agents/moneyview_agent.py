@@ -152,13 +152,25 @@ class MoneyViyaAgent:
         return text.strip().title()
     
     def _detect_risk(self, text: str) -> str:
-        """Detect risk appetite from text"""
-        text_lower = text.lower()
+        """Detect risk appetite from text or number"""
+        text_lower = text.lower().strip()
+        
+        # Support numbered options
+        if text_lower in ["1", "low", "safe"]:
+            return "Low"
+        if text_lower in ["2", "medium", "moderate", "balanced"]:
+            return "Medium"
+        if text_lower in ["3", "high", "aggressive"]:
+            return "High"
+        
+        # Check pattern matching
         for risk, patterns in self.RISK_PATTERNS.items():
             for pattern in patterns:
                 if pattern in text_lower:
                     return risk.title()
-        return "Medium"
+        
+        # Return None if not detected (for validation)
+        return None
     
     def _categorize_expense(self, text: str) -> str:
         """Categorize expense from text"""
@@ -225,6 +237,47 @@ class MoneyViyaAgent:
             "description": description,
             "date": self._get_ist_time().isoformat()
         })
+    
+    def _show_change_options(self, user: Dict) -> str:
+        """Show options to change profile data"""
+        lang = user.get("language", "en")
+        step = user.get("onboarding_step", 0)
+        
+        return f"""📝 *Need to change something?*
+
+Type *reset* to start over completely.
+
+Or continue with the current question.
+Your current details:
+• Name: {user.get('name', 'Not set')}
+• Occupation: {user.get('occupation', 'Not set')}
+• Income: ₹{int(user.get('monthly_income', 0)):,}
+• Expenses: ₹{int(user.get('monthly_expenses', 0)):,}
+• Savings: ₹{int(user.get('current_savings', 0)):,}
+
+_Type your answer for the current question, or type *reset* to start fresh._"""
+    
+    def _is_valid_goal(self, text: str) -> bool:
+        """Check if the goal input is valid (not just a single common word)"""
+        invalid_words = ["help", "language", "english", "hindi", "tamil", "ok", "yes", "no", 
+                        "hi", "hello", "thanks", "thank", "bye", "reset", "back", "change",
+                        "1", "2", "3", "low", "medium", "high"]
+        text_lower = text.lower().strip()
+        
+        # Too short
+        if len(text_lower) < 3:
+            return False
+        
+        # Single invalid word
+        if text_lower in invalid_words:
+            return False
+        
+        # Should have at least 2 words for a proper goal
+        words = text_lower.split()
+        if len(words) < 2 and len(text_lower) < 8:
+            return False
+            
+        return True
     
     async def process_message(self, phone: str, message: str, 
                              sender_name: str = "Friend") -> str:
@@ -421,55 +474,112 @@ _(बैंक में, FD में)_""",
             responses = {
                 "en": f"""Savings: ₹{int(amount):,} {"💰 Great!" if amount > 0 else "- No problem, we will build it!"}
 
-*What type of investments do you prefer?*
-_(Example: Safe investments, Balanced mix, or High risk for high returns)_""",
+*What is your investment risk preference?*
+
+Please reply with a number:
+*1* - 🛡️ Low Risk (Safe - FD, PPF, Savings)
+*2* - ⚖️ Medium Risk (Balanced - Mix of safe & growth)
+*3* - 🚀 High Risk (Aggressive - Stocks, Mutual Funds)
+
+_Or type: low, medium, high_""",
                 "hi": f"""बचत: ₹{int(amount):,} {"💰" if amount > 0 else "- कोई बात नहीं!"}
 
-*आप किस तरह का निवेश पसंद करते हैं?*
-_(उदाहरण: सुरक्षित, बैलेंस्ड, या हाई रिस्क)_""",
+*आपकी निवेश जोखिम प्राथमिकता क्या है?*
+
+कृपया नंबर भेजें:
+*1* - 🛡️ कम जोखिम (सुरक्षित)
+*2* - ⚖️ मध्यम जोखिम (संतुलित)
+*3* - 🚀 उच्च जोखिम (आक्रामक)""",
                 "ta": f"""சேமிப்பு: ₹{int(amount):,}
 
-*என்ன வகையான முதலீடு விரும்புகிறீர்கள்?*"""
+*உங்கள் முதலீட்டு ரிஸ்க் விருப்பம்?*
+
+எண்ணை அனுப்பவும்:
+*1* - 🛡️ குறைந்த ரிஸ்க்
+*2* - ⚖️ நடுத்தர ரிஸ்க்
+*3* - 🚀 அதிக ரிஸ்க்"""
             }
             return responses.get(lang, responses["en"])
         
-        # Step 7: Risk appetite
+        # Step 7: Risk appetite (with validation)
         if step == 7:
-            user["risk_appetite"] = self._detect_risk(message)
+            # Check for help/change command
+            msg_lower = message.lower().strip()
+            if msg_lower in ["help", "back", "change", "edit"]:
+                return self._show_change_options(user)
+            
+            risk = self._detect_risk(message)
+            
+            # Validate - if not a valid option
+            if risk is None:
+                return """⚠️ Sorry, I did not understand that.
+
+Please reply with:
+*1* - Low Risk (Safe)
+*2* - Medium Risk (Balanced)
+*3* - High Risk (Aggressive)
+
+Or type: low, medium, high"""
+            
+            user["risk_appetite"] = risk
             user["onboarding_step"] = 8
             self._save_user(phone, user)
             
             responses = {
-                "en": f"""Risk profile: {user['risk_appetite']} 📊
+                "en": f"""✅ Risk profile: *{risk}* 📊
 
-Now the exciting part - *What's your main financial goal?*
-_(Example: Save for a car, Pay off 5 lakh loan, Build emergency fund, Buy a house)_""",
-                "hi": f"""रिस्क प्रोफाइल: {user['risk_appetite']} 📊
+Now the exciting part - *What is your main financial goal?*
+
+_(Examples: Buy a car, Build emergency fund, Pay off loan, Buy a house, Save for vacation)_
+
+💡 _Type a real goal, not just a word!_""",
+                "hi": f"""✅ रिस्क प्रोफाइल: *{risk}* 📊
 
 *आपका मुख्य वित्तीय लक्ष्य क्या है?*
-_(उदाहरण: कार के लिए बचत, लोन चुकाना, इमरजेंसी फंड)_""",
-                "ta": f"""ரிஸ்க்: {user['risk_appetite']} 📊
+_(उदाहरण: कार खरीदना, इमरजेंसी फंड, लोन चुकाना)_""",
+                "ta": f"""✅ ரிஸ்க்: *{risk}* 📊
 
-*உங்கள் முக்கிய நிதி இலக்கு என்ன?*"""
+*உங்கள் முக்கிய நிதி இலக்கு என்ன?*
+_(உதாரணம்: கார் வாங்க, அவசர நிதி)_"""
             }
             return responses.get(lang, responses["en"])
         
-        # Step 8: Goal
+        # Step 8: Goal (with validation)
         if step == 8:
-            user["primary_goal"] = message.strip()
-            user["goals"] = [{"name": message.strip(), "status": "active"}]
+            # Check for help/change command
+            msg_lower = message.lower().strip()
+            if msg_lower in ["help", "back", "change", "edit"]:
+                return self._show_change_options(user)
+            
+            # Validate goal input
+            if not self._is_valid_goal(message):
+                return """⚠️ That does not look like a proper financial goal.
+
+Please enter a *specific goal* like:
+• "Buy a car"
+• "Build emergency fund"
+• "Pay off 5 lakh loan"
+• "Save for house down payment"
+• "Wedding fund"
+• "Child education"
+
+_What is your main financial goal?_"""
+            
+            goal_name = message.strip().title()
+            user["primary_goal"] = goal_name
+            user["goals"] = [{"name": goal_name, "status": "active"}]
             user["onboarding_step"] = 9
             self._save_user(phone, user)
             
             responses = {
-                "en": f"""Great goal: *{message.strip()}* 🎯
+                "en": f"""Great goal: *{goal_name}* 🎯
 
 *How much do you need for this goal?*
 _(Example: 5 lakh, 100000, 20 lakh)_""",
-                "hi": f"""बेहतरीन लक्ष्य: *{message.strip()}* 🎯
+                "hi": f"""बेहतरीन लक्ष्य: *{goal_name}* 🎯
 
 *इसके लिए कितने पैसे चाहिए?*""",
-                "ta": f"""சிறந்த இலக்கு: *{message.strip()}* 🎯
+                "ta": f"""சிறந்த இலக்கு: *{goal_name}* 🎯
 
 *இதற்கு எவ்வளவு தேவை?*"""
             }
