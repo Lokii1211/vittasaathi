@@ -120,7 +120,7 @@
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             text-align: left;
         }
 
@@ -134,24 +134,28 @@
 
         .input-wrapper {
             position: relative;
+            display: flex;
+            align-items: center;
         }
 
-        .input-wrapper i {
+        .input-wrapper i:first-child {
             position: absolute;
             left: 16px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
+            z-index: 1;
+            pointer-events: none;
         }
 
         .input-wrapper input {
             width: 100%;
-            padding: 16px 16px 16px 48px;
+            padding: 14px 50px 14px 48px;
             background: var(--bg-light);
             border: 2px solid var(--border);
-            border-radius: 14px;
+            border-radius: 12px;
             color: var(--text);
-            font-size: 16px;
+            font-size: 15px;
             transition: all 0.3s;
         }
 
@@ -326,14 +330,12 @@
             cursor: pointer;
             color: var(--text-muted);
             transition: color 0.2s;
+            z-index: 2;
+            pointer-events: auto !important;
         }
 
         .toggle-password:hover {
             color: var(--primary);
-        }
-
-        .input-wrapper {
-            position: relative;
         }
 
         .hidden {
