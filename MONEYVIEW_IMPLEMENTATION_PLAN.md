@@ -448,6 +448,13 @@ Want me to explain how to start? Type "SIP guide"
 - [ ] Mobile optimization
 - [ ] Testing & deployment
 
+### Phase 6: Future Roadmap (Post-Hackathon)
+- [ ] **Voice Reply Integration:** Two-way voice conversations
+- [ ] **UPI Integration:** Deep integration with payments
+- [ ] **Family Accounts:** Shared budgeting
+- [ ] **AI Investment Desk:** Automated portfolio management
+
+
 ---
 
 ## 📁 File Structure
