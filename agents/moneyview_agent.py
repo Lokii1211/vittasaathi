@@ -99,10 +99,57 @@ class MoneyViyaAgent:
         ]
     }
     
+    # Data file paths
+    DATA_DIR = "data"
+    USERS_FILE = "data/users.json"
+    TRANSACTIONS_FILE = "data/transactions.json"
+    
     def __init__(self):
         self.user_store = {}
         self.transaction_store = {}
+        self._ensure_data_dir()
+        self._load_data()
+    
+    def _ensure_data_dir(self):
+        """Create data directory if not exists"""
+        import os
+        os.makedirs(self.DATA_DIR, exist_ok=True)
+    
+    def _load_data(self):
+        """Load users and transactions from JSON files"""
+        import os
+        try:
+            if os.path.exists(self.USERS_FILE):
+                with open(self.USERS_FILE, 'r', encoding='utf-8') as f:
+                    self.user_store = json.load(f)
+                print(f"[MoneyViya] Loaded {len(self.user_store)} users from file")
+        except Exception as e:
+            print(f"[MoneyViya] Error loading users: {e}")
+            self.user_store = {}
         
+        try:
+            if os.path.exists(self.TRANSACTIONS_FILE):
+                with open(self.TRANSACTIONS_FILE, 'r', encoding='utf-8') as f:
+                    self.transaction_store = json.load(f)
+                print(f"[MoneyViya] Loaded transactions from file")
+        except Exception as e:
+            print(f"[MoneyViya] Error loading transactions: {e}")
+            self.transaction_store = {}
+    
+    def _save_data(self):
+        """Save all data to JSON files"""
+        try:
+            with open(self.USERS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(self.user_store, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"[MoneyViya] Error saving users: {e}")
+        
+        try:
+            with open(self.TRANSACTIONS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(self.transaction_store, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"[MoneyViya] Error saving transactions: {e}")
+    
     def _get_ist_time(self) -> datetime:
         if IST:
             return datetime.now(IST)
@@ -209,10 +256,12 @@ class MoneyViyaAgent:
                 "onboarding_complete": False,
                 "created_at": self._get_ist_time().isoformat()
             }
+            self._save_data()  # Save new user
         return self.user_store[phone]
     
     def _save_user(self, phone: str, data: Dict):
         self.user_store[phone] = data
+        self._save_data()  # Auto-save to file
         
     def _get_today_transactions(self, phone: str) -> Tuple[float, float]:
         today = self._get_ist_time().strftime("%Y-%m-%d")
@@ -237,6 +286,7 @@ class MoneyViyaAgent:
             "description": description,
             "date": self._get_ist_time().isoformat()
         })
+        self._save_data()  # Auto-save transactions
     
     def _show_change_options(self, user: Dict) -> str:
         """Show options to change profile data"""
@@ -281,7 +331,7 @@ _Type your answer for the current question, or type *reset* to start fresh._"""
     
     async def process_message(self, phone: str, message: str, 
                              sender_name: str = "Friend") -> str:
-        """Main message processing"""
+        """Main message processing with improved NLP"""
         try:
             user = self._get_user(phone)
             user["last_active"] = self._get_ist_time().isoformat()
@@ -291,33 +341,53 @@ _Type your answer for the current question, or type *reset* to start fresh._"""
             if not user.get("onboarding_complete"):
                 return await self._handle_onboarding(phone, message, user)
             
-            # Handle commands
+            # Handle commands - improved NLP matching
             msg_lower = message.lower().strip()
             
-            if msg_lower in ["hi", "hello", "hey", "start"]:
+            # Greeting patterns
+            if msg_lower in ["hi", "hello", "hey", "start", "hii", "hiii", "namaste", "vanakkam", "नमस्ते", "வணக்கம்"]:
                 return self._handle_greeting(user)
             
-            if msg_lower in ["help", "commands", "menu"]:
+            # Help patterns
+            if any(word in msg_lower for word in ["help", "commands", "menu", "what can you do", "options", "?", "sahayata", "உதவி"]):
                 return self._handle_help(user)
             
-            if msg_lower in ["reset", "restart", "start over"]:
+            # Reset patterns
+            if any(word in msg_lower for word in ["reset", "restart", "start over", "fresh start", "नया शुरू"]):
                 return self._handle_reset(phone)
             
-            if "balance" in msg_lower or "summary" in msg_lower:
+            # Profile/Status patterns
+            if any(word in msg_lower for word in ["profile", "my profile", "status", "my status", "who am i", "my details", "my info", "account"]):
+                return self._handle_profile(user)
+            
+            # Balance/Summary patterns
+            if any(word in msg_lower for word in ["balance", "summary", "total", "overview", "how much", "kitna", "எவ்வளவு"]):
                 return self._handle_balance(phone, user)
             
-            if "goal" in msg_lower:
-                if "add" in msg_lower:
+            # Goal patterns
+            if any(word in msg_lower for word in ["goal", "target", "लक्ष्य", "இலக்கு"]):
+                if any(word in msg_lower for word in ["add", "new", "create", "set"]):
                     return self._handle_add_goal(phone, message, user)
                 return self._handle_view_goals(user)
             
-            if "report" in msg_lower:
+            # Report patterns
+            if any(word in msg_lower for word in ["report", "weekly", "monthly", "analysis"]):
                 return self._handle_report(phone, user)
             
-            if "market" in msg_lower or "stock" in msg_lower:
+            # Market/Stock patterns
+            if any(word in msg_lower for word in ["market", "stock", "nifty", "sensex", "share", "invest", "बाजार", "சந்தை"]):
                 return self._handle_market(user)
             
+            # Savings patterns
+            if any(word in msg_lower for word in ["saving", "savings", "बचत", "சேமிப்பு"]):
+                return self._handle_savings(phone, user)
+            
+            # Tip/Advice patterns
+            if any(word in msg_lower for word in ["tip", "tips", "advice", "suggest", "recommendation"]):
+                return self._handle_tips(user)
+            
             # Check for expense
+
             if self._is_expense_message(message):
                 return self._handle_expense(phone, message, user)
             
@@ -899,16 +969,140 @@ You've got this! 💪"""
 
 _Type "investment tips" for personalized advice_"""
     
+    def _handle_profile(self, user: Dict) -> str:
+        """Show user profile summary"""
+        name = user.get("name", "User")
+        phone = user.get("phone", "")[-10:]
+        occupation = user.get("occupation", "Not set")
+        income = user.get("monthly_income", 0)
+        expenses = user.get("monthly_expenses", 0)
+        savings = user.get("current_savings", 0)
+        risk = user.get("risk_appetite", "Medium")
+        
+        return f"""👤 *Your Profile: {name}*
+━━━━━━━━━━━━━━━━━━━━━
+
+📱 Phone: ****{phone[-4:]}
+💼 Occupation: {occupation}
+💰 Monthly Income: ₹{int(income):,}
+💸 Monthly Expenses: ₹{int(expenses):,}
+🏦 Savings: ₹{int(savings):,}
+📊 Risk Profile: {risk}
+
+📈 Daily Budget: ₹{int(user.get('daily_budget', 0)):,}
+
+_To edit, visit the web dashboard or type "reset" to start over._"""
+    
+    def _handle_savings(self, phone: str, user: Dict) -> str:
+        """Show savings summary and tips"""
+        savings = user.get("current_savings", 0)
+        income = user.get("monthly_income", 0)
+        expenses = user.get("monthly_expenses", 0)
+        potential_savings = income - expenses
+        
+        return f"""💰 *Your Savings Overview*
+━━━━━━━━━━━━━━━━━━━━━
+
+🏦 Current Savings: ₹{int(savings):,}
+📊 Monthly Surplus: ₹{int(potential_savings):,}
+
+💡 *Quick Tips:*
+• Save at least 20% of income (₹{int(income * 0.2):,}/month)
+• Build emergency fund = 6 months expenses
+• Invest surplus in SIPs for long-term growth
+
+📈 At current rate, in 1 year you could save: ₹{int(potential_savings * 12):,}
+
+_Track every expense to save more!_"""
+    
+    def _handle_tips(self, user: Dict) -> str:
+        """Provide financial tips based on user profile"""
+        income = user.get("monthly_income", 0)
+        risk = user.get("risk_appetite", "Medium")
+        
+        tips = {
+            "Low": """🛡️ *Safe Investment Tips:*
+• Fixed Deposits (FD) - 6-7% returns
+• PPF - Tax-free, 7.1% returns  
+• Govt Bonds - Very secure
+• Savings Account - Easy access""",
+            
+            "Medium": """⚖️ *Balanced Investment Tips:*
+• Balanced Mutual Funds - Mix of equity & debt
+• NPS - For retirement
+• Index Funds - Low cost, market returns
+• Gold ETFs - Hedge against inflation""",
+            
+            "High": """🚀 *Growth Investment Tips:*
+• Equity Mutual Funds - High long-term returns
+• Direct Stocks - Research before investing
+• Small-cap Funds - High risk, high reward
+• ELSS - Tax saving + equity growth"""
+        }
+        
+        return f"""{tips.get(risk, tips["Medium"])}
+
+💡 *General Tips:*
+• Start SIP with ₹{int(income * 0.1):,}/month
+• Review portfolio quarterly
+• Don't panic during market dips
+• Diversify across asset classes
+
+_Type "market" for live updates_"""
+    
     def _handle_unknown(self, message: str, user: Dict) -> str:
-        return f"""I'm not sure what you meant by: "{message[:30]}..."
-
-Here's what I can do:
+        """Handle unrecognized messages with smart suggestions"""
+        # Try to understand intent using simple NLP
+        msg_lower = message.lower()
+        
+        # Check if it might be an amount
+        if any(char.isdigit() for char in message):
+            return """💡 I see a number! Did you mean:
 • "Spent 500 on food" - Track expense
-• "Earned 10000" - Track income
-• "Balance" - View summary
-• "Help" - See all commands
+• "Earned 5000" - Track income
+• "Add goal: Car, 5 lakh, 2 years" - Add goal
 
-Just tell me naturally! 🤖"""
+Just add a context to help me understand!"""
+        
+        # Check for common typos/variations
+        suggestions = []
+        if any(word in msg_lower for word in ["bal", "sum", "mon"]):
+            suggestions.append('"balance" - View summary')
+        if any(word in msg_lower for word in ["rep", "wee", "month"]):
+            suggestions.append('"report" - Get your report')
+        if any(word in msg_lower for word in ["gol", "tar", "sav"]):
+            suggestions.append('"goals" - View your goals')
+        
+        if suggestions:
+            return f"""💡 Did you mean:
+• {chr(10).join('• ' + s for s in suggestions)}
+
+Type what you need, I'll try to help!"""
+        
+        return f"""🤔 I'm not sure what you meant by: "{message[:40]}..."
+
+*Here's what I can do:*
+━━━━━━━━━━━━━━━━━━━━━
+💰 *Track Money:*
+• "Spent 500 on food"
+• "Earned 10000 salary"
+
+📊 *View Info:*
+• "Balance" - Daily summary
+• "Profile" - Your details
+• "Goals" - Your targets
+• "Report" - Weekly report
+
+📈 *Get Insights:*
+• "Market" - Stock updates
+• "Tips" - Investment advice
+• "Savings" - Savings overview
+
+🔧 *Others:*
+• "Help" - All commands
+• "Reset" - Start fresh
+
+Just talk to me naturally! 🤖"""
 
 
 # Singleton - keep lowercase for import compatibility

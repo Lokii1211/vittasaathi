@@ -706,7 +706,178 @@ async def search_user(query: str):
     return {"results": results, "count": len(results)}
 
 
+# ==================== GOAL MANAGEMENT ====================
+
+class GoalCreate(BaseModel):
+    name: str
+    amount: float
+    timeline: Optional[str] = "1 year"
+
+class GoalUpdate(BaseModel):
+    name: Optional[str] = None
+    amount: Optional[float] = None
+    timeline: Optional[str] = None
+    current: Optional[float] = None
+    status: Optional[str] = None
+
+
+@moneyview_router.post("/user/{phone}/goals")
+async def add_goal(phone: str, goal: GoalCreate):
+    """Add a new goal from dashboard"""
+    user = None
+    actual_phone = phone
+    
+    # Find user
+    for p in [phone, "91" + phone, phone.replace("91", "")]:
+        user = moneyview_agent.user_store.get(p)
+        if user:
+            actual_phone = p
+            break
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Add goal
+    if "goals" not in user:
+        user["goals"] = []
+    
+    new_goal = {
+        "name": goal.name,
+        "amount": goal.amount,
+        "timeline": goal.timeline,
+        "current": 0,
+        "status": "active",
+        "created": datetime.now(IST).isoformat() if IST else datetime.now().isoformat()
+    }
+    
+    user["goals"].append(new_goal)
+    moneyview_agent._save_user(actual_phone, user)
+    
+    return {"success": True, "goal": new_goal, "total_goals": len(user["goals"])}
+
+
+@moneyview_router.put("/user/{phone}/goals/{goal_index}")
+async def update_goal(phone: str, goal_index: int, updates: GoalUpdate):
+    """Update a goal from dashboard"""
+    user = None
+    actual_phone = phone
+    
+    for p in [phone, "91" + phone, phone.replace("91", "")]:
+        user = moneyview_agent.user_store.get(p)
+        if user:
+            actual_phone = p
+            break
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    goals = user.get("goals", [])
+    if goal_index >= len(goals):
+        raise HTTPException(status_code=404, detail="Goal not found")
+    
+    goal = goals[goal_index]
+    if updates.name is not None:
+        goal["name"] = updates.name
+    if updates.amount is not None:
+        goal["amount"] = updates.amount
+    if updates.timeline is not None:
+        goal["timeline"] = updates.timeline
+    if updates.current is not None:
+        goal["current"] = updates.current
+    if updates.status is not None:
+        goal["status"] = updates.status
+    
+    user["goals"][goal_index] = goal
+    moneyview_agent._save_user(actual_phone, user)
+    
+    return {"success": True, "goal": goal}
+
+
+@moneyview_router.delete("/user/{phone}/goals/{goal_index}")
+async def delete_goal(phone: str, goal_index: int):
+    """Delete a goal from dashboard"""
+    user = None
+    actual_phone = phone
+    
+    for p in [phone, "91" + phone, phone.replace("91", "")]:
+        user = moneyview_agent.user_store.get(p)
+        if user:
+            actual_phone = p
+            break
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    goals = user.get("goals", [])
+    if goal_index >= len(goals):
+        raise HTTPException(status_code=404, detail="Goal not found")
+    
+    deleted = goals.pop(goal_index)
+    user["goals"] = goals
+    moneyview_agent._save_user(actual_phone, user)
+    
+    return {"success": True, "deleted": deleted}
+
+
+# ==================== TRANSACTION MANAGEMENT ====================
+
+class TransactionCreate(BaseModel):
+    type: str  # "expense" or "income"
+    amount: float
+    category: str
+    description: Optional[str] = ""
+
+
+@moneyview_router.post("/user/{phone}/transactions")
+async def add_transaction(phone: str, txn: TransactionCreate):
+    """Add a transaction from dashboard"""
+    user = None
+    actual_phone = phone
+    
+    for p in [phone, "91" + phone, phone.replace("91", "")]:
+        user = moneyview_agent.user_store.get(p)
+        if user:
+            actual_phone = p
+            break
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    moneyview_agent._add_transaction(
+        actual_phone,
+        txn.type,
+        txn.amount,
+        txn.category,
+        txn.description
+    )
+    
+    return {"success": True, "message": f"{txn.type.title()} of ₹{txn.amount} added"}
+
+
+@moneyview_router.get("/user/{phone}/transactions")
+async def get_transactions(phone: str, limit: int = 50):
+    """Get user transactions"""
+    actual_phone = phone
+    
+    for p in [phone, "91" + phone, phone.replace("91", "")]:
+        if p in moneyview_agent.transaction_store:
+            actual_phone = p
+            break
+    
+    transactions = moneyview_agent.transaction_store.get(actual_phone, [])
+    
+    # Sort by date, newest first
+    sorted_txns = sorted(
+        transactions,
+        key=lambda x: x.get("date", ""),
+        reverse=True
+    )[:limit]
+    
+    return {"transactions": sorted_txns, "count": len(sorted_txns)}
+
+
 # ==================== HEALTH CHECK ====================
+
 
 @moneyview_router.get("/health")
 async def health_check():
