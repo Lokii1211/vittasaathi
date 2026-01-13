@@ -258,7 +258,186 @@ def whatsapp_status():
     }
 
 
+# ================= AUTHENTICATION ENDPOINTS =================
+import hashlib
+import secrets
+
+# Password store (in production, use a proper database)
+PASSWORD_FILE = "data/passwords.json"
+
+def _load_passwords():
+    """Load passwords from file"""
+    import os
+    try:
+        if os.path.exists(PASSWORD_FILE):
+            with open(PASSWORD_FILE, 'r') as f:
+                return json.load(f)
+    except:
+        pass
+    return {}
+
+def _save_passwords(passwords):
+    """Save passwords to file"""
+    import os
+    os.makedirs("data", exist_ok=True)
+    with open(PASSWORD_FILE, 'w') as f:
+        json.dump(passwords, f)
+
+def _hash_password(password: str) -> str:
+    """Hash password with salt"""
+    salt = "MoneyViya2026"  # In production, use unique salt per user
+    return hashlib.sha256((password + salt).encode()).hexdigest()
+
+
+@app.post("/api/auth/register")
+async def register_user(request: Request):
+    """Register new user with phone and password"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "").replace("+", "").replace(" ", "")
+        password = data.get("password", "")
+        
+        if len(phone) < 10:
+            return {"success": False, "error": "Invalid phone number"}
+        
+        if len(password) < 6:
+            return {"success": False, "error": "Password must be at least 6 characters"}
+        
+        # Format phone
+        if not phone.startswith("91"):
+            phone = "91" + phone
+        
+        # Check if already registered
+        passwords = _load_passwords()
+        if phone in passwords:
+            return {"success": False, "error": "Phone already registered. Please login."}
+        
+        # Hash and save password
+        passwords[phone] = {
+            "password_hash": _hash_password(password),
+            "created_at": datetime.now().isoformat()
+        }
+        _save_passwords(passwords)
+        
+        # Also create user in moneyview agent if available
+        if MONEYVIEW_AVAILABLE and moneyview_agent:
+            if phone not in moneyview_agent.user_store:
+                moneyview_agent.user_store[phone] = {
+                    "phone": phone,
+                    "language": "en",
+                    "onboarding_step": 0,
+                    "onboarding_complete": False,
+                    "dashboard_registered": True,
+                    "created_at": datetime.now().isoformat()
+                }
+                moneyview_agent._save_data()
+        
+        return {"success": True, "message": "Registration successful!"}
+        
+    except Exception as e:
+        print(f"[AUTH] Registration error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/auth/login")
+async def login_user(request: Request):
+    """Login with phone and password"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "").replace("+", "").replace(" ", "")
+        password = data.get("password", "")
+        
+        if not phone.startswith("91"):
+            phone = "91" + phone
+        
+        # Check password
+        passwords = _load_passwords()
+        
+        if phone not in passwords:
+            # Fallback: check if user exists in WhatsApp (for users who onboarded via WhatsApp)
+            if MONEYVIEW_AVAILABLE and moneyview_agent:
+                user = moneyview_agent.user_store.get(phone)
+                if user and user.get("onboarding_complete"):
+                    # Allow login for WhatsApp users without password
+                    token = secrets.token_hex(32)
+                    return {
+                        "success": True, 
+                        "token": token,
+                        "message": "Login successful (WhatsApp user)",
+                        "user": {
+                            "phone": phone,
+                            "name": user.get("name"),
+                            "onboarding_complete": True
+                        }
+                    }
+            return {"success": False, "error": "Account not found. Please register."}
+        
+        # Verify password
+        stored = passwords[phone]
+        if stored.get("password_hash") != _hash_password(password):
+            return {"success": False, "error": "Incorrect password"}
+        
+        # Generate session token
+        token = secrets.token_hex(32)
+        
+        # Get user data
+        user_data = None
+        if MONEYVIEW_AVAILABLE and moneyview_agent:
+            user_data = moneyview_agent.user_store.get(phone, {})
+        
+        return {
+            "success": True,
+            "token": token,
+            "message": "Login successful!",
+            "user": {
+                "phone": phone,
+                "name": user_data.get("name") if user_data else None,
+                "onboarding_complete": user_data.get("onboarding_complete") if user_data else False
+            }
+        }
+        
+    except Exception as e:
+        print(f"[AUTH] Login error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/auth/change-password")
+async def change_password(request: Request):
+    """Change user password"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "").replace("+", "").replace(" ", "")
+        old_password = data.get("old_password", "")
+        new_password = data.get("new_password", "")
+        
+        if not phone.startswith("91"):
+            phone = "91" + phone
+        
+        passwords = _load_passwords()
+        
+        if phone not in passwords:
+            return {"success": False, "error": "Account not found"}
+        
+        # Verify old password
+        if passwords[phone].get("password_hash") != _hash_password(old_password):
+            return {"success": False, "error": "Current password is incorrect"}
+        
+        if len(new_password) < 6:
+            return {"success": False, "error": "New password must be at least 6 characters"}
+        
+        # Update password
+        passwords[phone]["password_hash"] = _hash_password(new_password)
+        passwords[phone]["updated_at"] = datetime.now().isoformat()
+        _save_passwords(passwords)
+        
+        return {"success": True, "message": "Password changed successfully!"}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ================= AI AGENT ENDPOINTS (for n8n) =================
+
 @app.get("/api/users/active")
 def get_active_users():
     """Get all active users for daily reminders (used by n8n)"""

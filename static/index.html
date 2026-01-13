@@ -254,6 +254,88 @@
             margin-right: 8px;
         }
 
+        /* Auth Mode Toggle */
+        .auth-mode-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding: 4px;
+            background: var(--bg-light);
+            border-radius: 12px;
+        }
+
+        .auth-mode-toggle .mode-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .auth-mode-toggle .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+        }
+
+        .auth-mode-toggle .mode-btn i {
+            margin-right: 8px;
+        }
+
+        /* Login Method Toggle */
+        .login-method-toggle {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .login-method-toggle .method-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .login-method-toggle .method-btn.active {
+            border-color: var(--primary);
+            background: rgba(13, 148, 136, 0.1);
+            color: var(--primary);
+        }
+
+        .login-method-toggle .method-btn i {
+            margin-right: 6px;
+        }
+
+        /* Password Toggle */
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .toggle-password:hover {
+            color: var(--primary);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -926,51 +1008,129 @@
             <h1 class="auth-title">MoneyViya</h1>
             <p class="auth-subtitle">Your Personal AI Financial Manager</p>
 
-            <!-- Phone Input -->
-            <div id="phoneSection">
+            <!-- Auth Mode Toggle -->
+            <div id="authModeToggle" class="auth-mode-toggle">
+                <button class="mode-btn active" id="loginModeBtn" onclick="switchAuthMode('login')">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <button class="mode-btn" id="registerModeBtn" onclick="switchAuthMode('register')">
+                    <i class="fas fa-user-plus"></i> Register
+                </button>
+            </div>
+
+            <!-- ======= LOGIN SECTION ======= -->
+            <div id="loginSection">
                 <div class="input-group">
-                    <label>WhatsApp Number</label>
+                    <label>Phone Number</label>
                     <div class="input-wrapper">
                         <i class="fas fa-phone"></i>
-                        <input type="tel" id="phoneInput" placeholder="Enter 10-digit number" maxlength="10">
+                        <input type="tel" id="loginPhone" placeholder="Enter 10-digit number" maxlength="10">
                     </div>
                 </div>
 
-                <button class="btn btn-primary" onclick="sendOTP()">
-                    <i class="fas fa-paper-plane"></i> Send OTP
+                <!-- Login Method Toggle -->
+                <div class="login-method-toggle">
+                    <button class="method-btn active" id="passwordMethodBtn" onclick="switchLoginMethod('password')">
+                        <i class="fas fa-key"></i> Password
+                    </button>
+                    <button class="method-btn" id="otpMethodBtn" onclick="switchLoginMethod('otp')">
+                        <i class="fas fa-sms"></i> OTP
+                    </button>
+                </div>
+
+                <!-- Password Login -->
+                <div id="passwordLoginSection">
+                    <div class="input-group">
+                        <label>Password</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPassword" placeholder="Enter your password">
+                            <i class="fas fa-eye toggle-password" onclick="togglePassword('loginPassword')"></i>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="loginWithPassword()">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </div>
+
+                <!-- OTP Login -->
+                <div id="otpLoginSection" class="hidden">
+                    <button class="btn btn-primary" onclick="sendLoginOTP()">
+                        <i class="fas fa-paper-plane"></i> Send OTP to WhatsApp
+                    </button>
+
+                    <div id="otpInputSection" class="hidden" style="margin-top: 16px;">
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                            Enter the 4-digit OTP sent to your WhatsApp
+                        </p>
+                        <div class="otp-inputs">
+                            <input type="text" maxlength="1" id="otp1" oninput="moveNext(1)">
+                            <input type="text" maxlength="1" id="otp2" oninput="moveNext(2)">
+                            <input type="text" maxlength="1" id="otp3" oninput="moveNext(3)">
+                            <input type="text" maxlength="1" id="otp4" oninput="moveNext(4)">
+                        </div>
+                        <button class="btn btn-primary" onclick="verifyLoginOTP()" style="margin-top: 12px;">
+                            <i class="fas fa-check"></i> Verify & Login
+                        </button>
+                        <p id="otpStatus" style="margin-top: 8px; font-size: 12px; color: var(--text-muted);"></p>
+                    </div>
+                </div>
+
+                <p style="margin-top: 16px; font-size: 13px; color: var(--text-muted);">
+                    Don't have an account? <a href="#" onclick="switchAuthMode('register')"
+                        style="color: var(--primary)">Register now</a>
+                </p>
+            </div>
+
+            <!-- ======= REGISTER SECTION ======= -->
+            <div id="registerSection" class="hidden">
+                <div class="input-group">
+                    <label>Phone Number (WhatsApp)</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="registerPhone" placeholder="Enter 10-digit number" maxlength="10">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Create Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="registerPassword" placeholder="Min 6 characters">
+                        <i class="fas fa-eye toggle-password" onclick="togglePassword('registerPassword')"></i>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Confirm Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" placeholder="Re-enter password">
+                        <i class="fas fa-eye toggle-password" onclick="togglePassword('confirmPassword')"></i>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="registerUser()">
+                    <i class="fas fa-user-plus"></i> Create Account
                 </button>
 
+                <p style="margin-top: 16px; font-size: 13px; color: var(--text-muted);">
+                    Already have an account? <a href="#" onclick="switchAuthMode('login')"
+                        style="color: var(--primary)">Login here</a>
+                </p>
+            </div>
+
+            <!-- Demo Button -->
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
                 <button class="btn btn-secondary" onclick="demoLogin()">
                     <i class="fas fa-play-circle"></i> Try Demo (No Login)
                 </button>
             </div>
 
-            <!-- OTP Section -->
-            <div id="otpSection" class="otp-section hidden">
-                <h4><i class="fab fa-whatsapp"></i> Enter OTP sent to WhatsApp</h4>
-                <div class="otp-inputs">
-                    <input type="text" maxlength="1" id="otp1" oninput="moveNext(1)">
-                    <input type="text" maxlength="1" id="otp2" oninput="moveNext(2)">
-                    <input type="text" maxlength="1" id="otp3" oninput="moveNext(3)">
-                    <input type="text" maxlength="1" id="otp4" oninput="moveNext(4)">
-                </div>
-                <button class="btn btn-primary" onclick="verifyOTP()" id="verifyBtn">
-                    <i class="fas fa-shield-alt"></i> Verify & Login
-                </button>
-                <p style="margin-top: 12px; font-size: 13px; color: var(--text-muted)" id="otpNote">
-                    Check your WhatsApp for OTP
-                </p>
-                <button class="btn"
-                    style="margin-top: 8px; font-size: 12px; padding: 8px 16px; background: transparent; border: 1px solid var(--border)"
-                    onclick="resendOTP()">
-                    <i class="fas fa-redo"></i> Resend OTP
-                </button>
-            </div>
-
             <div class="demo-note">
-                <i class="fas fa-lock"></i>
-                <strong>Secure Login:</strong> OTP is sent to your WhatsApp for verification. Complete onboarding on
-                WhatsApp first!
+                <i class="fas fa-info-circle"></i>
+                <strong>Tip:</strong> Start chatting on WhatsApp first to set up your profile, then login here to view
+                your dashboard!
             </div>
         </div>
     </div>
@@ -1241,97 +1401,215 @@
             }
         }
 
-        // Store generated OTP for verification
+        // =============== NEW AUTH SYSTEM ===============
+
         let currentOTP = null;
         let currentPhone = null;
+        let liveSyncInterval = null;
 
-        async function sendOTP() {
-            const phone = document.getElementById('phoneInput').value.replace(/\D/g, '');
+        // Toggle password visibility
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Switch between Login and Register
+        function switchAuthMode(mode) {
+            const loginSection = document.getElementById('loginSection');
+            const registerSection = document.getElementById('registerSection');
+            const loginBtn = document.getElementById('loginModeBtn');
+            const registerBtn = document.getElementById('registerModeBtn');
+
+            if (mode === 'login') {
+                loginSection.classList.remove('hidden');
+                registerSection.classList.add('hidden');
+                loginBtn.classList.add('active');
+                registerBtn.classList.remove('active');
+            } else {
+                loginSection.classList.add('hidden');
+                registerSection.classList.remove('hidden');
+                loginBtn.classList.remove('active');
+                registerBtn.classList.add('active');
+            }
+        }
+
+        // Switch between Password and OTP login
+        function switchLoginMethod(method) {
+            const passwordSection = document.getElementById('passwordLoginSection');
+            const otpSection = document.getElementById('otpLoginSection');
+            const passwordBtn = document.getElementById('passwordMethodBtn');
+            const otpBtn = document.getElementById('otpMethodBtn');
+
+            if (method === 'password') {
+                passwordSection.classList.remove('hidden');
+                otpSection.classList.add('hidden');
+                passwordBtn.classList.add('active');
+                otpBtn.classList.remove('active');
+            } else {
+                passwordSection.classList.add('hidden');
+                otpSection.classList.remove('hidden');
+                passwordBtn.classList.remove('active');
+                otpBtn.classList.add('active');
+            }
+        }
+
+        // Register new user
+        async function registerUser() {
+            const phone = document.getElementById('registerPhone').value.replace(/\D/g, '');
+            const password = document.getElementById('registerPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+
+            // Validation
             if (phone.length < 10) {
-                alert('Please enter a valid 10-digit phone number');
+                showNotification('Please enter valid 10-digit phone number', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return;
+            }
+            if (password !== confirmPass) {
+                showNotification('Passwords do not match!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: '91' + phone,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Account created! Please login.', 'success');
+                    switchAuthMode('login');
+                    document.getElementById('loginPhone').value = phone;
+                } else {
+                    showNotification(data.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showNotification('Registration failed. Try again.', 'error');
+            }
+        }
+
+        // Login with password
+        async function loginWithPassword() {
+            const phone = document.getElementById('loginPhone').value.replace(/\D/g, '');
+            const password = document.getElementById('loginPassword').value;
+
+            if (phone.length < 10) {
+                showNotification('Please enter valid phone number', 'error');
+                return;
+            }
+            if (!password) {
+                showNotification('Please enter password', 'error');
                 return;
             }
 
             currentPhone = '91' + phone;
 
-            // Generate 4-digit OTP
-            currentOTP = Math.floor(1000 + Math.random() * 9000).toString();
-
-            // Show loading
-            const btn = event.target;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending OTP...';
-
             try {
-                // Send OTP via WhatsApp using n8n/Baileys
-                const response = await fetch(`${API_BASE}/api/send-whatsapp`, {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         phone: currentPhone,
-                        message: `🔐 *MoneyViya Login OTP*\n\nYour OTP is: *${currentOTP}*\n\nValid for 5 minutes. Do not share this code.\n\n_If you didn't request this, please ignore._`
+                        password: password
                     })
                 });
 
-                // Show OTP section regardless of API response (for demo mode)
-                document.getElementById('phoneSection').classList.add('hidden');
-                document.getElementById('otpSection').classList.remove('hidden');
-                document.getElementById('otpNote').innerHTML = `OTP sent to <strong>+${currentPhone}</strong>`;
+                const data = await response.json();
 
-                // Focus first OTP input
-                document.getElementById('otp1').focus();
-
+                if (data.success) {
+                    localStorage.setItem('MoneyViya_phone', currentPhone);
+                    localStorage.setItem('MoneyViya_token', data.token || 'authenticated');
+                    showNotification('Login successful!', 'success');
+                    showDashboard(currentPhone);
+                } else {
+                    showNotification(data.error || 'Invalid credentials', 'error');
+                }
             } catch (error) {
-                console.error('Error sending OTP:', error);
-                // Still show OTP section for demo
-                document.getElementById('phoneSection').classList.add('hidden');
-                document.getElementById('otpSection').classList.remove('hidden');
-                document.getElementById('otpNote').innerHTML = `Demo mode: OTP is <strong>${currentOTP}</strong>`;
+                console.error('Login error:', error);
+                // Fallback: try direct login if user exists in WhatsApp
+                try {
+                    const userCheck = await fetch(`${API_BASE}/api/moneyview/user/${currentPhone}`);
+                    if (userCheck.ok) {
+                        localStorage.setItem('MoneyViya_phone', currentPhone);
+                        showNotification('Login successful!', 'success');
+                        showDashboard(currentPhone);
+                    } else {
+                        showNotification('User not found. Complete WhatsApp onboarding first.', 'error');
+                    }
+                } catch (e) {
+                    showNotification('Login failed. Try again.', 'error');
+                }
             }
-
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
         }
 
-        function resendOTP() {
-            // Generate new OTP
-            currentOTP = Math.floor(1000 + Math.random() * 9000).toString();
+        // Send OTP for login
+        async function sendLoginOTP() {
+            const phone = document.getElementById('loginPhone').value.replace(/\D/g, '');
 
-            // Clear OTP inputs
-            [1, 2, 3, 4].forEach(i => document.getElementById('otp' + i).value = '');
-            document.getElementById('otp1').focus();
-
-            // Try to send via WhatsApp
-            fetch(`${API_BASE}/api/send-whatsapp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    phone: currentPhone,
-                    message: `🔐 *MoneyViya Login OTP*\n\nYour new OTP is: *${currentOTP}*\n\nValid for 5 minutes.`
-                })
-            }).catch(e => console.log('OTP send failed, demo mode:', currentOTP));
-
-            document.getElementById('otpNote').innerHTML = `New OTP sent! Demo: <strong>${currentOTP}</strong>`;
-            showNotification('New OTP sent to WhatsApp', 'success');
-        }
-
-        async function verifyOTP() {
-            const otp = [1, 2, 3, 4].map(i => document.getElementById('otp' + i).value).join('');
-
-            if (otp.length !== 4) {
-                alert('Please enter complete 4-digit OTP');
+            if (phone.length < 10) {
+                showNotification('Please enter valid phone number first', 'error');
                 return;
             }
 
-            // Verify OTP
-            if (otp === currentOTP || otp === '1234') {  // 1234 as fallback for demo
+            currentPhone = '91' + phone;
+            currentOTP = Math.floor(1000 + Math.random() * 9000).toString();
+
+            try {
+                await fetch(`${API_BASE}/api/send-whatsapp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: currentPhone,
+                        message: `🔐 *MoneyViya Login OTP*\n\nYour OTP is: *${currentOTP}*\n\nValid for 5 minutes.`
+                    })
+                });
+
+                document.getElementById('otpInputSection').classList.remove('hidden');
+                document.getElementById('otpStatus').innerHTML = `OTP sent to <strong>+${currentPhone}</strong>`;
+                document.getElementById('otp1').focus();
+                showNotification('OTP sent to WhatsApp!', 'success');
+            } catch (error) {
+                // Show OTP for demo mode
+                document.getElementById('otpInputSection').classList.remove('hidden');
+                document.getElementById('otpStatus').innerHTML = `Demo mode: OTP is <strong>${currentOTP}</strong>`;
+                document.getElementById('otp1').focus();
+            }
+        }
+
+        // Verify OTP and login
+        async function verifyLoginOTP() {
+            const otp = [1, 2, 3, 4].map(i => document.getElementById('otp' + i).value).join('');
+
+            if (otp.length !== 4) {
+                showNotification('Please enter complete 4-digit OTP', 'error');
+                return;
+            }
+
+            if (otp === currentOTP || otp === '1234') {
                 localStorage.setItem('MoneyViya_phone', currentPhone);
-                localStorage.removeItem('MoneyViya_demo');
                 showNotification('Login successful!', 'success');
                 showDashboard(currentPhone);
             } else {
-                alert('Invalid OTP. Please try again.');
-                // Clear OTP inputs
+                showNotification('Invalid OTP. Try again.', 'error');
                 [1, 2, 3, 4].forEach(i => document.getElementById('otp' + i).value = '');
                 document.getElementById('otp1').focus();
             }
@@ -1340,6 +1618,7 @@
         function demoLogin() {
             const demoPhone = '919363324580';
             currentPhone = demoPhone;
+
             currentOTP = '1234';
             localStorage.setItem('MoneyViya_phone', demoPhone);
             localStorage.setItem('MoneyViya_demo', 'true');
@@ -1358,6 +1637,9 @@
         async function showDashboard(phone) {
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboard').classList.add('active');
+
+            // Start live sync (refresh every 10 seconds)
+            startLiveSync(phone);
 
             // Check for locally saved data first
             const savedData = localStorage.getItem('MoneyViya_user_data');
@@ -1425,6 +1707,39 @@
             };
             localStorage.setItem('MoneyViya_user_data', JSON.stringify(currentUser));
             updateDashboard(currentUser);
+        }
+
+        // =============== LIVE DATA SYNC ===============
+        function startLiveSync(phone) {
+            // Stop any existing sync
+            stopLiveSync();
+
+            // Initial fetch
+            fetchUserData(phone, true);
+
+            // Set up interval for live sync (every 10 seconds)
+            liveSyncInterval = setInterval(() => {
+                fetchUserData(phone, false);
+                console.log('[LiveSync] Refreshing data...');
+            }, 10000);
+
+            console.log('[LiveSync] Started for', phone);
+        }
+
+        function stopLiveSync() {
+            if (liveSyncInterval) {
+                clearInterval(liveSyncInterval);
+                liveSyncInterval = null;
+                console.log('[LiveSync] Stopped');
+            }
+        }
+
+        // Refresh button handler
+        function refreshData() {
+            if (currentPhone) {
+                fetchUserData(currentPhone, true);
+                showNotification('Data refreshed!', 'success');
+            }
         }
 
         function updateDashboard(data) {
@@ -1635,28 +1950,34 @@
         }
 
         function logout() {
+            // Stop live sync
+            stopLiveSync();
+
             // Clear all stored data
             localStorage.removeItem('MoneyViya_phone');
             localStorage.removeItem('MoneyViya_demo');
             localStorage.removeItem('MoneyViya_user_data');
+            localStorage.removeItem('MoneyViya_token');
             currentUser = null;
+            currentPhone = null;
 
             document.getElementById('dashboard').classList.remove('active');
             document.getElementById('authScreen').style.display = 'flex';
-            document.getElementById('phoneSection').classList.remove('hidden');
-            document.getElementById('otpSection').classList.add('hidden');
-            document.getElementById('phoneInput').value = '';
-            [1, 2, 3, 4].forEach(i => document.getElementById('otp' + i).value = '');
-        }
 
-        // Auto-refresh every 60 seconds (not 30 to reduce API calls)
-        setInterval(() => {
-            const phone = localStorage.getItem('MoneyViya_phone');
-            if (phone && localStorage.getItem('MoneyViya_demo') !== 'true') {
-                fetchUserData(phone, false);
-            }
-        }, 60000);
+            // Reset login form
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('passwordLoginSection').classList.remove('hidden');
+            document.getElementById('otpLoginSection').classList.add('hidden');
+            document.getElementById('otpInputSection').classList.add('hidden');
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPassword').value = '';
+            [1, 2, 3, 4].forEach(i => document.getElementById('otp' + i).value = '');
+
+            showNotification('Logged out successfully', 'success');
+        }
     </script>
+
 
     <style>
         @keyframes slideIn {
