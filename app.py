@@ -288,6 +288,50 @@ async def send_direct_message(request: Request):
         return {"success": False, "error": str(e)}
 
 
+@app.post("/api/send-whatsapp")
+async def send_whatsapp_otp(request: Request):
+    """Send WhatsApp message via local Baileys bot (for OTP)"""
+    import httpx
+    
+    try:
+        data = await request.json()
+        phone = data.get("phone", "")
+        message = data.get("message", "")
+        
+        # Clean phone number
+        clean_phone = phone.replace("+", "").replace(" ", "")
+        
+        # Try to send via local Baileys bot
+        baileys_url = "http://localhost:3001/send"
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                baileys_url,
+                json={"phone": clean_phone, "message": message}
+            )
+            
+            if response.status_code == 200:
+                return {"success": True, "message": "OTP sent via WhatsApp"}
+            else:
+                # Fallback to Cloud API if available
+                if whatsapp_cloud_service.is_available():
+                    result = whatsapp_cloud_service.send_text_message(clean_phone, message)
+                    return {"success": True, "result": result, "method": "cloud"}
+                    
+                return {"success": False, "error": "Baileys bot not available"}
+                
+    except Exception as e:
+        # Fallback to Cloud API
+        try:
+            if whatsapp_cloud_service.is_available():
+                clean_phone = data.get("phone", "").replace("+", "")
+                result = whatsapp_cloud_service.send_text_message(clean_phone, data.get("message", ""))
+                return {"success": True, "result": result, "method": "cloud"}
+        except:
+            pass
+        return {"success": False, "error": str(e)}
+
+
 @app.post("/api/send-reminder")
 async def send_reminder(request: Request):
     """Send daily reminder to a user (used by n8n)"""
