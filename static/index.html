@@ -1668,17 +1668,19 @@
 
         async function fetchUserData(phone, showDemoOnFail = true) {
             try {
-                const response = await fetch(`${API_BASE}/api/MoneyViya/user/${phone}`);
+                const response = await fetch(`${API_BASE}/api/moneyview/user/${phone}`);
                 if (response.ok) {
                     const data = await response.json();
                     currentUser = data;
                     localStorage.setItem('MoneyViya_user_data', JSON.stringify(data));
                     updateDashboard(data);
+                    console.log('[Sync] Data loaded:', data.name, 'Income:', data.today_income, 'Expense:', data.today_expense);
                 } else if (showDemoOnFail) {
+                    console.log('[Sync] User not found, loading demo');
                     loadDemoData();
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('[Sync] Error:', error);
                 if (showDemoOnFail) {
                     loadDemoData();
                 }
@@ -1754,11 +1756,11 @@
             document.getElementById('todayExpense').textContent = '₹' + formatNumber(data.today_expense || 0);
             document.getElementById('totalSavings').textContent = '₹' + formatNumber(data.current_savings || 0);
 
-            // Budget - show negative correctly and style it
-            const dailyBudget = data.daily_budget || 0;
+            // Budget - use remaining_budget from API (already calculated correctly)
             const budgetElement = document.getElementById('dailyBudget');
-            const todayNet = (data.today_income || 0) - (data.today_expense || 0);
-            const remainingBudget = dailyBudget + todayNet;
+            const remainingBudget = data.remaining_budget !== undefined
+                ? data.remaining_budget
+                : (data.daily_budget || 0) - (data.today_expense || 0) + (data.today_income || 0);
 
             if (remainingBudget < 0) {
                 budgetElement.textContent = '-₹' + formatNumber(Math.abs(remainingBudget));

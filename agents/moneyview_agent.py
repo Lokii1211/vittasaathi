@@ -815,12 +815,21 @@ _(Just type: English, Hindi, Tamil, Telugu, or Kannada)_"""
         
         today_income, today_expense = self._get_today_transactions(phone)
         daily_budget = user.get("daily_budget", 1000)
-        remaining = max(0, daily_budget - today_expense)
+        remaining = daily_budget - today_expense + today_income  # Can be negative
         
         lang = user.get("language", "en")
         
         if lang == "en":
-            insight = "💡 Great tracking!" if remaining > daily_budget * 0.3 else "⚠️ Budget running low!"
+            if remaining < 0:
+                insight = f"🔴 *Over budget by ₹{int(abs(remaining)):,}!*"
+                budget_text = f"-₹{int(abs(remaining)):,}"
+            elif remaining < daily_budget * 0.3:
+                insight = "⚠️ Budget running low!"
+                budget_text = f"₹{int(remaining):,}"
+            else:
+                insight = "💡 Great tracking!"
+                budget_text = f"₹{int(remaining):,}"
+            
             return f"""✅ *Expense Logged!*
 
 💸 ₹{int(amount):,} on {category}
@@ -829,27 +838,30 @@ _(Just type: English, Hindi, Tamil, Telugu, or Kannada)_"""
 📊 *Today:*
 💵 Income: ₹{int(today_income):,}
 💸 Spent: ₹{int(today_expense):,}
-💰 Budget Left: ₹{int(remaining):,}
+💰 Budget Left: {budget_text}
 
 {insight}"""
         elif lang == "hi":
+            budget_text = f"-₹{int(abs(remaining)):,}" if remaining < 0 else f"₹{int(remaining):,}"
             return f"""✅ *खर्च दर्ज!*
 
 💸 ₹{int(amount):,} - {category}
 
 📊 *आज:*
 💸 खर्च: ₹{int(today_expense):,}
-💰 बचा बजट: ₹{int(remaining):,}"""
+💰 बचा बजट: {budget_text}"""
         elif lang == "ta":
+            budget_text = f"-₹{int(abs(remaining)):,}" if remaining < 0 else f"₹{int(remaining):,}"
             return f"""✅ *செலவு பதிவு!*
 
 💸 ₹{int(amount):,} - {category}
 
 📊 *இன்று:*
 💸 செலவு: ₹{int(today_expense):,}
-💰 மீதம்: ₹{int(remaining):,}"""
+💰 மீதம்: {budget_text}"""
         
         return f"✅ Logged: ₹{int(amount):,} on {category}"
+
     
     def _handle_income(self, phone: str, message: str, user: Dict) -> str:
         amount = self._extract_amount(message)

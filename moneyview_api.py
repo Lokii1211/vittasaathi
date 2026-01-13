@@ -553,12 +553,23 @@ async def get_user_profile(phone: str):
         if t["type"] == "expense" and t["date"].startswith(today)
     )
     
-    # Get recent transactions (last 10)
-    recent_transactions = sorted(
+    # Calculate totals (all time)
+    total_income = sum(t["amount"] for t in transactions if t["type"] == "income")
+    total_expense = sum(t["amount"] for t in transactions if t["type"] == "expense")
+    
+    # Get ALL transactions sorted by date (recent first)
+    all_transactions = sorted(
         transactions, 
         key=lambda x: x.get("date", ""), 
         reverse=True
-    )[:10]
+    )
+    
+    # Recent for dashboard display
+    recent_transactions = all_transactions[:20]
+    
+    # Calculate remaining budget (can be negative)
+    daily_budget = user.get("daily_budget", 0)
+    remaining_budget = daily_budget - today_expense + today_income
     
     return {
         "phone": phone,
@@ -567,7 +578,8 @@ async def get_user_profile(phone: str):
         "occupation": user.get("occupation"),
         "monthly_income": user.get("monthly_income", 0),
         "monthly_expenses": user.get("monthly_expenses", 0),
-        "daily_budget": user.get("daily_budget", 0),
+        "daily_budget": daily_budget,
+        "remaining_budget": remaining_budget,
         "current_savings": user.get("current_savings", 0),
         "goals": user.get("goals", []),
         "risk_appetite": user.get("risk_appetite"),
@@ -575,7 +587,13 @@ async def get_user_profile(phone: str):
         "today_income": today_income,
         "today_expense": today_expense,
         "today_net": today_income - today_expense,
-        "recent_transactions": recent_transactions
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "total_net": total_income - total_expense,
+        "transaction_count": len(all_transactions),
+        "recent_transactions": recent_transactions,
+        "all_transactions": all_transactions,
+        "last_updated": user.get("last_active")
     }
 
 
