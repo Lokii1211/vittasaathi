@@ -815,9 +815,10 @@ _(Just type: English, Hindi, Tamil, Telugu, or Kannada)_"""
         
         today_income, today_expense = self._get_today_transactions(phone)
         daily_budget = user.get("daily_budget", 1000)
-        remaining = daily_budget - today_expense + today_income  # Can be negative
+        remaining = daily_budget - today_expense  # Budget is only based on daily allowance minus expenses
         
         lang = user.get("language", "en")
+
         
         if lang == "en":
             if remaining < 0:

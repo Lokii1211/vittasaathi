@@ -1756,11 +1756,11 @@
             document.getElementById('todayExpense').textContent = '₹' + formatNumber(data.today_expense || 0);
             document.getElementById('totalSavings').textContent = '₹' + formatNumber(data.current_savings || 0);
 
-            // Budget - use remaining_budget from API (already calculated correctly)
+            // Budget - use remaining_budget from API (daily_budget - expenses only)
             const budgetElement = document.getElementById('dailyBudget');
             const remainingBudget = data.remaining_budget !== undefined
                 ? data.remaining_budget
-                : (data.daily_budget || 0) - (data.today_expense || 0) + (data.today_income || 0);
+                : (data.daily_budget || 0) - (data.today_expense || 0);  // Don't add income
 
             if (remainingBudget < 0) {
                 budgetElement.textContent = '-₹' + formatNumber(Math.abs(remainingBudget));

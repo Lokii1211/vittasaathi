@@ -567,9 +567,9 @@ async def get_user_profile(phone: str):
     # Recent for dashboard display
     recent_transactions = all_transactions[:20]
     
-    # Calculate remaining budget (can be negative)
+    # Calculate remaining budget (based on daily allowance minus expenses only)
     daily_budget = user.get("daily_budget", 0)
-    remaining_budget = daily_budget - today_expense + today_income
+    remaining_budget = daily_budget - today_expense  # Don't add income to budget
     
     return {
         "phone": phone,
