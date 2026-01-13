@@ -147,12 +147,35 @@ async def health_check():
 # Debug reset endpoint (for testing)
 @app.get("/debug/reset-user/{phone}")
 async def debug_reset_user(phone: str):
-    """Reset a user's language to force language selection"""
+    """Reset a user to start fresh onboarding"""
     clean_phone = phone.replace("+", "").replace(" ", "")
     if not clean_phone.startswith("91"):
         clean_phone = "91" + clean_phone
-    full_phone = "+" + clean_phone
     
+    # Try to reset in MoneyViya agent
+    if MONEYVIEW_AVAILABLE and moneyview_agent:
+        # Try different phone formats
+        for p in [clean_phone, "+" + clean_phone, phone]:
+            if p in moneyview_agent.user_store:
+                user = moneyview_agent.user_store[p]
+                user["language"] = "en"
+                user["onboarding_step"] = 0
+                user["onboarding_complete"] = False
+                user["name"] = None
+                user["occupation"] = None
+                user["monthly_income"] = 0
+                user["monthly_expenses"] = 0
+                user["current_savings"] = 0
+                user["goals"] = []
+                moneyview_agent._save_data()
+                return {
+                    "status": "reset", 
+                    "phone": p, 
+                    "message": "User completely reset! Next message will start fresh onboarding."
+                }
+    
+    # Also try old user_repo
+    full_phone = "+" + clean_phone
     user = user_repo.get_user(full_phone)
     if user:
         user["language"] = None
@@ -160,7 +183,8 @@ async def debug_reset_user(phone: str):
         user["onboarding_step"] = 0
         user_repo.update_user(full_phone, user)
         return {"status": "reset", "phone": full_phone, "message": "User reset. Next message will show language selection."}
-    return {"status": "not_found", "phone": full_phone}
+    
+    return {"status": "not_found", "phone": clean_phone, "message": "User not found in database"}
 
 
 # Include extended API routes
